@@ -1,20 +1,16 @@
 // دالة الذكاء الاصطناعي على Vercel: تشخيص الأعطال + قراءة الفواتير
-// تعمل مع Gemini أو Claude حسب المفتاح الموجود في إعدادات Vercel:
-//   GEMINI_API_KEY    ← يستخدم Google Gemini (له فئة مجانية)
-//   ANTHROPIC_API_KEY ← يستخدم Anthropic Claude
-// إذا وُجد الاثنان يُستخدم Gemini، ويمكن الإجبار بالمتغير AI_PROVIDER = gemini أو claude
+// نظام احتياطي تلقائي: Gemini Flash ← Gemini Flash-Lite ← Claude Haiku
+// المفاتيح في Vercel: GEMINI_API_KEY و/أو ANTHROPIC_API_KEY (يكفي واحد)
+// اختياري: GEMINI_MODEL و ANTHROPIC_MODEL، و AI_PROVIDER = claude لجعل Claude أولاً
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-5-5';
+const GEMINI_MODELS = [...new Set([process.env.GEMINI_MODEL, 'gemini-flash-latest', 'gemini-flash-lite-latest'].filter(Boolean))];
 
-function pickProvider() {
-  const forced = String(process.env.AI_PROVIDER || '').toLowerCase();
+function buildChain() {
   const g = process.env.GEMINI_API_KEY, a = process.env.ANTHROPIC_API_KEY;
-  if (forced === 'claude' && a) return { name: 'claude', key: a };
-  if (forced === 'gemini' && g) return { name: 'gemini', key: g };
-  if (g) return { name: 'gemini', key: g };
-  if (a) return { name: 'claude', key: a };
-  return null;
+  const gem = g ? GEMINI_MODELS.map(m => ({ name: 'gemini', key: g, model: m })) : [];
+  const cla = a ? [{ name: 'claude', key: a, model: CLAUDE_MODEL }] : [];
+  return String(process.env.AI_PROVIDER || '').toLowerCase() === 'claude' ? cla.concat(gem) : gem.concat(cla);
 }
 
 // حد بسيط لعدد الطلبات لكل IP (تقريبي، يعمل داخل نفس النسخة من الدالة)
@@ -36,40 +32,48 @@ function extractJson(text) {
   try { return JSON.parse(text.slice(a, b + 1)); } catch (e) { return null; }
 }
 
-async function callClaude(apiKey, system, content, maxTokens) {
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify({ model: CLAUDE_MODEL, max_tokens: maxTokens, system, messages: [{ role: 'user', content }] })
-  });
-  if (!r.ok) throw new Error('claude ' + r.status + ' ' + (await r.text().catch(() => '')).slice(0, 200));
-  const data = await r.json();
+async function post(url, headers, body, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const r = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body), signal: ctrl.signal });
+    if (!r.ok) throw new Error(r.status + ' ' + (await r.text().catch(() => '')).slice(0, 200));
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+
+async function callClaude(s, system, content, maxTokens) {
+  const data = await post('https://api.anthropic.com/v1/messages',
+    { 'x-api-key': s.key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+    { model: s.model, max_tokens: maxTokens, system, messages: [{ role: 'user', content }] }, 9000);
   return (data.content || []).filter(x => x.type === 'text').map(x => x.text).join('\n');
 }
 
-async function callGemini(apiKey, system, content, maxTokens) {
+async function callGemini(s, system, content, maxTokens) {
   const parts = (Array.isArray(content) ? content : [{ type: 'text', text: content }]).map(c =>
     c.type === 'image' ? { inline_data: { mime_type: c.source.media_type, data: c.source.data } } : { text: c.text });
-  const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(GEMINI_MODEL) + ':generateContent';
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: { 'x-goog-api-key': apiKey, 'content-type': 'application/json' },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: system }] },
-      contents: [{ role: 'user', parts }],
-      generationConfig: { maxOutputTokens: maxTokens + 2048, responseMimeType: 'application/json', temperature: 0.3 }
-    })
-  });
-  if (!r.ok) throw new Error('gemini ' + r.status + ' ' + (await r.text().catch(() => '')).slice(0, 200));
-  const data = await r.json();
+  const data = await post('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(s.model) + ':generateContent',
+    { 'x-goog-api-key': s.key, 'content-type': 'application/json' },
+    { systemInstruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts }],
+      generationConfig: { maxOutputTokens: maxTokens + 2048, responseMimeType: 'application/json', temperature: 0.3 } }, 7000);
   const c = (data.candidates || [])[0];
   return ((c && c.content && c.content.parts) || []).filter(x => x.text && !x.thought).map(x => x.text).join('\n');
 }
 
-function callAI(provider, system, content, maxTokens) {
-  return provider.name === 'gemini'
-    ? callGemini(provider.key, system, content, maxTokens)
-    : callClaude(provider.key, system, content, maxTokens);
+// يجرب كل مزوّد بالترتيب حتى ينجح أحدهم
+async function callAI(chain, system, content, maxTokens) {
+  let lastErr = new Error('no provider');
+  for (const s of chain) {
+    try {
+      const text = s.name === 'gemini' ? await callGemini(s, system, content, maxTokens) : await callClaude(s, system, content, maxTokens);
+      if (text && text.includes('{')) { console.log('ai ok:', s.name, s.model); return text; }
+      lastErr = new Error('empty output');
+    } catch (e) {
+      lastErr = e;
+      console.error('ai fail:', s.name, s.model, String(e.message || e).slice(0, 200));
+    }
+  }
+  throw lastErr;
 }
 
 const DIAG_SYSTEM = `أنت فني سيارات خبير في دول الخليج، تساعد مالك السيارة على فهم العطل قبل الذهاب للورشة.
@@ -90,8 +94,8 @@ module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
 
-  const provider = pickProvider();
-  if (!provider) return res.status(503).json({ error: 'not_configured' });
+  const chain = buildChain();
+  if (!chain.length) return res.status(503).json({ error: 'not_configured' });
 
   // نقبل الطلبات من نفس الموقع فقط
   const origin = req.headers.origin || '';
@@ -121,7 +125,7 @@ module.exports = async (req, res) => {
       ].filter(Boolean).join('\n');
       if (!body.description && !body.code && !body.sound) return res.status(400).json({ error: 'empty' });
 
-      const text = await callAI(provider, DIAG_SYSTEM, prompt, 700);
+      const text = await callAI(chain, DIAG_SYSTEM, prompt, 700);
       const j = extractJson(text);
       if (!j || !j.title) return res.status(502).json({ error: 'bad_output' });
       return res.status(200).json({
@@ -143,7 +147,7 @@ module.exports = async (req, res) => {
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: image } },
         { type: 'text', text: 'اقرأ هذه الفاتورة. العملة المتوقعة: ' + clip(body.currency, 5) }
       ];
-      const text = await callAI(provider, INVOICE_SYSTEM, content, 800);
+      const text = await callAI(chain, INVOICE_SYSTEM, content, 800);
       const j = extractJson(text) || { items: [] };
       const items = Array.isArray(j.items) ? j.items.slice(0, 20)
         .map(it => ({ name: clip(it.name, 60), price: Number(it.price) || 0 }))
