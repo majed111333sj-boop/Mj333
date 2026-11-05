@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>فحص السيارة قبل الشراء | الفاحص الذكي</title>
+    <meta name="description" content="افحص السيارة المستعملة بنفسك قبل الشراء خطوة بخطوة: 40 نقطة فحص، تقييم من 100، علامات الخطر، تكلفة الإصلاح المتوقعة، ومبلغ التفاوض المقترح.">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, sans-serif; -webkit-tap-highlight-color: transparent; }
+        input, select, textarea, button { font-family: inherit; }
+        .ans { flex: 1; padding: .45rem 0; border-radius: .6rem; font-size: 11px; font-weight: 800; border: 1px solid #e2e8f0; background: #fff; color: #475569; }
+        .ans.ok.on { background: #059669; border-color: #059669; color: #fff; }
+        .ans.note.on { background: #d97706; border-color: #d97706; color: #fff; }
+        .ans.bad.on { background: #dc2626; border-color: #dc2626; color: #fff; }
+        .ans.skip.on { background: #64748b; border-color: #64748b; color: #fff; }
+        .stage-btn.active { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: #fff !important; }
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body class="bg-slate-200 text-slate-900">
+<div class="max-w-md mx-auto min-h-screen bg-slate-50 shadow-xl">
+
+    <header class="bg-slate-950 text-white px-4 pb-4 sticky top-0 z-40" style="padding-top:max(0.875rem, env(safe-area-inset-top))">
+        <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="w-9 h-9 shrink-0 rounded-xl bg-emerald-600 flex items-center justify-center text-lg">🔍</span>
+                <div class="min-w-0">
+                    <h1 class="font-black text-sm leading-tight">فحص قبل الشراء</h1>
+                    <p class="text-[10px] text-slate-400 truncate">افحص السيارة المستعملة بنفسك خطوة بخطوة</p>
+                </div>
+            </div>
+            <a href="./" class="no-print shrink-0 bg-slate-800 border border-slate-700 text-[11px] font-bold px-2.5 py-1.5 rounded-lg">🩺 تشخيص الأعطال</a>
+        </div>
+        <div class="mt-3 no-print">
+            <div class="flex justify-between text-[10px] text-slate-400 font-bold mb-1">
+                <span id="progress-text">0 / 0 نقطة</span>
+                <span id="progress-score"></span>
+            </div>
+            <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div id="progress-bar" class="h-full bg-emerald-400 transition-all" style="width:0%"></div></div>
+        </div>
+    </header>
+
+    <main class="p-3.5 space-y-3.5" style="padding-bottom:calc(2rem + env(safe-area-inset-bottom))">
+
+        <!-- بيانات السيارة -->
+        <section id="car-card" class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2.5">
+            <h2 class="font-extrabold text-sm">🚗 بيانات السيارة المعروضة للبيع</h2>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label for="i-make" class="text-[10px] text-slate-500 font-bold block mb-1">الشركة</label>
+                    <select id="i-make" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold"></select>
+                </div>
+                <div>
+                    <label for="i-model" class="text-[10px] text-slate-500 font-bold block mb-1">الموديل</label>
+                    <input id="i-model" list="i-model-list" maxlength="30" placeholder="مثل: كامري" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold">
+                    <datalist id="i-model-list"></datalist>
+                </div>
+                <div>
+                    <label for="i-year" class="text-[10px] text-slate-500 font-bold block mb-1">سنة الصنع</label>
+                    <select id="i-year" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold"></select>
+                </div>
+                <div>
+                    <label for="i-km" class="text-[10px] text-slate-500 font-bold block mb-1">الممشى (كم)</label>
+                    <input id="i-km" type="number" inputmode="numeric" placeholder="مثل: 120000" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono">
+                </div>
+                <div class="col-span-2">
+                    <label for="i-price" class="text-[10px] text-slate-500 font-bold block mb-1">السعر المطلوب (<span class="cur"></span>)</label>
+                    <input id="i-price" type="number" inputmode="decimal" placeholder="مثل: 45000" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono">
+                </div>
+            </div>
+            <p id="km-hint" class="hidden text-[10px] rounded-lg p-2 leading-relaxed"></p>
+        </section>
+
+        <!-- مراحل الفحص -->
+        <div class="no-print flex gap-1.5 overflow-x-auto hide-scrollbar" id="stage-tabs"></div>
+
+        <section id="stage-box" class="space-y-2.5"></section>
+
+        <div class="no-print grid grid-cols-2 gap-2">
+            <button id="prev-btn" onclick="goStage(-1)" class="bg-white border border-slate-300 font-bold py-2.5 rounded-xl text-xs">→ السابق</button>
+            <button id="next-btn" onclick="goStage(1)" class="bg-blue-700 text-white font-extrabold py-2.5 rounded-xl text-xs">التالي ←</button>
+        </div>
+
+        <button onclick="showResult()" class="no-print w-full bg-emerald-600 text-white font-black py-3 rounded-xl text-sm shadow-md">📊 عرض النتيجة والتقييم</button>
+
+        <!-- النتيجة -->
+        <section id="result" class="hidden bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-3">
+            <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                <div>
+                    <h2 class="font-black text-sm">📊 نتيجة الفحص</h2>
+                    <p id="r-car" class="text-[10px] text-slate-500 font-bold"></p>
+                </div>
+                <div class="text-center shrink-0">
+                    <span id="r-score" class="block text-3xl font-black font-mono"></span>
+                    <span class="text-[10px] text-slate-400 font-bold">من 100</span>
+                </div>
+            </div>
+            <div id="r-verdict" class="rounded-xl p-3 text-sm font-black text-center border"></div>
+            <p id="r-confidence" class="text-[10px] text-slate-500 text-center"></p>
+
+            <div id="r-flags-box" class="hidden bg-red-50 border border-red-200 rounded-xl p-2.5">
+                <span class="font-black text-[11px] text-red-800 block mb-1">🚩 علامات خطر</span>
+                <ul id="r-flags" class="text-[11px] text-red-900 space-y-1 list-disc pr-4"></ul>
+            </div>
+
+            <div>
+                <span class="font-black text-[11px] block mb-1">🔧 ملاحظات ومشاكل وتكلفتها التقديرية</span>
+                <ul id="r-issues" class="space-y-1 text-[11px]"></ul>
+            </div>
+
+            <div class="bg-slate-950 text-white rounded-xl p-3 grid grid-cols-2 gap-2 text-center">
+                <div>
+                    <span class="text-[10px] text-slate-400 block">تكلفة الإصلاح المتوقعة</span>
+                    <span id="r-cost" class="font-black font-mono text-amber-400"></span>
+                </div>
+                <div>
+                    <span class="text-[10px] text-slate-400 block">سعر مقترح للتفاوض</span>
+                    <span id="r-offer" class="font-black font-mono text-emerald-400"></span>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 space-y-1.5">
+                <div class="flex justify-between items-center">
+                    <span class="font-black text-blue-950 text-[11px]">💬 جملة التفاوض مع البائع</span>
+                    <button onclick="copyText('r-nego')" class="no-print text-[10px] bg-blue-600 text-white px-2.5 py-1 rounded font-bold">نسخ</button>
+                </div>
+                <p id="r-nego" class="text-slate-700 text-[11px] leading-relaxed bg-white p-2 rounded-lg border border-blue-100"></p>
+            </div>
+
+            <div id="r-ai-box" class="hidden bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-[11px] leading-relaxed text-indigo-950 space-y-1"></div>
+
+            <div class="no-print grid grid-cols-2 gap-2">
+                <button id="ai-btn" onclick="aiAnalyze()" class="bg-indigo-700 text-white font-extrabold py-2.5 rounded-xl text-[11px]">🤖 تحليل ذكي للنتائج</button>
+                <button onclick="shareWhatsApp()" class="bg-green-600 text-white font-extrabold py-2.5 rounded-xl text-[11px]">💬 مشاركة واتساب</button>
+                <button onclick="window.print()" class="bg-slate-900 text-white font-bold py-2.5 rounded-xl text-[11px]">📥 حفظ PDF</button>
+                <button onclick="resetAll()" class="bg-white border border-slate-300 font-bold py-2.5 rounded-xl text-[11px]">🗑️ فحص سيارة جديدة</button>
+            </div>
+
+            <p class="text-[10px] text-slate-500 leading-relaxed bg-slate-50 border border-slate-200 rounded-lg p-2">
+                ⚖️ هذا <b>دليل فحص ذاتي مساعد</b> مبني على ملاحظاتك، وليس شهادة فحص رسمية. التكاليف تقديرية. للسيارات مرتفعة الثمن ننصح بفحص إضافي عند جهة فحص معتمدة قبل الدفع، والقرار النهائي لك.
+            </p>
+        </section>
+
+        <footer class="text-center text-[10px] text-slate-400 pt-2 no-print">
+            <a href="./" class="underline">الفاحص الذكي</a> · <a href="privacy.html" class="underline">الخصوصية</a> · <a href="terms.html" class="underline">الشروط</a>
+        </footer>
+    </main>
+</div>
+
+<script>
+// =====================================================================
+// 🔍 فحص السيارة قبل الشراء — خدمة مستقلة تعمل بالكامل داخل المتصفح
+// =====================================================================
+const $ = id => document.getElementById(id);
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+    del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+
+// العملة ومستوى الأسعار حسب الدولة المختارة في التطبيق الرئيسي
+const COUNTRY = {
+    SA: { cur: 'ر.س', rate: 1, idx: 1.0, dec: 0 }, AE: { cur: 'د.إ', rate: 0.9793, idx: 1.1, dec: 0 }, KW: { cur: 'د.ك', rate: 0.0819, idx: 1.1, dec: 1 },
+    QA: { cur: 'ر.ق', rate: 0.9707, idx: 1.15, dec: 0 }, BH: { cur: 'د.ب', rate: 0.1003, idx: 1.0, dec: 1 }, OM: { cur: 'ر.ع', rate: 0.1025, idx: 0.95, dec: 1 }
+};
+const LOC = store.get('sd_loc', null) || { country: 'SA', city: '' };
+const CC = COUNTRY[LOC.country] || COUNTRY.SA;
+const local = sar => sar * CC.idx * CC.rate;
+const fmt = v => Number(v).toLocaleString('en', { maximumFractionDigits: CC.dec }) + ' ' + CC.cur;
+
+const MAKES = ['تويوتا', 'هيونداي', 'نيسان', 'كيا', 'لكزس', 'فورد', 'شيفروليه', 'جي إم سي', 'هوندا', 'مازدا', 'ميتسوبيشي', 'مرسيدس', 'بي إم دبليو', 'جيلي', 'شانجان', 'إم جي', 'شيري', 'دودج', 'جيب', 'أخرى'];
+const MODELS = {
+    'تويوتا': ['كامري', 'كورولا', 'يارس', 'لاندكروزر', 'برادو', 'هايلكس', 'راف فور', 'فورتشنر', 'أفالون'], 'هيونداي': ['أكسنت', 'إلنترا', 'سوناتا', 'توسان', 'سنتافي', 'كريتا', 'أزيرا'],
+    'نيسان': ['صني', 'ألتيما', 'باترول', 'ماكسيما', 'إكس تريل', 'نافارا', 'كيكس'], 'كيا': ['ريو', 'سيراتو', 'K5', 'سبورتاج', 'سورينتو', 'بيجاس'],
+    'لكزس': ['ES', 'LX', 'RX', 'IS', 'GX'], 'فورد': ['تورس', 'إكسبلورر', 'إكسبديشن', 'F-150', 'موستنج'], 'شيفروليه': ['تاهو', 'ماليبو', 'كابريس', 'سلفرادو', 'كابتيفا'],
+    'جي إم سي': ['يوكن', 'سييرا', 'تيرين', 'أكاديا'], 'هوندا': ['أكورد', 'سيفيك', 'CR-V', 'بايلوت'], 'مازدا': ['مازدا 6', 'مازدا 3', 'CX-5', 'CX-9'], 'ميتسوبيشي': ['لانسر', 'باجيرو', 'أتراج', 'L200']
+};
+
+// نقاط الفحص: [المعرف، العنوان، كيف تفحص، الوزن، تكلفة الإصلاح بالريال، علامة خطر؟]
+const STAGES = [
+    { id: 'docs', icon: '📄', title: 'الأوراق والتاريخ', items: [
+        ['vin', 'رقم الهيكل (VIN) في الاستمارة يطابق السيارة', 'قارن الرقم في الاستمارة مع الرقم أسفل الزجاج الأمامي وعلى باب السائق. أي اختلاف = توقف.', 10, 0, true],
+        ['service', 'سجل صيانة منتظم', 'اطلب فواتير أو سجل الوكالة. الصيانة المنتظمة مؤشر قوي على حالة المحرك والقير.', 4, 0, false],
+        ['accident', 'لا يوجد تاريخ حوادث كبيرة', 'اسأل البائع مباشرة، واطلب تقرير حوادث من جهة معتمدة إن توفر في بلدك.', 8, 0, true],
+        ['periodic', 'الفحص الدوري ساري', 'تأكد من صلاحية الفحص الفني الدوري للمركبة.', 3, 0, false],
+        ['mileage', 'الممشى منطقي مع العمر وحالة الدواسات والدركسون', 'دواسات ودركسون مهترئة مع ممشى قليل = احتمال تلاعب بالعداد.', 6, 0, true],
+        ['owners', 'سبب البيع منطقي والبائع يجيب بوضوح', 'التهرب من الأسئلة أو الاستعجال الشديد علامة تستحق الحذر.', 2, 0, false]
+    ]},
+    { id: 'ext', icon: '🚗', title: 'الهيكل الخارجي', items: [
+        ['paint', 'لون الصبغ متطابق في كل القطع', 'انظر للسيارة بزاوية تحت الشمس. اختلاف اللمعة أو اللون بين الأبواب = صبغ (غالباً بعد حادث).', 6, 1500, false],
+        ['gaps', 'الفراغات بين القطع متساوية', 'قارن الفراغ بين الكبوت والرفارف والأبواب من الجهتين. عدم التساوي = احتمال حادث وإصلاح هيكل.', 6, 0, true],
+        ['rust', 'لا يوجد صدأ أو فقاعات تحت الصبغ', 'افحص أسفل الأبواب وحول العجلات وأرضية الشنطة.', 4, 800, false],
+        ['glass', 'الزجاج والأنوار سليمة', 'ابحث عن تشققات أو زجاج غير أصلي (علامة الشركة مختلفة).', 2, 400, false],
+        ['tires', 'تآكل الكفرات متساوٍ وعمقها جيد', 'تآكل جهة واحدة من الكفر = مشكلة ترصيص أو مقصات.', 4, 1600, false],
+        ['tireage', 'الكفرات حديثة (أقل من 5 سنوات)', 'التاريخ مكتوب على جانب الكفر بأربعة أرقام: أسبوع ثم سنة (مثل 2321).', 2, 1600, false],
+        ['under', 'لا آثار ضرب أو تسريب تحت السيارة', 'انظر تحت المحرك والقير بكشاف الجوال. ابحث عن بقع زيت حديثة.', 5, 600, false]
+    ]},
+    { id: 'int', icon: '💺', title: 'المقصورة', items: [
+        ['lights', 'لمبات الطبلون تضيء عند المفتاح ثم تنطفئ بعد التشغيل', 'لمبة لا تضيء أبداً عند المفتاح قد تكون مخفية عمداً. لمبة تبقى مضاءة = عطل.', 8, 0, true],
+        ['ac', 'المكيف يبرد بسرعة', 'شغّله على أقصى برودة، يجب أن يبرد خلال دقيقتين.', 4, 600, false],
+        ['elec', 'النوافذ والأقفال والشاشة والسماعات تعمل', 'جرّب كل زر بنفسك.', 3, 400, false],
+        ['seats', 'تآكل المقاعد يناسب الممشى', 'مقعد سائق مهترئ جداً مع ممشى قليل = علامة استفهام.', 3, 0, false],
+        ['flood', 'لا رائحة رطوبة أو عفن أو آثار طين (غرق)', 'افحص تحت الفرش وفي حفرة الاستبنة. آثار الطين أو الصدأ الداخلي = سيارة غرق.', 7, 0, true],
+        ['airbag', 'لمبة الوسادة الهوائية تنطفئ بعد التشغيل', 'بقاء لمبة الوسادة مضاءة قد يعني وسائد منفجرة سابقاً لم تُستبدل.', 6, 1200, true]
+    ]},
+    { id: 'eng', icon: '🔧', title: 'المحرك (وهو بارد)', items: [
+        ['cold', 'المحرك بارد عند وصولك', 'اطلب من البائع ألا يشغل السيارة قبل وصولك. المحرك الساخن يخفي مشاكل التشغيل.', 4, 0, false],
+        ['oil', 'الزيت طبيعي ولا توجد رغوة بيضاء تحت غطاء الزيت', 'الرغوة البيضاء أو الزيت الحليبي = احتمال تلف جوان الرأس (إصلاح مكلف).', 8, 3000, true],
+        ['coolant', 'ماء الرديتر نظيف ومستواه طبيعي', 'ماء بني أو عليه زيت = مشكلة. لا تفتح غطاء الرديتر والمحرك حار.', 4, 400, false],
+        ['leaks', 'لا تسريب زيت أو ماء حول المحرك', 'ابحث عن أماكن مبللة أو متسخة بالزيت.', 5, 500, false],
+        ['belts', 'السيور سليمة بدون تشقق', 'افحص السير بعينك؛ التشققات تعني تبديلاً قريباً.', 2, 200, false],
+        ['start', 'التشغيل سهل بدون طقة أو تأخر', 'استمع للحظة التشغيل الأولى، أي طقة معدنية = خطر.', 5, 700, false],
+        ['idle', 'المحرك ثابت وهو واقف بدون رجة', 'راقب عداد اللفات؛ التذبذب أو الرجة = تقطيع أو مشكلة حوامل.', 6, 400, false],
+        ['smoke', 'لا دخان أزرق أو أبيض كثيف من العادم', 'الأزرق = حرق زيت، والأبيض الكثيف المستمر = ماء يحترق (جوان رأس).', 8, 4000, true]
+    ]},
+    { id: 'drive', icon: '🛣️', title: 'القيادة التجريبية', items: [
+        ['trans', 'تبديل القير ناعم بدون نتعة أو تأخر', 'سُق على سرعات مختلفة؛ النتعة أو التأخير أو ارتفاع اللفات بدون تسارع = مشكلة قير (مكلفة).', 9, 4500, true],
+        ['brakes', 'الفرامل قوية ولا تسحب لجهة ولا تصدر صوتاً', 'افرمل بقوة على طريق فاضٍ وآمن.', 5, 500, false],
+        ['straight', 'السيارة تمشي مستقيمة', 'اترك الدركسون لحظة على طريق مستوٍ.', 4, 200, false],
+        ['vib', 'لا رجة على سرعة 80 إلى 120', 'الرجة في الدركسون غالباً كفرات، وفي الجسم قد تكون عكس أو قير.', 4, 300, false],
+        ['noise', 'لا طقطقة في المطبات أو عند اللف', 'لف الدركسون لآخره ببطء، واعبر مطباً بهدوء.', 4, 700, false],
+        ['temp', 'مؤشر الحرارة ثابت في المنتصف بعد 15 دقيقة', 'ارتفاع الحرارة = خطر كبير على المحرك.', 8, 1500, true],
+        ['power', 'التسارع طبيعي', 'قارن مع ما تعرفه عن نفس الموديل.', 5, 800, false]
+    ]},
+    { id: 'obd', icon: '🔌', title: 'الأكواد (اختياري)', items: [
+        ['codes', 'لا توجد أكواد أعطال مخزنة', 'إن كان معك قارئ OBD أو عند أي محل قطع، اقرأ الأكواد. أكواد ممسوحة حديثاً قد تخفي مشكلة.', 5, 500, false]
+    ]}
+];
+const PROBLEM = {"vin": "رقم الهيكل غير مطابق", "service": "لا يوجد سجل صيانة واضح", "accident": "تاريخ حوادث", "periodic": "الفحص الدوري غير ساري", "mileage": "الممشى غير منطقي (احتمال تلاعب بالعداد)", "owners": "إجابات البائع غير واضحة", "paint": "اختلاف في لون الصبغ (صبغ)", "gaps": "فراغات غير متساوية بين القطع", "rust": "صدأ أو فقاعات تحت الصبغ", "glass": "تشقق في الزجاج أو الأنوار", "tires": "تآكل غير متساوٍ في الكفرات", "tireage": "كفرات قديمة", "under": "آثار ضرب أو تسريب تحت السيارة", "lights": "لمبات طبلون غير طبيعية", "ac": "ضعف المكيف", "elec": "أعطال كهربائية في المقصورة", "seats": "تآكل غير متناسب مع الممشى", "flood": "آثار رطوبة أو غرق", "airbag": "لمبة الوسادة الهوائية مضاءة", "cold": "المحرك كان ساخناً قبل الفحص", "oil": "زيت غير طبيعي أو رغوة (احتمال جوان رأس)", "coolant": "ماء الرديتر غير نظيف", "leaks": "تسريب زيت أو ماء", "belts": "سيور متشققة", "start": "صعوبة أو طقة عند التشغيل", "idle": "رجة أو تذبذب والسيارة واقفة", "smoke": "دخان من العادم", "trans": "مشكلة في تبديل القير", "brakes": "ضعف أو سحب أو صوت في الفرامل", "straight": "السيارة تسحب لجهة", "vib": "رجة على السرعة", "noise": "طقطقة في المطبات أو عند اللف", "temp": "ارتفاع حرارة المحرك", "power": "ضعف في التسارع", "codes": "توجد أكواد أعطال"};
+const ALL = STAGES.flatMap(s => s.items.map(i => ({ stage: s.id, id: i[0], title: i[1], how: i[2], w: i[3], cost: i[4], red: i[5], prob: PROBLEM[i[0]] || i[1] })));
+const ANS = [['ok', '✅ سليم'], ['note', '⚠️ ملاحظة'], ['bad', '❌ مشكلة'], ['skip', '— لم أفحص']];
+
+let state = store.get('sd_inspect', { answers: {}, notes: {}, car: {} });
+let stageIdx = 0;
+const photos = {};   // الصور تبقى في الذاكرة فقط (لا تُرفع لأي مكان)
+
+function save() { store.set('sd_inspect', state); updateProgress(); }
+
+// ---------- الواجهة ----------
+function buildStageTabs() {
+    const box = $('stage-tabs'); box.innerHTML = '';
+    STAGES.forEach((s, i) => {
+        const done = s.items.filter(it => state.answers[it[0]]).length;
+        const b = el('button', 'stage-btn shrink-0 border border-slate-300 bg-white rounded-full px-3 py-1.5 text-[11px] font-bold' + (i === stageIdx ? ' active' : ''), s.icon + ' ' + s.title + ' ' + done + '/' + s.items.length);
+        b.onclick = () => { stageIdx = i; render(); };
+        box.appendChild(b);
+    });
+}
+function render() {
+    buildStageTabs();
+    const s = STAGES[stageIdx], box = $('stage-box'); box.innerHTML = '';
+    s.items.forEach(([id, title, how, w, cost, red]) => {
+        const card = el('div', 'bg-white rounded-2xl p-3 border shadow-sm space-y-2 ' + (red ? 'border-red-200' : 'border-slate-200'));
+        const top = el('div', 'flex items-start justify-between gap-2');
+        top.appendChild(el('span', 'font-extrabold text-xs leading-snug', title));
+        if (red) top.appendChild(el('span', 'shrink-0 text-[9px] font-black bg-red-100 text-red-700 px-1.5 py-0.5 rounded', 'مهم'));
+        card.appendChild(top);
+        card.appendChild(el('p', 'text-[11px] text-slate-500 leading-relaxed', '💡 ' + how));
+        const row = el('div', 'flex gap-1.5');
+        ANS.forEach(([k, label]) => {
+            const b = el('button', 'ans ' + k + (state.answers[id] === k ? ' on' : ''), label);
+            b.onclick = () => { state.answers[id] = state.answers[id] === k ? undefined : k; if (!state.answers[id]) delete state.answers[id]; save(); render(); };
+            row.appendChild(b);
+        });
+        card.appendChild(row);
+        if (state.answers[id] === 'note' || state.answers[id] === 'bad') {
+            const inp = el('input', 'w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-[11px]');
+            inp.placeholder = 'وصف مختصر للمشكلة (اختياري)'; inp.maxLength = 120; inp.value = state.notes[id] || '';
+            inp.oninput = () => { state.notes[id] = inp.value; save(); };
+            card.appendChild(inp);
+            const ph = el('div', 'flex items-center gap-2');
+            const lab = el('label', 'text-[11px] font-bold text-blue-700 cursor-pointer', '📷 أضف صورة');
+            const f = el('input'); f.type = 'file'; f.accept = 'image/*'; f.capture = 'environment'; f.className = 'hidden';
+            f.onchange = () => { const file = f.files[0]; if (!file) return; const r = new FileReader(); r.onload = () => { photos[id] = r.result; render(); }; r.readAsDataURL(file); };
+            lab.appendChild(f); ph.appendChild(lab);
+            if (photos[id]) { const img = el('img', 'h-14 rounded-lg border'); img.src = photos[id]; ph.appendChild(img); }
+            card.appendChild(ph);
+        }
+        box.appendChild(card);
+    });
+    $('prev-btn').disabled = stageIdx === 0; $('prev-btn').classList.toggle('opacity-40', stageIdx === 0);
+    $('next-btn').textContent = stageIdx === STAGES.length - 1 ? '📊 النتيجة' : 'التالي ←';
+    updateProgress();
+}
+function goStage(d) {
+    if (d > 0 && stageIdx === STAGES.length - 1) { showResult(); return; }
+    stageIdx = Math.max(0, Math.min(STAGES.length - 1, stageIdx + d)); render();
+    window.scrollTo({ top: $('stage-tabs').offsetTop - 120, behavior: 'smooth' });
+}
+function updateProgress() {
+    const n = Object.keys(state.answers).length;
+    $('progress-text').textContent = n + ' / ' + ALL.length + ' نقطة';
+    $('progress-bar').style.width = Math.round(n / ALL.length * 100) + '%';
+}
+
+// ---------- الحساب ----------
+function compute() {
+    let maxPen = 0, pen = 0, cost = 0, answered = 0, redAnswered = 0, redTotal = 0;
+    const flags = [], issues = [];
+    ALL.forEach(it => {
+        const a = state.answers[it.id];
+        if (it.red) redTotal++;
+        if (!a || a === 'skip') return;
+        answered++; if (it.red) redAnswered++;
+        maxPen += it.w;
+        if (a === 'note') { pen += it.w * 0.4; cost += it.cost * 0.3; issues.push({ it, a, cost: it.cost * 0.3 }); if (it.red) flags.push('⚠️ ' + it.prob + ' (ملاحظة)'); }
+        if (a === 'bad') { pen += it.w; cost += it.cost; issues.push({ it, a, cost: it.cost }); if (it.red) flags.push('❌ ' + it.prob); }
+    });
+    let score = maxPen ? Math.round(100 * (1 - pen / maxPen)) : 0;
+    const redBad = ALL.some(it => it.red && state.answers[it.id] === 'bad');
+    if (redBad) score = Math.min(score, 55);
+    const coverage = answered / ALL.length;
+    let verdict, cls;
+    if (!answered) { verdict = 'أجب على بعض نقاط الفحص أولاً'; cls = 'bg-slate-50 border-slate-200 text-slate-600'; }
+    else if (redBad || score < 60) { verdict = '❌ ننصح بتجنبها أو فحصها عند جهة معتمدة قبل أي قرار'; cls = 'bg-red-50 border-red-200 text-red-800'; }
+    else if (score < 80 || flags.length || cost > 0) { verdict = '🤝 مناسبة مع التفاوض على السعر'; cls = 'bg-amber-50 border-amber-200 text-amber-800'; }
+    else { verdict = '✅ حالتها جيدة حسب ملاحظاتك'; cls = 'bg-emerald-50 border-emerald-200 text-emerald-800'; }
+    return { score, cost: local(cost), flags, issues, verdict, cls, coverage, answered, redAnswered, redTotal, redBad };
+}
+
+function carText() {
+    const c = state.car;
+    return [c.make, c.model, c.year].filter(Boolean).join(' ') + (c.km ? ' • ' + Number(c.km).toLocaleString('en') + ' كم' : '');
+}
+function showResult() {
+    const r = compute();
+    $('result').classList.remove('hidden');
+    $('r-car').textContent = carText() || 'سيارة بدون بيانات';
+    $('r-score').textContent = r.answered ? r.score : '—';
+    $('r-score').className = 'block text-3xl font-black font-mono ' + (r.score >= 80 ? 'text-emerald-600' : r.score >= 60 ? 'text-amber-600' : 'text-red-600');
+    $('r-verdict').textContent = r.verdict; $('r-verdict').className = 'rounded-xl p-3 text-sm font-black text-center border ' + r.cls;
+    const missingRed = r.redTotal - r.redAnswered;
+    $('r-confidence').textContent = 'فحصت ' + r.answered + ' من ' + ALL.length + ' نقطة' + (missingRed ? ' • لم تفحص ' + missingRed + ' نقاط مهمة' : '') + (r.coverage < 0.6 ? ' — النتيجة تقريبية، أكمل الفحص لدقة أعلى' : '');
+    const fl = $('r-flags'); fl.innerHTML = '';
+    r.flags.forEach(f => fl.appendChild(el('li', null, f)));
+    $('r-flags-box').classList.toggle('hidden', !r.flags.length);
+    const ul = $('r-issues'); ul.innerHTML = '';
+    if (!r.issues.length) ul.appendChild(el('li', 'text-slate-500', 'لا توجد ملاحظات حتى الآن.'));
+    r.issues.forEach(({ it, a, cost }) => {
+        const li = el('li', 'flex justify-between gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5');
+        const t = el('span', null, (a === 'bad' ? '❌ ' : '⚠️ ') + it.prob + (state.notes[it.id] ? ' — ' + state.notes[it.id] : ''));
+        li.appendChild(t);
+        li.appendChild(el('span', 'font-mono font-bold shrink-0', cost ? fmt(local(cost)) : '—'));
+        ul.appendChild(li);
+    });
+    $('r-cost').textContent = fmt(r.cost);
+    const price = parseFloat(state.car.price) || 0;
+    const offer = price ? Math.max(0, price - r.cost) : 0;
+    $('r-offer').textContent = price ? fmt(offer) : 'أدخل السعر المطلوب';
+    const issuesTxt = r.issues.filter(x => x.cost).slice(0, 4).map(x => x.it.prob).join('، ');
+    $('r-nego').textContent = price && r.cost
+        ? `"السيارة فيها ملاحظات تحتاج إصلاحاً تقديره ${fmt(r.cost)} تقريباً (${issuesTxt}). أقدر أشتريها بـ ${fmt(offer)} بدل ${fmt(price)}."`
+        : (r.cost ? `"السيارة فيها ملاحظات تحتاج إصلاحاً تقديره ${fmt(r.cost)} تقريباً، وأحتاج خصماً يغطي هذا المبلغ."` : '"السيارة حالتها جيدة حسب فحصي، هل السعر قابل للتفاوض البسيط؟"');
+    $('result').scrollIntoView({ behavior: 'smooth' });
+}
+
+function reportText() {
+    const r = compute();
+    const lines = ['🔍 تقرير فحص قبل الشراء — الفاحص الذكي', '🚗 ' + (carText() || '-'), '📊 التقييم: ' + (r.answered ? r.score + '/100' : '-'), r.verdict];
+    if (r.flags.length) lines.push('🚩 ' + r.flags.join(' | '));
+    r.issues.forEach(({ it, a }) => lines.push((a === 'bad' ? '❌ ' : '⚠️ ') + it.prob + (state.notes[it.id] ? ' (' + state.notes[it.id] + ')' : '')));
+    lines.push('💰 تكلفة إصلاح تقديرية: ' + fmt(r.cost));
+    lines.push('* دليل فحص ذاتي وليس شهادة فحص رسمية');
+    return lines.join('\n');
+}
+function shareWhatsApp() { window.open('https://wa.me/?text=' + encodeURIComponent(reportText()), '_blank'); }
+function copyText(id) {
+    const t = $(id).textContent;
+    const done = () => alert('تم النسخ ✓');
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(done).catch(() => alert('انسخ النص يدوياً.'));
+    else alert('انسخ النص يدوياً.');
+}
+function resetAll() {
+    if (!confirm('مسح هذا الفحص والبدء بسيارة جديدة؟')) return;
+    state = { answers: {}, notes: {}, car: {} }; store.del('sd_inspect');
+    Object.keys(photos).forEach(k => delete photos[k]);
+    ['i-model', 'i-km', 'i-price'].forEach(id => $(id).value = '');
+    $('result').classList.add('hidden'); stageIdx = 0; render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ---------- تحليل ذكي اختياري ----------
+async function aiAnalyze() {
+    const r = compute();
+    if (!r.answered) { alert('أجب على بعض نقاط الفحص أولاً.'); return; }
+    const btn = $('ai-btn'), box = $('r-ai-box');
+    btn.disabled = true; btn.textContent = '⏳ جاري التحليل…';
+    box.classList.remove('hidden'); box.textContent = '🤖 جاري تحليل ملاحظاتك…';
+    const findings = ALL.filter(it => state.answers[it.id] && state.answers[it.id] !== 'skip')
+        .map(it => ({ ok: '✅', note: '⚠️', bad: '❌' }[state.answers[it.id]] + ' ' + (state.answers[it.id] === 'ok' ? it.title : it.prob) + (state.notes[it.id] ? ' (' + state.notes[it.id] + ')' : ''))).join('\n');
+    try {
+        const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 25000);
+        const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
+            body: JSON.stringify({ mode: 'inspect', car: carText(), price: state.car.price ? fmt(state.car.price) : '', score: r.score, findings }) });
+        clearTimeout(t);
+        if (!res.ok) throw new Error(res.status);
+        const j = await res.json();
+        box.innerHTML = '';
+        box.appendChild(el('p', 'font-black', '🤖 التحليل الذكي'));
+        if (j.summary) box.appendChild(el('p', null, j.summary));
+        (j.risks || []).forEach(x => box.appendChild(el('p', null, '• ' + x)));
+        if (j.model_notes) box.appendChild(el('p', 'text-indigo-800', '🚗 ' + j.model_notes));
+        if (j.next_steps) box.appendChild(el('p', 'font-bold', '👉 ' + j.next_steps));
+    } catch (e) {
+        box.textContent = 'تعذر التحليل الذكي الآن. النتيجة أعلاه محسوبة من ملاحظاتك وتبقى صحيحة.';
+    }
+    btn.disabled = false; btn.textContent = '🤖 تحليل ذكي للنتائج';
+}
+
+// ---------- التشغيل ----------
+window.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.cur').forEach(e => e.textContent = CC.cur);
+    const mk = $('i-make'); MAKES.forEach(m => mk.appendChild(el('option', null, m)));
+    const yr = $('i-year'), y0 = new Date().getFullYear();
+    for (let y = y0 + 1; y >= 2000; y--) yr.appendChild(el('option', null, String(y)));
+    const c = state.car;
+    mk.value = c.make || store.get('sd_car-make', 'تويوتا'); yr.value = c.year || String(y0 - 5);
+    $('i-model').value = c.model || ''; $('i-km').value = c.km || ''; $('i-price').value = c.price || '';
+    const fillModels = () => { const dl = $('i-model-list'); dl.innerHTML = ''; (MODELS[mk.value] || []).forEach(m => { const o = document.createElement('option'); o.value = m; dl.appendChild(o); }); };
+    fillModels();
+    const sync = () => {
+        state.car = { make: mk.value, model: $('i-model').value.trim(), year: yr.value, km: $('i-km').value, price: $('i-price').value };
+        // تنبيه: ممشى قليل جداً أو كثير جداً مقارنة بالعمر
+        const age = Math.max(1, y0 - parseInt(yr.value)), km = parseFloat($('i-km').value) || 0, perYear = km / age, hint = $('km-hint');
+        if (km && perYear < 7000) { hint.textContent = '🔎 الممشى قليل جداً مقارنة بعمر السيارة (' + Math.round(perYear).toLocaleString('en') + ' كم/سنة). تأكد من سجل الصيانة وحالة الدواسات لاستبعاد تلاعب العداد.'; hint.className = 'text-[10px] rounded-lg p-2 leading-relaxed bg-amber-50 border border-amber-200 text-amber-800'; }
+        else if (km && perYear > 40000) { hint.textContent = '🔎 ممشى مرتفع (' + Math.round(perYear).toLocaleString('en') + ' كم/سنة). ركّز على فحص القير والمحرك والمساعدات.'; hint.className = 'text-[10px] rounded-lg p-2 leading-relaxed bg-blue-50 border border-blue-200 text-blue-800'; }
+        else hint.className = 'hidden';
+        save();
+    };
+    mk.onchange = () => { $('i-model').value = ''; fillModels(); sync(); };
+    [yr, $('i-model'), $('i-km'), $('i-price')].forEach(e => e.addEventListener('input', sync));
+    yr.onchange = sync;
+    sync(); render();
+});
+</script>
+</body>
+</html>

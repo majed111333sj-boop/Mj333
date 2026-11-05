@@ -18,6 +18,8 @@
         input, textarea, select, button { font-family: inherit; }
         .nav-btn.active { color: #1d4ed8; }
         .nav-btn.active .nav-ico { background: #dbeafe; }
+        .chip { white-space: nowrap; padding: .3rem .65rem; border-radius: 9999px; background: #f1f5f9; border: 1px solid #e2e8f0; font-size: 11px; font-weight: 600; color: #334155; }
+        .chip.on { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
         .mode-btn.active { background: #fff; color: #1e3a8a; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -55,6 +57,14 @@
 
         <!-- ================= TAB: DIAGNOSE ================= -->
         <section id="tab-diagnose" class="space-y-3.5">
+            <a href="inspect.html" class="no-print flex items-center gap-3 bg-gradient-to-l from-emerald-600 to-emerald-800 text-white rounded-2xl p-3.5 shadow-md">
+                <span class="text-2xl">🔍</span>
+                <span class="flex-1 min-w-0">
+                    <span class="block font-black text-sm">ناوي تشتري سيارة مستعملة؟</span>
+                    <span class="block text-[11px] text-emerald-100">افحصها بنفسك خطوة بخطوة: 40 نقطة، تقييم، وسعر تفاوض مقترح. مجاناً</span>
+                </span>
+                <span class="text-lg">←</span>
+            </a>
             <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-3">
                 <h2 class="font-extrabold text-sm text-slate-900">🚗 افحص سيارتك</h2>
                 <div class="grid grid-cols-2 gap-2">
@@ -67,6 +77,24 @@
                         <select id="car-year" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold outline-none"></select>
                     </div>
                 </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label for="car-model" class="text-[10px] text-slate-500 font-bold block mb-1">الموديل (يرفع الدقة)</label>
+                        <input id="car-model" list="car-model-list" maxlength="30" placeholder="مثل: كامري" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold outline-none">
+                        <datalist id="car-model-list"></datalist>
+                    </div>
+                    <div>
+                        <label for="car-km" class="text-[10px] text-slate-500 font-bold block mb-1">الممشى</label>
+                        <select id="car-km" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold outline-none">
+                            <option value="">غير محدد</option>
+                            <option>أقل من 50 ألف كم</option>
+                            <option>50 - 100 ألف كم</option>
+                            <option>100 - 150 ألف كم</option>
+                            <option>150 - 200 ألف كم</option>
+                            <option>أكثر من 200 ألف كم</option>
+                        </select>
+                    </div>
+                </div>
 
                 <div class="bg-slate-100 p-1 rounded-xl grid grid-cols-3 gap-1 text-[11px] font-extrabold text-slate-600">
                     <button id="mode-desc" onclick="setDiagMode('desc')" class="mode-btn active py-2 rounded-lg">📝 بالوصف</button>
@@ -76,12 +104,28 @@
 
                 <!-- Mode: description -->
                 <div id="panel-desc" class="space-y-2">
-                    <label for="car-desc" class="text-[11px] text-slate-600 font-bold block">صف المشكلة بكلامك: متى تحدث؟ وما الصوت أو الإحساس؟</label>
+                    <label for="car-desc" class="text-[11px] text-slate-600 font-bold block">صف المشكلة بكلامك (أو اختر من الخيارات تحتها):</label>
                     <div class="relative">
-                        <textarea id="car-desc" rows="3" maxlength="600" placeholder="مثال: السيارة تفتف وترج وهي واقفة عند الإشارة، ولمبة المكينة تومض" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pl-11 text-xs leading-relaxed outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white resize-none"></textarea>
+                        <textarea id="car-desc" rows="4" maxlength="600" placeholder="مثال: السيارة تفتف وترج وهي واقفة عند الإشارة، ولمبة المكينة تومض" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pl-11 text-xs leading-relaxed outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white resize-none"></textarea>
                         <button onclick="startDictation('car-desc')" aria-label="تحدث بدل الكتابة" class="absolute left-2 top-2 w-8 h-8 rounded-lg bg-blue-50 text-blue-700 text-sm">🎤</button>
+                        <button id="desc-confirm" onclick="startInterview()" aria-label="تأكيد الوصف وبدء الفحص" disabled class="absolute left-2 bottom-3 w-8 h-8 rounded-lg bg-slate-200 text-slate-400 text-sm font-black transition-all">✓</button>
                     </div>
                     <p id="dictate-status" class="hidden text-[10px] text-blue-700 font-bold">🔴 أستمع إليك… تحدث الآن</p>
+                    <div class="space-y-2 bg-slate-50 border border-slate-200 rounded-xl p-2.5">
+                        <p class="text-[10px] text-slate-500 font-bold">اختر ما ينطبق (اختياري، يرفع الدقة كثيراً):</p>
+                        <div>
+                            <span class="text-[10px] font-extrabold text-slate-700 block mb-1">⏱️ متى تظهر المشكلة؟</span>
+                            <div id="chips-when" class="flex flex-wrap gap-1.5"></div>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-extrabold text-slate-700 block mb-1">👀 وش تلاحظ؟</span>
+                            <div id="chips-sym" class="flex flex-wrap gap-1.5"></div>
+                        </div>
+                        <div>
+                            <span class="text-[10px] font-extrabold text-slate-700 block mb-1">🚨 لمبات ظاهرة في الطبلون</span>
+                            <div id="chips-light" class="flex flex-wrap gap-1.5"></div>
+                        </div>
+                    </div>
                     <div class="flex gap-1.5 overflow-x-auto hide-scrollbar text-[10px] font-semibold">
                         <button onclick="quickDesc('تفتفة ورجة والسيارة واقفة')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">تفتفة ورجة</button>
                         <button onclick="quickDesc('المكيف ما يبرد ويطلع هواء حار')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">المكيف ما يبرد</button>
@@ -89,7 +133,21 @@
                         <button onclick="quickDesc('صرير عند الفرملة')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">صرير الفرامل</button>
                         <button onclick="quickDesc('الحرارة ترتفع')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">الحرارة ترتفع</button>
                     </div>
-                    <button onclick="runDescriptionDiagnosis()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-extrabold py-3 rounded-xl text-xs shadow-md">⚡ افحص من الوصف</button>
+                    <button onclick="startInterview()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-extrabold py-3 rounded-xl text-xs shadow-md">⚡ افحص الآن</button>
+                    <div id="interview" class="hidden bg-indigo-50 border border-indigo-200 rounded-xl p-3 space-y-2.5">
+                        <div class="flex justify-between items-center gap-2">
+                            <span id="iv-title" class="font-black text-[11px] text-indigo-900">🤖 جاري التحليل…</span>
+                            <span id="iv-step" class="text-[10px] font-bold text-indigo-600 shrink-0"></span>
+                        </div>
+                        <div class="h-1.5 bg-indigo-100 rounded-full overflow-hidden"><div id="iv-bar" class="h-full bg-indigo-600 transition-all" style="width:5%"></div></div>
+                        <p id="iv-q" class="text-xs font-extrabold text-slate-900 leading-relaxed"></p>
+                        <div id="iv-opts" class="grid grid-cols-2 gap-1.5"></div>
+                        <div id="iv-nav" class="hidden flex justify-between text-[10px] font-bold">
+                            <button id="iv-back" onclick="ivBack()" class="text-indigo-700 underline">→ السؤال السابق</button>
+                            <button onclick="ivFinish()" class="text-slate-500 underline">تخطَّ وأظهر النتيجة</button>
+                        </div>
+                    </div>
+                    <button onclick="runDescriptionDiagnosis()" class="w-full text-[10px] text-slate-500 underline">أو نتيجة سريعة بدون أسئلة</button>
                 </div>
 
                 <!-- Mode: sound -->
@@ -140,6 +198,7 @@
 
             <!-- Skeleton -->
             <div id="car-skeleton" class="hidden bg-white rounded-2xl p-4 border border-slate-200 space-y-3">
+                <p id="skeleton-msg" class="text-[11px] text-indigo-700 font-bold">🤖 جاري تحليل المشكلة بالذكاء الاصطناعي… (حتى 20 ثانية)</p>
                 <div class="h-4 w-32 shimmer rounded-md"></div>
                 <div class="h-6 w-3/4 shimmer rounded-md"></div>
                 <div class="h-20 w-full shimmer rounded-xl"></div>
@@ -158,7 +217,6 @@
                         <span id="res-confidence" class="text-[10px] text-slate-500 font-bold"></span>
                     </div>
                 </div>
-                <p id="res-ai-status" class="hidden text-[10px] text-indigo-700 font-bold">🤖 جاري تحسين التشخيص بالذكاء الاصطناعي…</p>
                 <div id="res-sound-box" class="hidden bg-indigo-50 border border-indigo-200 rounded-xl p-2.5 text-[10px] text-indigo-900 leading-relaxed"></div>
                 <p id="res-explain" class="hidden text-[11px] text-slate-700 leading-relaxed"></p>
 
@@ -183,16 +241,30 @@
                         <ul id="res-checks" class="list-disc pr-5 space-y-0.5 text-slate-700"></ul>
                     </div>
                     <div id="res-advice" class="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-2 text-[11px] leading-relaxed"></div>
-                    <div id="res-question" class="hidden bg-blue-50 border border-blue-200 text-blue-900 rounded-lg p-2 text-[11px] leading-relaxed"></div>
+                    <div id="res-followup" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-2.5 space-y-2 no-print">
+                        <p id="res-question" class="text-[11px] text-blue-900 font-bold leading-relaxed"></p>
+                        <div class="flex gap-1.5">
+                            <input id="followup-input" maxlength="200" placeholder="اكتب إجابتك هنا…" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-blue-600">
+                            <button onclick="startDictation('followup-input')" aria-label="أجب بالصوت" class="shrink-0 w-9 rounded-lg bg-white border border-blue-200 text-sm">🎤</button>
+                        </div>
+                        <button onclick="answerFollowup()" class="w-full bg-blue-700 text-white font-extrabold py-2 rounded-lg text-xs">🔄 أجب وأعد الفحص</button>
+                    </div>
                     <p id="res-alt" class="text-[10px] text-slate-500"></p>
                 </div>
 
-                <div class="bg-blue-50/80 border border-blue-200 rounded-xl p-3 space-y-1.5">
-                    <div class="flex justify-between items-center">
-                        <span class="font-black text-blue-950 text-[11px]">💬 جملة التفاوض مع الفني:</span>
-                        <button onclick="copyNegotiator()" class="text-[10px] bg-blue-600 text-white px-2.5 py-1 rounded font-bold">نسخ</button>
+                <div class="bg-blue-50/80 border border-blue-200 rounded-xl p-2.5">
+                    <span class="font-black text-blue-950 text-[11px] block mb-1">💡 قبل ما تدفع</span>
+                    <ul id="protect-list" class="text-[11px] text-slate-700 space-y-1 leading-relaxed"></ul>
+                    <p id="negotiator-script" class="hidden"></p>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-xl p-3 space-y-2 no-print">
+                    <span class="font-black text-slate-900 text-[11px] block">🔎 الورشة تقول لازم تغيّر قطعة؟ اسأل قبل ما توافق</span>
+                    <div class="flex gap-1.5">
+                        <input id="pc-part-r" maxlength="60" placeholder="اسم القطعة، مثل: طرمبة الدركسون" class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-blue-600">
+                        <button onclick="checkPart('r')" class="shrink-0 bg-slate-900 text-white font-bold px-3 rounded-lg text-[11px]">هل هي لازمة؟</button>
                     </div>
-                    <p id="negotiator-script" class="text-slate-700 text-[11px] leading-relaxed bg-white p-2 rounded-lg border border-blue-100"></p>
+                    <div id="pc-result-r" class="hidden rounded-lg p-2.5 text-[11px] leading-relaxed border space-y-1"></div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 no-print">
@@ -206,6 +278,14 @@
 
         <!-- ================= TAB: PRICES ================= -->
         <section id="tab-prices" class="hidden space-y-3.5">
+            <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2.5">
+                <h2 class="font-extrabold text-sm">🔎 هل هذه القطعة لازمة فعلاً؟</h2>
+                <p class="text-[10px] text-slate-500">اكتب العطل وما تقترحه الورشة، ونقول لك هل تغييرها مرتبط بالعطل أم لا.</p>
+                <textarea id="pc-fault-p" rows="2" maxlength="300" placeholder="وصف العطل، مثل: صوت ونين لما ألف الدركسون" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs resize-none outline-none"></textarea>
+                <input id="pc-part-p" maxlength="60" placeholder="القطعة المقترحة، مثل: طرمبة الدركسون" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs outline-none">
+                <button onclick="checkPart('p')" class="w-full bg-slate-900 text-white font-extrabold py-2.5 rounded-xl text-xs">هل هي لازمة لهذا العطل؟</button>
+                <div id="pc-result-p" class="hidden rounded-xl p-2.5 text-[11px] leading-relaxed border space-y-1"></div>
+            </div>
             <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2.5">
                 <h2 class="font-extrabold text-sm">💰 السعر العادل في <span class="city-name"></span></h2>
                 <select id="price-part" onchange="renderPriceLookup()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold outline-none"></select>
@@ -585,6 +665,28 @@ function switchTab(t) {
 // =====================================================================
 // 🚗 بيانات السيارات وقاعدة الأعطال (أسعار مرجعية بالريال السعودي)
 // =====================================================================
+const CHIPS = {
+    when:  [['start', 'عند التشغيل', 'عند التشغيل تشغيل الصبح'], ['idle', 'والسيارة واقفة', 'واقفه وقوف اشاره'], ['accel', 'عند الدعسة', 'الدعسه تسارع'],
+            ['speed', 'على سرعة عالية', 'على السرعه مع السرعه ماشي'], ['brake', 'عند الفرملة', 'فرمله افرمل'], ['steer', 'عند لف الدركسون', 'لف الدركسون عند اللف'],
+            ['bump', 'في المطبات', 'مطبات مطب'], ['cold', 'والمحرك بارد', 'بارد'], ['hot', 'بعد ما يحمى', 'بعد ما يحمى']],
+    sym:   [['sound', 'صوت', 'صوت'], ['vib', 'رجة', 'رجه'], ['smell', 'رائحة', 'ريحه'], ['smoke', 'دخان', 'دخان'], ['leak', 'تسريب سوائل', 'تسريب'],
+            ['power', 'ضعف بالسحب', 'ضعف عزم ما تسحب'], ['heat', 'حرارة', 'حراره تسخن'], ['ac', 'المكيف', 'مكيف ما يبرد'], ['pull', 'تسحب لجهة', 'يسحب']],
+    light: [['engine', '🔧 المكينة', 'لمبه المكينه'], ['oil', '🛢️ الزيت', 'لمبه الزيت'], ['temp', '🌡️ الحرارة', 'ساعه الحراره'], ['battery', '🔋 البطارية', 'بطاريه دينمو'],
+            ['abs', '⚠️ ABS', 'فرامل'], ['brakel', '🛑 الفرامل', 'فرامل'], ['airbag', '🎈 الوسادة', ''], ['tpms', '🛞 ضغط الكفرات', 'كفرات']]
+};
+const CAR_MODELS = {
+    'تويوتا': ['كامري', 'كورولا', 'يارس', 'لاندكروزر', 'برادو', 'هايلكس', 'راف فور', 'فورتشنر', 'أفالون', 'إينوفا'],
+    'هيونداي': ['أكسنت', 'إلنترا', 'سوناتا', 'توسان', 'سنتافي', 'كريتا', 'أزيرا', 'باليسيد'],
+    'نيسان': ['صني', 'ألتيما', 'باترول', 'ماكسيما', 'إكس تريل', 'نافارا', 'كيكس', 'باثفايندر'],
+    'كيا': ['ريو', 'سيراتو', 'K5', 'سبورتاج', 'سورينتو', 'بيجاس', 'كارنفال', 'سيلتوس'],
+    'لكزس': ['ES', 'LX', 'RX', 'IS', 'GX', 'NX'],
+    'فورد': ['تورس', 'إكسبلورر', 'إكسبديشن', 'F-150', 'موستنج', 'إيدج', 'رينجر'],
+    'شيفروليه': ['تاهو', 'ماليبو', 'كابريس', 'سلفرادو', 'كابتيفا', 'سبارك', 'جروف', 'سوبربان'],
+    'جي إم سي': ['يوكن', 'سييرا', 'تيرين', 'أكاديا'],
+    'هوندا': ['أكورد', 'سيفيك', 'CR-V', 'بايلوت', 'سيتي', 'HR-V'],
+    'مازدا': ['مازدا 6', 'مازدا 3', 'CX-5', 'CX-9', 'CX-30'],
+    'ميتسوبيشي': ['لانسر', 'باجيرو', 'أتراج', 'ASX', 'L200', 'إكسباندر']
+};
 const CAR_MAKES = ['تويوتا', 'هيونداي', 'نيسان', 'كيا', 'لكزس', 'فورد', 'شيفروليه', 'جي إم سي', 'هوندا', 'مازدا', 'ميتسوبيشي', 'مرسيدس', 'بي إم دبليو', 'جيلي', 'شانجان', 'إم جي', 'شيري', 'دودج', 'جيب', 'أخرى'];
 
 const CAR_KB = [
@@ -597,7 +699,7 @@ const CAR_KB = [
       parts: [['تعبئة فريون + فحص تسريب', 125]], labor: 60,
       advice: 'اطلب فحص تسريب بالصبغة قبل التعبئة؛ التعبئة بدون إصلاح التسريب تضيع فلوسك. إذا الكمبروسر لا يشبك فقد يكون الريليه أو الكلتش وليس الكمبروسر كاملاً.' },
     { id: 'steer', title: 'ونين طرمبة الدركسون (نقص زيت أو تلف الطرمبة)', codes: [], sev: 'caution',
-      kw: { 'ونين': 3, 'دركسون': 3, 'سكان': 3, 'توجيه': 3, 'لف': 1, 'ثقيل': 2, 'طرمبه': 2 },
+      kw: { 'ونين': 3, 'دركسون': 2, 'سكان': 2, 'توجيه': 2, 'لف': 1, 'دركسون ثقيل': 3, 'ثقيل اللف': 3, 'طرمبه': 2 },
       parts: [['زيت دركسون', 45], ['طرمبة دركسون (عند الحاجة)', 450]], labor: 120,
       advice: 'ابدأ بفحص مستوى زيت الدركسون وتسريبه؛ كثير من حالات الونين تنتهي بتعبئة الزيت. لا تقبل تبديل الطرمبة قبل هذا الفحص.' },
     { id: 'brakes', title: 'تآكل فحمات الفرامل', codes: [], sev: 'caution',
@@ -625,7 +727,7 @@ const CAR_KB = [
       parts: [['رمان بلي عجلة', 280]], labor: 150,
       advice: 'إذا تغيّر الصوت عند الميلان يميناً أو يساراً فهذا يؤكد رمان البلي. لا تتأخر لأن تلفه الكامل قد يسبب ارتخاء العجلة.' },
     { id: 'suspension', title: 'تلف أجزاء المقصات أو المساعدات', codes: [], sev: 'caution',
-      kw: { 'مطبات': 3, 'مطب': 3, 'حفر': 2, 'طقطقه': 2, 'خبط': 3, 'طقه تحت': 3, 'مساعدات': 3, 'مساعد': 2, 'مقصات': 3, 'جلد': 2 },
+      kw: { 'مطبات': 3, 'مطب': 3, 'حفر': 2, 'طقطقه': 2, 'خبط': 3, 'طقه تحت': 3, 'مساعدات': 3, 'مساعد': 2, 'مقصات': 3, 'جلد': 2, 'طقه وانا ماشي': 3, 'طقطقه وانا ماشي': 3 },
       parts: [['عمود توازن (لنك)', 120], ['جلد مقص (عند الحاجة)', 150]], labor: 100,
       advice: 'اطلب رفع السيارة وتحديد القطعة بالضبط؛ كثير من الورش تقترح تبديل المساعدات كاملة بينما المشكلة في لنك رخيص.' },
     { id: 'knock', title: 'طقة داخلية في المحرك (نقص زيت أو تلف داخلي)', codes: [], sev: 'stop',
@@ -641,7 +743,7 @@ const CAR_KB = [
       parts: [['وصلة أو جوان شكمان', 150]], labor: 100,
       advice: 'تأكد من عدم وجود رائحة عادم داخل المقصورة؛ إن وجدت فافتح النوافذ وأصلحها سريعاً.' },
     { id: 'balance', title: 'عدم اتزان الكفرات أو الترصيص', codes: [], sev: 'safe',
-      kw: { 'رجه في الدركسون': 4, 'رجه على السرعه': 4, 'سرعه 100': 3, 'خط سريع': 2, 'ترصيص': 3, 'ميزان': 3, 'وزن': 2, 'يسحب': 3, 'يميل': 2, 'كفرات': 2 },
+      kw: { 'رجه في الدركسون': 4, 'رجه على السرعه': 4, 'سرعه 100': 3, 'خط سريع': 2, 'ترصيص': 3, 'ميزان': 3, 'وزن': 2, 'يسحب': 3, 'يميل': 2, 'كفرات': 2, 'وانا ماشي': 2, 'اثناء السير': 2, 'على السرعه': 2, 'في الطريق': 1 },
       parts: [['وزن وترصيص', 120]], labor: 0,
       advice: 'افحص ضغط الكفرات أولاً. إذا السيارة تسحب لجهة واحدة مع تآكل غير متساوٍ فتحتاج ترصيص.' },
     { id: 'oil', title: 'تسريب أو حرق زيت المحرك', codes: [], sev: 'caution',
@@ -652,6 +754,23 @@ const CAR_KB = [
       kw: { 'تهريب هواء': 4, 'حساس الهواء': 3, 'ماف': 3, 'استهلاك بنزين': 2, 'يصرف بنزين': 3 },
       parts: [['تنظيف حساس الهواء (MAF)', 60], ['فحص تهريب الهواء (خراطيم)', 80]], labor: 80,
       advice: 'ابدأ بالأرخص: تنظيف حساس الهواء وفحص خراطيم الهواء بالدخان. لا تبدّل الحساسات قبل هذا الفحص.' }
+];
+CAR_KB.push(
+    { id: 'power', title: 'ضعف في سحب المحرك (فلاتر أو بوابة الهواء أو ضغط البنزين)', codes: ['P0171','P0101'], sev: 'caution',
+      kw: { 'ما تسحب': 4, 'ماتسحب': 4, 'ثقيله': 2, 'ثقيل في الدعسه': 4, 'بطيئه': 3, 'تمشي ببطء': 4, 'ضعف في الدعسه': 4, 'ضعف عزم': 4, 'ما تشيل': 3, 'ضعيفه': 2 },
+      parts: [['فلتر هواء', 60], ['فلتر بنزين', 120], ['تنظيف بوابة الهواء (ثروتل)', 100]], labor: 80,
+      advice: 'ابدأ بالأرخص: فلتر الهواء وتنظيف بوابة الهواء، ثم فلتر البنزين. إذا كانت لمبة المكينة مضاءة فاطلب قراءة الكمبيوتر قبل تبديل أي قطعة.' },
+    { id: 'cv', title: 'تلف جوزة العكس (CV) أو مفصل التوجيه', codes: [], sev: 'caution',
+      kw: { 'طقطقه عند اللف': 4, 'طق عند اللف': 4, 'عند اللف': 2, 'دوران': 2, 'جوزه': 4, 'عكس': 3, 'كوبلن': 3, 'لفيت': 1 },
+      parts: [['جوزة عكس (CV)', 350]], labor: 150,
+      advice: 'الطقطقة مع اللف الكامل للدركسون علامة شائعة لتلف جوزة العكس. افحص الجلد المطاطي حولها؛ إن كان مشقوقاً فقد تسرب الشحم.' }
+);
+// تعديلات حسب السياق: كلمات تجعل بعض الأعطال أقل أو أكثر احتمالاً
+const CONTEXT_ADJUST = [
+    { re: /ماشي|السير|الطريق|السرعه|سرعه عاليه/, adj: { misfire: -2, balance: 2, bearing: 1 }, unless: /تفتف|تقطيع|يقطع/ },
+    { re: /واقف|وقوف|اشاره|سكون/, adj: { balance: -2, bearing: -2, misfire: 1 } },
+    { re: /اللف|لف الدركسون/, adj: { cv: 2, steer: 1 } },
+    { re: /بارد/, adj: { belt: 1, battery: 1 } }
 ];
 const SEV = {
     safe:    ['آمن للسير 🟢', 'bg-emerald-950 border-emerald-500/50 text-emerald-300', 'آمن للسير'],
@@ -671,10 +790,51 @@ function scoreDescription(text) {
         for (const [k, w] of Object.entries(item.kw)) if (norm.includes(normalizeAr(k))) sc += w;
         if (sc > 0) scores[item.id] = sc;
     });
+    CONTEXT_ADJUST.forEach(r => {
+        if (!r.re.test(norm) || (r.unless && r.unless.test(norm))) return;
+        for (const [id, d] of Object.entries(r.adj)) if (scores[id] !== undefined || d > 0 && Object.keys(scores).length) scores[id] = (scores[id] || 0) + d;
+    });
+    Object.keys(scores).forEach(k => { if (scores[k] <= 0) delete scores[k]; });
     return scores;
 }
 
-function carLabel() { return $('car-make').value + ' ' + $('car-year').value; }
+// ---------- الخيارات الموجّهة (متى/الأعراض/اللمبات) ----------
+function buildChips() {
+    ['when', 'sym', 'light'].forEach(group => {
+        const box = $('chips-' + group); box.innerHTML = '';
+        CHIPS[group].forEach(([id, label]) => {
+            const b = el('button', 'chip', label);
+            b.type = 'button'; b.dataset.group = group; b.dataset.id = id;
+            b.onclick = () => b.classList.toggle('on');
+            box.appendChild(b);
+        });
+    });
+}
+function selectedChips() {
+    const out = { when: [], sym: [], light: [], kw: [] };
+    document.querySelectorAll('.chip.on').forEach(b => {
+        const c = CHIPS[b.dataset.group].find(x => x[0] === b.dataset.id);
+        if (!c) return;
+        out[b.dataset.group].push(c[1].replace(/^[^\u0600-\u06FFA-Za-z]+\s*/, ''));
+        if (c[2]) out.kw.push(c[2]);
+        if (b.dataset.group === 'light') out.lightIds = (out.lightIds || []).concat(c[0]);
+    });
+    return out;
+}
+function contextText(sel) {
+    sel = sel || selectedChips();
+    const parts = [];
+    if (sel.when.length) parts.push('متى تظهر: ' + sel.when.join('، '));
+    if (sel.sym.length) parts.push('الأعراض: ' + sel.sym.join('، '));
+    if (sel.light.length) parts.push('لمبات الطبلون: ' + sel.light.join('، '));
+    return parts.join(' | ');
+}
+function fillModelList() {
+    const dl = $('car-model-list'); dl.innerHTML = '';
+    (CAR_MODELS[$('car-make').value] || []).forEach(m => { const o = document.createElement('option'); o.value = m; dl.appendChild(o); });
+}
+
+function carLabel() { const m = ($('car-model').value || '').trim(); return $('car-make').value + (m ? ' ' + m : '') + ' ' + $('car-year').value; }
 
 let diagMode = 'desc';
 function setDiagMode(m) {
@@ -684,7 +844,7 @@ function setDiagMode(m) {
         $('panel-' + x).classList.toggle('hidden', x !== m);
     });
 }
-function quickDesc(t) { $('car-desc').value = t; runDescriptionDiagnosis(); }
+function quickDesc(t) { $('car-desc').value = t; onDescInput(); startInterview(); }
 
 // ---------- بناء نتيجة التشخيص ----------
 function buildLocalResult(scores, meta) {
@@ -699,42 +859,51 @@ function buildLocalResult(scores, meta) {
     Object.assign(r, { kb: top, title: top.title, sev: top.sev, conf, advice: top.advice,
                        alts: ranked.slice(1, 3).map(([id]) => kbById(id).title) });
     if (!r.code) r.code = top.codes.find(c => r.text.toUpperCase().includes(c)) || '';
+    applyLightSafety(r, meta);
     return r;
+}
+function applyLightSafety(r, meta) {
+    const ids = (meta && meta.lightIds) || [];
+    if (ids.includes('oil') || ids.includes('temp')) {
+        r.sev = 'stop';
+        const warn = ids.includes('oil') ? 'لمبة الزيت الحمراء تعني ضغط زيت منخفض: أطفئ المحرك فوراً وافحص مستوى الزيت.' : 'لمبة الحرارة تعني خطر ارتفاع حرارة المحرك: أوقف السيارة ولا تفتح غطاء الرديتر وهو حار.';
+        if (!String(r.advice || '').includes(warn)) r.advice = warn + (r.advice ? ' ' + r.advice : '');
+    }
 }
 
 let lastDiag = null, diagSeq = 0;
 
-function showSkeleton() {
-    return new Promise(res => {
-        $('car-results').classList.add('hidden');
-        $('car-skeleton').classList.remove('hidden');
-        setTimeout(() => { $('car-skeleton').classList.add('hidden'); res(); }, 450);
-    });
-}
+let lastMeta = null, followups = [];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function runDiagnosis(scores, meta) {
     const seq = ++diagSeq;
+    lastMeta = meta;
     const local = buildLocalResult(scores, meta);
-    const aiPromise = aiDiagnose(meta, local);
-    await showSkeleton();
+    const useAi = aiAvailable !== false && location.protocol !== 'file:';
+    $('car-results').classList.add('hidden');
+    $('skeleton-msg').textContent = useAi ? '🤖 جاري تحليل المشكلة بالذكاء الاصطناعي… (حتى 20 ثانية)' : '⏳ جاري التحليل…';
+    $('car-skeleton').classList.remove('hidden');
+    if (window.innerWidth < 900) $('car-skeleton').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    // ننتظر الذكاء الاصطناعي أولاً حتى لا تظهر نتيجة مبدئية ثم تتغير
+    const [ai] = await Promise.all([useAi ? aiDiagnose(meta, local) : Promise.resolve(null), sleep(450)]);
     if (seq !== diagSeq) return;
-    renderDiagnosis(local, true);
-    const ai = await aiPromise;
-    if (seq !== diagSeq) return;
-    $('res-ai-status').classList.add('hidden');
+    $('car-skeleton').classList.add('hidden');
     const final = ai ? mergeAi(local, ai) : local;
+    applyLightSafety(final, meta);
     renderDiagnosis(final, false);
     if (final.title) addHistory(final);
+    $('car-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function renderDiagnosis(r, aiPending) {
     $('car-results').classList.remove('hidden');
     const badges = { desc: 'تشخيص من الوصف', sound: 'تشخيص صوتي مبدئي', both: 'تشخيص صوتي + وصف', code: 'تشخيص من كود العطل' };
-    $('res-badge').textContent = r.ai ? '🤖 تشخيص ذكي' : badges[r.source] || 'تشخيص';
+    $('res-badge').textContent = r.ai ? (r.cached ? '⚡ تشخيص ذكي (من السجلات)' : '🤖 تشخيص ذكي') : badges[r.source] || 'تشخيص';
     $('res-car').textContent = carLabel() + ' • ' + cityName();
     $('res-code').textContent = r.code ? 'DTC: ' + r.code : '';
     $('res-confidence').textContent = r.conf ? 'الثقة: ' + r.conf : '';
-    $('res-ai-status').classList.toggle('hidden', !(aiPending && aiAvailable !== false));
+
 
     const sb = $('res-sound-box');
     sb.textContent = r.soundSummary; sb.classList.toggle('hidden', !r.soundSummary);
@@ -752,9 +921,10 @@ function renderDiagnosis(r, aiPending) {
         $('res-advice').textContent = r.source === 'sound'
             ? 'الصوت المسجّل لم يُظهر نمطاً واضحاً. سجّل مرة أخرى في مكان أهدأ وقرّب الجوال من مصدر الصوت، أو أضف وصفاً مكتوباً.'
             : 'جرّب وصفاً أدق: متى يظهر العطل (وقوف، سرعة، فرملة، لف الدركسون، تشغيل)؟ وما نوع الصوت (صفير، طقطقة، ونين، هدير)؟ وهل ظهرت لمبة في الطبلون؟';
-        ['res-checks-box', 'res-question'].forEach(id => $(id).classList.add('hidden'));
+        ['res-checks-box', 'res-followup'].forEach(id => $(id).classList.add('hidden'));
         $('res-alt').textContent = '';
         $('negotiator-script').textContent = '';
+        $('protect-list').innerHTML = '';
         return;
     }
     $('res-title').textContent = r.title;
@@ -782,8 +952,10 @@ function renderDiagnosis(r, aiPending) {
     (r.checks || []).forEach(c => chk.appendChild(el('li', null, c)));
     $('res-checks-box').classList.toggle('hidden', !(r.checks && r.checks.length));
     $('res-advice').textContent = '💡 ' + r.advice;
-    $('res-question').textContent = r.question ? '❓ ' + r.question + ' — أضف الإجابة للوصف وأعد الفحص لنتيجة أدق.' : '';
-    $('res-question').classList.toggle('hidden', !r.question);
+    const canAsk = r.question && postAsks < 2;
+    $('res-question').textContent = canAsk ? '❓ ' + r.question : '';
+    $('followup-input').value = '';
+    $('res-followup').classList.toggle('hidden', !canAsk);
     $('res-alt').textContent = r.alts && r.alts.length ? 'احتمالات أخرى: ' + r.alts.join('، ') : '';
     lastDiag = r;
     renderMoney();
@@ -802,6 +974,92 @@ function renderNegotiator() {
         txt = `"التشخيص المبدئي لسيارتي: ${r.title}. أرجو تزويدي بعرض سعر مكتوب بالقطع وأجرة اليد قبل البدء، وتسليمي القطع القديمة بعد التبديل."`;
     }
     $('negotiator-script').textContent = txt;
+    const ul = $('protect-list'); ul.innerHTML = '';
+    const tips = [];
+    const opt = r.kb ? r.kb.parts.filter(isOptional).map(p => p[0].replace(' (عند الحاجة)', '')) : [];
+    tips.push('🔎 ليست كل قطعة تقترحها الورشة تالفة بالضرورة' + (opt.length ? ' (مثل ' + opt.join('، ') + ')' : '') + '؛ اطلب أن يريك العطل أو القراءة قبل التبديل.');
+    if (r.kb) tips.push('💰 السعر العادل في ' + cityName() + ' تقريباً ' + fmtSar(r.totalSar) + '. اطلب عرضاً مكتوباً، واطلب القطع القديمة.');
+    else tips.push('💰 اطلب عرض سعر مكتوباً بالقطع وأجرة اليد قبل البدء، واطلب القطع القديمة.');
+    tips.forEach(t => ul.appendChild(el('li', null, t)));
+    ['pc-part-r'].forEach(id => { $(id).value = ''; }); $('pc-result-r').classList.add('hidden');
+}
+// ---------- هل القطعة لازمة لهذا العطل؟ ----------
+// قطع من نفس النظام: قد تكون لازمة لكنها ليست السبب الأول
+const RELATED_PARTS = {
+    brakes: ['هوبات', 'دسكات', 'هوب', 'كالبر', 'قماشات', 'زيت فرامل'], steer: ['علبه دركسون', 'ليات دركسون', 'ذراع', 'مقص'],
+    misfire: ['بخاخات', 'بخاخ', 'حساس', 'فلتر بنزين', 'جوان'], ac: ['كمبروسر', 'ضاغط', 'ثلاجه', 'مكثف', 'ريليه'],
+    overheat: ['رديتر', 'طرمبه ماء', 'مروحه', 'حساس حراره', 'خراطيم'], battery: ['دينمو', 'سلف', 'اقطاب'],
+    suspension: ['مساعدات', 'مقصات', 'جلد', 'كفرات'], balance: ['كفرات', 'رمان بلي', 'مقصات', 'جوزه'],
+    bearing: ['هوب', 'جوزه', 'كفرات'], trans: ['فلتر قير', 'حساس سرعه', 'كمبيوتر قير', 'بلف'],
+    power: ['بخاخات', 'طرمبه بنزين', 'دبه', 'حساس'], cv: ['عكس', 'جلد عكس', 'رمان بلي'], belt: ['شداد', 'بكرات', 'دينمو']
+};
+function localPartVerdict(part, kb) {
+    const n = normalizeAr(part);
+    if (!kb) return null;
+    const words = n.split(' ').filter(w => w.length > 2 && w !== 'ال');
+    let best = null, bestScore = 0;
+    kb.parts.forEach(p => {
+        const pn = normalizeAr(p[0].replace(' (عند الحاجة)', ''));
+        let sc = 0;
+        if (pn === n) sc = 100; else if (pn.includes(n) || n.includes(pn)) sc = 50;
+        words.forEach(w => { if (pn.includes(w.replace(/^ال/, ''))) sc += w.length; });
+        if (sc > bestScore) { bestScore = sc; best = p; }
+    });
+    if (best && bestScore >= 4) {
+        if (isOptional(best)) return { verdict: 'maybe', reason: 'قد تكون لازمة، لكنها عادة آخر خيار في هذا العطل وليست أوله.', how_to_verify: 'ابدأ بالإصلاح الأبسط، واطلب إثباتاً على تلفها قبل تبديلها.', cheaper_first: kb.parts.filter(p => !isOptional(p)).map(p => p[0]).join('، ') || null };
+        return { verdict: 'needed', reason: 'هذه القطعة من الأسباب الشائعة لعطل "' + kb.title + '".', how_to_verify: 'اطلب من الفني أن يريك الفحص أو القراءة التي تؤكد تلفها.', cheaper_first: null };
+    }
+    if ((RELATED_PARTS[kb.id] || []).some(r => n.includes(normalizeAr(r)) || normalizeAr(r).includes(n)))
+        return { verdict: 'maybe', reason: 'هذه القطعة من نفس النظام، لكنها ليست السبب الأول المعتاد لعطل "' + kb.title + '".', how_to_verify: 'اطلب من الفني أن يريك تلفها بالقياس أو بالعين قبل تبديلها.', cheaper_first: kb.parts.filter(p => !isOptional(p)).map(p => p[0]).join('، ') || null };
+    return { verdict: 'unlikely', reason: 'هذه القطعة ليست ضمن القطع المعتادة لعطل "' + kb.title + '".', how_to_verify: 'اطلب من الفني أن يوضح علاقتها بالعطل، أو يريك سبب التلف قبل التبديل.', cheaper_first: null };
+}
+async function checkPart(where) {
+    const part = $('pc-part-' + where).value.trim();
+    const box = $('pc-result-' + where);
+    let fault = '', kb = null;
+    if (where === 'r') {
+        if (!lastDiag) return;
+        fault = lastDiag.title + (lastDiag.text ? ' — ' + lastDiag.text : '') + (followups.length ? ' — ' + followups.map(f => f.q + ' ' + f.a).join('، ') : '');
+        kb = lastDiag.kb;
+    } else {
+        fault = $('pc-fault-p').value.trim();
+        if (fault.length < 3) { alert('اكتب وصف العطل أولاً.'); $('pc-fault-p').focus(); return; }
+        const sc = Object.entries(scoreDescription(fault)).sort((a, b) => b[1] - a[1]);
+        if (sc.length && sc[0][1] >= 3) kb = kbById(sc[0][0]);
+    }
+    if (part.length < 2) { alert('اكتب اسم القطعة.'); $('pc-part-' + where).focus(); return; }
+    box.classList.remove('hidden'); box.className = 'rounded-lg p-2.5 text-[11px] leading-relaxed border space-y-1 bg-slate-50 border-slate-200'; box.textContent = '🤖 جاري التحقق…';
+    let r = null;
+    if (aiAvailable !== false && location.protocol !== 'file:') {
+        try {
+            const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 15000);
+            const res = await fetch(AI_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
+                body: JSON.stringify({ mode: 'partcheck', car: carLabel(), fault, part, known_parts: kb ? kb.parts.map(p => p[0]) : [] }) });
+            clearTimeout(t);
+            if (res.status === 503 || res.status === 404) aiAvailable = false;
+            else if (res.ok) r = await res.json();
+        } catch (e) {}
+    }
+    if (!r || !r.verdict) r = localPartVerdict(part, kb);
+    box.innerHTML = '';
+    if (!r) { box.textContent = 'لم أستطع الحكم على هذه القطعة لهذا الوصف. اطلب من الفني أن يوضح سبب تبديلها ويريك التلف قبل الدفع.'; return; }
+    const V = { needed: ['✅ غالباً لازمة لهذا العطل', 'bg-emerald-50 border-emerald-200 text-emerald-900'],
+                maybe: ['⚠️ قد تكون لازمة، تأكد أولاً', 'bg-amber-50 border-amber-200 text-amber-900'],
+                unlikely: ['❌ غالباً غير مرتبطة بهذا العطل', 'bg-red-50 border-red-200 text-red-900'] }[r.verdict] || ['❔ غير واضح', 'bg-slate-50 border-slate-200 text-slate-800'];
+    box.className = 'rounded-lg p-2.5 text-[11px] leading-relaxed border space-y-1 ' + V[1];
+    box.appendChild(el('p', 'font-black', V[0] + ': ' + part));
+    if (r.reason) box.appendChild(el('p', null, r.reason));
+    if (r.how_to_verify) box.appendChild(el('p', null, '🔍 ' + r.how_to_verify));
+    if (r.cheaper_first) box.appendChild(el('p', 'font-bold', '💡 جرّب أولاً: ' + r.cheaper_first));
+}
+
+function goAudit() {
+    switchTab('prices');
+    if (lastDiag && lastDiag.kb) {
+        const first = lastDiag.kb.parts[0] && matchPart(lastDiag.kb.parts[0][0]);
+        if (first) $('audit-part').value = first;
+    }
+    setTimeout(() => $('audit-part').scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
 }
 
 function copyNegotiator() {
@@ -830,8 +1088,9 @@ async function aiDiagnose(meta, local) {
         const res = await fetch(AI_ENDPOINT, {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
             body: JSON.stringify({
-                mode: 'diagnose', car: carLabel(), country: C().name, city: cityName(),
+                mode: 'diagnose', car: carLabel(), country: C().name, city: cityName(), mileage: $('car-km').value || '',
                 description: meta.text || '', code: meta.code || '', sound: meta.soundSummary || '', context: meta.context || '',
+                structured: meta.structured || '', followups: followups.slice(-6),
                 localGuess: local.kb ? local.kb.id : null,
                 catalog: CAR_KB.map(k => ({ id: k.id, title: k.title }))
             })
@@ -849,6 +1108,7 @@ function mergeAi(local, ai) {
     const confMap = { high: 'عالية', medium: 'متوسطة', low: 'منخفضة' };
     return Object.assign({}, local, {
         ai: true,
+        cached: !!ai.cached,
         kb,
         title: String(ai.title).slice(0, 120),
         sev: SEV[ai.severity] ? ai.severity : (kb ? kb.sev : 'caution'),
@@ -862,10 +1122,144 @@ function mergeAi(local, ai) {
 }
 
 // ---------- الفحص بالوصف ----------
-function runDescriptionDiagnosis() {
+function descMeta() {
     const text = $('car-desc').value.trim();
-    if (text.length < 3) { alert('اكتب وصفاً للمشكلة أولاً، أو اضغط 🎤 وتحدث.'); $('car-desc').focus(); return; }
-    runDiagnosis(scoreDescription(text), { source: 'desc', text });
+    const sel = selectedChips();
+    const structured = contextText(sel);
+    return { source: 'desc', text, structured, lightIds: sel.lightIds || [], kw: sel.kw.join(' ') };
+}
+function runDescriptionDiagnosis() {
+    const meta = descMeta();
+    if (meta.text.length < 3 && !meta.structured) { alert('اكتب وصفاً للمشكلة، أو اختر من الخيارات تحت الوصف، أو اضغط 🎤 وتحدث.'); $('car-desc').focus(); return; }
+    clearTimeout(ivTimer); followups = []; postAsks = 0; ivSeq++; iv = null; $('interview').classList.add('hidden'); ivLastText = meta.text;
+    runDiagnosis(scoreDescription(meta.text + ' ' + meta.kw), meta);
+}
+// =====================================================================
+// 🎯 المقابلة الذكية: أسئلة متتابعة قبل التشخيص لرفع الدقة
+// =====================================================================
+const QBANK = {
+    _when: { q: 'متى تظهر المشكلة غالباً؟', type: 'choice', options: [['والسيارة واقفة', 'واقفه'], ['أثناء المشي', 'وانا ماشي'], ['عند الدعسة', 'الدعسه'], ['عند الفرملة', 'فرمله'], ['عند لف الدركسون', 'عند اللف'], ['عند التشغيل', 'عند التشغيل']] },
+    _light: { q: 'هل توجد لمبة مضاءة في الطبلون؟', type: 'choice', options: [['لا يوجد', ''], ['لمبة المكينة', 'لمبه المكينه'], ['لمبة الزيت', 'لمبه الزيت'], ['لمبة الحرارة', 'ساعه الحراره'], ['لمبة البطارية', 'بطاريه']] },
+    misfire: { q: 'هل لمبة المكينة تومض (تطفي وتشتغل)؟', type: 'yesno', kw: 'تومض' },
+    balance: { q: 'وين تحس الرجة أكثر؟', type: 'choice', options: [['في الدركسون', 'رجه في الدركسون'], ['في جسم السيارة كامل', 'رجه'], ['في دواسة الفرامل', 'فرامل']] },
+    bearing: { q: 'هل الصوت يتغير لما تميل يمين أو يسار؟', type: 'yesno', kw: 'رمان بلي' },
+    brakes: { q: 'وش نوع صوت الفرامل؟', type: 'choice', options: [['صفير خفيف', 'صفير'], ['خشخشة حديد قوية', 'حكه احتكاك'], ['طقة', 'طقه']] },
+    ac: { q: 'هل الهواء يطلع بارد شوي ثم يحمى؟', type: 'yesno', kw: 'فريون' },
+    overheat: { q: 'هل ينقص ماء الرديتر أو تشوف بخار؟', type: 'yesno', kw: 'رديتر بخار' },
+    battery: { q: 'هل الأنوار والطبلون تضعف عند التشغيل؟', type: 'yesno', kw: 'بطاريه' },
+    trans: { q: 'متى تحس النتعة؟', type: 'choice', options: [['عند الانطلاق من الوقوف', 'نتعه'], ['عند التبديل أثناء المشي', 'يتاخر في التبديل'], ['عند الرجوع للخلف', 'قير']] },
+    suspension: { q: 'هل الصوت يظهر فقط في المطبات؟', type: 'yesno', kw: 'مطبات' },
+    steer: { q: 'هل الصوت يزيد كل ما لفيت الدركسون أكثر؟', type: 'yesno', kw: 'ونين' },
+    cv: { q: 'هل الطقطقة تظهر عند اللف الكامل وأنت ماشي؟', type: 'yesno', kw: 'جوزه عكس' },
+    power: { q: 'هل لمبة المكينة مضاءة مع الضعف؟', type: 'yesno', kw: 'لمبه المكينه' },
+    knock: { q: 'هل الطقة تزيد مع الدعسة؟', type: 'yesno', kw: 'نوك دق' },
+    oil: { q: 'وش لون الدخان؟', type: 'choice', options: [['أزرق', 'دخان ازرق'], ['أبيض كثيف', 'بخار رديتر'], ['أسود', 'بنزين'], ['ما فيه دخان', '']] },
+    exhaust: { q: 'هل الصوت أعلى عند التشغيل البارد؟', type: 'yesno', kw: 'شكمان' },
+    belt: { q: 'هل الصياح يخف بعد ما يحمى المحرك؟', type: 'yesno', kw: 'سير' },
+    cat: { q: 'هل تشم ريحة بيض أو كبريت؟', type: 'yesno', kw: 'ريحه بيض' },
+    lean: { q: 'هل استهلاك البنزين زاد؟', type: 'yesno', kw: 'يصرف بنزين' }
+};
+function localQuestions(scores, meta) {
+    const qs = [];
+    const toQ = b => ({ q: b.q, type: b.type, options: b.type === 'choice' ? b.options.map(o => o[0]) : null, kws: b.type === 'choice' ? b.options.map(o => o[1]) : null, kw: b.kw || '' });
+    if (!/متى/.test(meta.structured || '')) qs.push(toQ(QBANK._when));
+    if (!/لمبات/.test(meta.structured || '')) qs.push(toQ(QBANK._light));
+    Object.entries(scores).sort((a, b) => b[1] - a[1]).slice(0, 3).forEach(([id]) => { if (QBANK[id] && qs.length < 4) qs.push(toQ(QBANK[id])); });
+    return qs;
+}
+async function aiQuestions(meta) {
+    if (aiAvailable === false || location.protocol === 'file:') return null;
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 12000);
+    try {
+        const res = await fetch(AI_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
+            body: JSON.stringify({ mode: 'questions', car: carLabel(), mileage: $('car-km').value || '', description: meta.text, structured: meta.structured || '' }) });
+        if (res.status === 503 || res.status === 404) { aiAvailable = false; return null; }
+        if (!res.ok) return null;
+        const j = await res.json();
+        const qs = (j.questions || []).filter(q => q && q.q && (q.type === 'yesno' || (Array.isArray(q.options) && q.options.length >= 2))).slice(0, 4)
+            .map(q => ({ q: String(q.q).slice(0, 140), type: q.type === 'yesno' ? 'yesno' : 'choice', options: q.type === 'yesno' ? null : q.options.slice(0, 5).map(o => String(o).slice(0, 40)), ai: true }));
+        return qs.length ? qs : null;
+    } catch (e) { return null; }
+    finally { clearTimeout(t); }
+}
+
+let iv = null, ivSeq = 0, ivTimer = null, ivLastText = null, postAsks = 0;
+// زر التأكيد ✓ داخل خانة الوصف: يتفعّل عند كتابة وصف، والفحص يبدأ فقط عند الضغط عليه
+function onDescInput() {
+    const ready = $('car-desc').value.trim().length >= 3;
+    const b = $('desc-confirm');
+    b.disabled = !ready;
+    b.className = 'absolute left-2 bottom-3 w-8 h-8 rounded-lg text-sm font-black transition-all ' + (ready ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-200 text-slate-400');
+}
+async function startInterview(auto) {
+    const meta = descMeta();
+    if (meta.text.length < 3 && !meta.structured) { if (!auto) { alert('اكتب وصفاً للمشكلة، أو اختر من الخيارات، أو اضغط 🎤 وتحدث.'); $('car-desc').focus(); } return; }
+    clearTimeout(ivTimer);
+    ivLastText = meta.text; followups = []; postAsks = 0;
+    const seq = ++ivSeq;
+    iv = null;
+    $('car-results').classList.add('hidden');
+    $('interview').classList.remove('hidden');
+    $('iv-title').textContent = '🤖 جاري التحليل…'; $('iv-step').textContent = ''; $('iv-q').textContent = 'أجهّز لك أسئلة سريعة ترفع دقة التشخيص…';
+    $('iv-opts').innerHTML = ''; $('iv-nav').classList.add('hidden'); $('iv-bar').style.width = '8%';
+    if (!auto) $('interview').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const scores = scoreDescription(meta.text + ' ' + meta.kw);
+    let qs = await aiQuestions(meta);
+    if (seq !== ivSeq) return;
+    if (!qs) qs = localQuestions(scores, meta);
+    if (!qs.length) { ivFinishWith(meta, []); return; }
+    iv = { meta, qs, i: 0, answers: [] };
+    renderIvQ();
+}
+function renderIvQ() {
+    const { qs, i } = iv, q = qs[i];
+    $('iv-title').textContent = '🎯 أسئلة سريعة لدقة أعلى';
+    $('iv-step').textContent = 'سؤال ' + (i + 1) + ' من ' + qs.length;
+    $('iv-bar').style.width = Math.round((i + 1) / (qs.length + 1) * 100) + '%';
+    $('iv-q').textContent = q.q;
+    const box = $('iv-opts'); box.innerHTML = '';
+    const opts = q.type === 'yesno' ? ['نعم', 'لا'] : q.options.slice();
+    opts.push('لا أعرف');
+    const long = opts.some(o => o.length > 16);
+    box.className = 'grid gap-1.5 ' + (long ? 'grid-cols-1' : 'grid-cols-2');
+    opts.forEach((o, k) => {
+        const b = el('button', 'bg-white border border-indigo-200 rounded-lg py-2 px-2 text-[11px] font-bold text-slate-800 active:bg-indigo-600 active:text-white', o);
+        b.onclick = () => {
+            let kw = '';
+            if (o !== 'لا أعرف') {
+                if (q.type === 'yesno') kw = o === 'نعم' ? (q.kw || (q.ai ? q.q : '')) : '';
+                else kw = q.kws ? (q.kws[k] || '') : o;
+            }
+            iv.answers[iv.i] = { q: q.q, a: o, kw };
+            iv.i++;
+            if (iv.i < iv.qs.length) renderIvQ(); else ivFinish();
+        };
+        box.appendChild(b);
+    });
+    $('iv-nav').classList.remove('hidden');
+    $('iv-back').classList.toggle('invisible', i === 0);
+}
+function ivBack() { if (!iv || iv.i === 0) return; iv.i--; iv.answers.length = iv.i; renderIvQ(); }
+function ivFinish() {
+    if (!iv) { runDescriptionDiagnosis(); return; }
+    ivFinishWith(iv.meta, iv.answers.filter(Boolean));
+}
+function ivFinishWith(meta, answers) {
+    $('interview').classList.add('hidden');
+    followups = answers.filter(x => x.a !== 'لا أعرف').map(x => ({ q: x.q, a: x.a }));
+    const extra = answers.map(x => x.kw).filter(Boolean).join(' ');
+    iv = null;
+    runDiagnosis(scoreDescription([meta.text, meta.kw, extra].filter(Boolean).join(' ')), meta);
+}
+
+function answerFollowup() {
+    const a = $('followup-input').value.trim();
+    if (!a) { alert('اكتب إجابتك أولاً، أو اضغط 🎤.'); $('followup-input').focus(); return; }
+    if (!lastDiag || !lastMeta) return;
+    followups.push({ q: lastDiag.question, a: a.slice(0, 200) }); postAsks++;
+    const meta = Object.assign({}, lastMeta);
+    const extra = followups.map(f => f.a).join(' ');
+    runDiagnosis(scoreDescription([meta.text, meta.kw, extra].filter(Boolean).join(' ')), meta);
 }
 
 // ---------- تحويل الكلام إلى نص ----------
@@ -878,7 +1272,7 @@ function startDictation(targetId) {
     const base = target.value ? target.value.trim() + ' ' : '';
     recognizer = new SR();
     recognizer.lang = 'ar-SA'; recognizer.interimResults = true; recognizer.continuous = false;
-    recognizer.onresult = e => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; target.value = base + t; };
+    recognizer.onresult = e => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; target.value = base + t; if (targetId === 'car-desc') onDescInput(); };
     recognizer.onerror = e => {
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed') alert('لم يُسمح باستخدام المايكروفون. فعّل الإذن من إعدادات المتصفح.');
         else if (e.error === 'no-speech') alert('لم أسمع شيئاً، حاول مرة أخرى.');
@@ -936,7 +1330,7 @@ async function startSoundDiagnosis() {
     if (descText) for (const [k, v] of Object.entries(scoreDescription(descText))) scores[k] = (scores[k] || 0) + v;
     const ctxLabel = $('sound-context').selectedOptions[0].textContent;
     runDiagnosis(scores, {
-        source: descText ? 'both' : 'sound', text: descText, context: ctxLabel,
+        source: descText ? 'both' : 'sound', text: descText, context: ctxLabel, structured: contextText(), lightIds: selectedChips().lightIds || [],
         soundSummary: f.quiet ? '🔈 الصوت المسجّل ضعيف جداً — قرّب الجوال من مصدر الصوت.' : describeSound(f) + ' • ' + ctxLabel
     });
 }
@@ -1057,7 +1451,8 @@ function runCodeDiagnosis(codeArg) {
     const scores = {};
     CAR_KB.forEach(k => { if (k.codes.includes(code)) scores[k.id] = 10; });
     const info = dtcInfo(code);
-    const meta = { source: 'code', code, text: code, codeInfo: codeSummary(code) };
+    const meta = { source: 'code', code, text: code, codeInfo: codeSummary(code), structured: contextText(), lightIds: selectedChips().lightIds || [] };
+    followups = [];
     runDiagnosis(scores, meta).then(() => {
         if (!lastDiag && info) {
             // كود معروف بلا قطع مرتبطة: نعرض معناه كنتيجة
@@ -1695,7 +2090,7 @@ function renderProviderPanel() {
 let sendTarget = null;
 function buildReport(type) {
     const r = lastDiag; if (!r || !r.title) return null;
-    const lines = ['🚗 السيارة: ' + carLabel(), '📍 ' + C().name + ' - ' + cityName(), '🔧 التشخيص: ' + r.title, '⚠️ الحالة: ' + (SEV[r.sev] ? SEV[r.sev][2] : '')];
+    const lines = ['🚗 السيارة: ' + carLabel() + ($('car-km').value ? ' • ' + $('car-km').value : ''), '📍 ' + C().name + ' - ' + cityName(), '🔧 التشخيص: ' + r.title, '⚠️ الحالة: ' + (SEV[r.sev] ? SEV[r.sev][2] : '')];
     if (r.code) lines.push('📟 الكود: ' + r.code);
     if (r.kb) {
         const parts = r.kb.parts.map(p => p[0]).join('، ');
@@ -1703,6 +2098,8 @@ function buildReport(type) {
         if (type !== 'agent') lines.push('💰 التكلفة العادلة المتوقعة: ' + fmtSar(r.totalSar));
     }
     if (r.text && r.text !== r.code) lines.push('📝 وصف العميل: ' + r.text);
+    if (lastMeta && lastMeta.structured) lines.push('📋 ' + lastMeta.structured);
+    followups.forEach(f => lines.push('❓ ' + f.q + ' ← ' + f.a));
     if (r.soundSummary) lines.push(r.soundSummary);
     return lines.join('\n').slice(0, 2000);
 }
@@ -1877,10 +2274,16 @@ function renderOwnerPanel() {
 window.addEventListener('DOMContentLoaded', () => {
     const mk = $('car-make'); CAR_MAKES.forEach(m => mk.appendChild(el('option', null, m)));
     const yr = $('car-year'), nowY = new Date().getFullYear(); for (let y = nowY + 1; y >= 2005; y--) yr.appendChild(el('option', null, String(y))); yr.appendChild(el('option', null, 'أقدم من 2005')); yr.value = String(nowY - 3);
-    ['car-make', 'car-year'].forEach(id => {
+    ['car-make', 'car-year', 'car-model', 'car-km'].forEach(id => {
         const v = store.get('sd_' + id, null); if (v) $(id).value = v;
         $(id).addEventListener('change', () => store.set('sd_' + id, $(id).value));
     });
+    $('car-make').addEventListener('change', () => { $('car-model').value = ''; store.set('sd_car-model', ''); fillModelList(); });
+    fillModelList();
+    buildChips();
+    $('followup-input').addEventListener('keydown', e => { if (e.key === 'Enter') answerFollowup(); });
+    $('pc-part-r').addEventListener('keydown', e => { if (e.key === 'Enter') checkPart('r'); });
+    $('car-desc').addEventListener('input', onDescInput);
     fillPartSelects();
     fillCountrySelect('login-country');
     $('code-input').addEventListener('keydown', e => { if (e.key === 'Enter') runCodeDiagnosis(); });

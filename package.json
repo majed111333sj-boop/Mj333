@@ -4,7 +4,7 @@
   "private": true,
   "description": "الفاحص الذكي - تشخيص أعطال السيارات والأسعار العادلة والورش والوكلاء",
   "scripts": {
-    "build": "tailwindcss -i ./input.css -o ./dist/style.css --minify && node -e \"const fs=require('fs');for(const f of ['index.html','privacy.html','terms.html'])fs.copyFileSync(f,'dist/'+f)\"",
+    "build": "tailwindcss -i ./input.css -o ./dist/style.css --minify && node -e \"const fs=require('fs');fs.readdirSync('.').filter(f=>f.endsWith('.html')).forEach(f=>fs.copyFileSync(f,'dist/'+f))\"",
     "dev": "tailwindcss -i ./input.css -o ./dist/style.css --watch"
   },
   "devDependencies": {
