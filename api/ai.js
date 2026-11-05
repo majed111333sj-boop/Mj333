@@ -1,14 +1,20 @@
 // دالة الذكاء الاصطناعي على Vercel: تشخيص الأعطال + قراءة الفواتير
-// نظام احتياطي تلقائي: Gemini Flash ← Gemini Flash-Lite ← Claude Haiku
-// المفاتيح في Vercel: GEMINI_API_KEY و/أو ANTHROPIC_API_KEY (يكفي واحد)
-// اختياري: GEMINI_MODEL و ANTHROPIC_MODEL، و AI_PROVIDER = claude لجعل Claude أولاً
+// توزيع النماذج حسب المهمة + احتياطي تلقائي، والمفاتيح في Vercel:
+//   GEMINI_API_KEY و/أو ANTHROPIC_API_KEY
+//   GEMINI_MAIN_MODELS  = نماذج المهام الرئيسية بالترتيب، مفصولة بفاصلة (مثال: gemini-3.6-flash,gemini-3.5-flash)
+//   GEMINI_LIGHT_MODELS = نماذج المهام الخفيفة/الاحتياط الأخير (مثال: gemini-3.1-flash-lite)
+//   AI_PROVIDER = claude لجعل Claude أولاً
 
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-5-5';
-const GEMINI_MODELS = [...new Set([process.env.GEMINI_MODEL, 'gemini-flash-latest', 'gemini-flash-lite-latest'].filter(Boolean))];
+const list = v => String(v || '').split(',').map(x => x.trim()).filter(Boolean);
+const MAIN = list(process.env.GEMINI_MAIN_MODELS || process.env.GEMINI_MODEL || 'gemini-flash-latest');
+const LIGHT = list(process.env.GEMINI_LIGHT_MODELS || 'gemini-flash-lite-latest');
 
-function buildChain() {
+// المهمة الرئيسية: الرئيسية ثم الخفيفة ثم Claude — المهمة الخفيفة: الخفيفة ثم الرئيسية ثم Claude
+function buildChain(task) {
   const g = process.env.GEMINI_API_KEY, a = process.env.ANTHROPIC_API_KEY;
-  const gem = g ? GEMINI_MODELS.map(m => ({ name: 'gemini', key: g, model: m })) : [];
+  const order = task === 'light' ? LIGHT.concat(MAIN) : MAIN.concat(LIGHT);
+  const gem = g ? [...new Set(order)].map(m => ({ name: 'gemini', key: g, model: m })) : [];
   const cla = a ? [{ name: 'claude', key: a, model: CLAUDE_MODEL }] : [];
   return String(process.env.AI_PROVIDER || '').toLowerCase() === 'claude' ? cla.concat(gem) : gem.concat(cla);
 }
@@ -42,30 +48,36 @@ async function post(url, headers, body, ms) {
   } finally { clearTimeout(t); }
 }
 
-async function callClaude(s, system, content, maxTokens) {
+async function callClaude(s, system, content, maxTokens, ms) {
   const data = await post('https://api.anthropic.com/v1/messages',
     { 'x-api-key': s.key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    { model: s.model, max_tokens: maxTokens, system, messages: [{ role: 'user', content }] }, 9000);
+    { model: s.model, max_tokens: maxTokens, system, messages: [{ role: 'user', content }] }, ms);
   return (data.content || []).filter(x => x.type === 'text').map(x => x.text).join('\n');
 }
 
-async function callGemini(s, system, content, maxTokens) {
+async function callGemini(s, system, content, maxTokens, ms) {
   const parts = (Array.isArray(content) ? content : [{ type: 'text', text: content }]).map(c =>
     c.type === 'image' ? { inline_data: { mime_type: c.source.media_type, data: c.source.data } } : { text: c.text });
   const data = await post('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(s.model) + ':generateContent',
     { 'x-goog-api-key': s.key, 'content-type': 'application/json' },
     { systemInstruction: { parts: [{ text: system }] }, contents: [{ role: 'user', parts }],
-      generationConfig: { maxOutputTokens: maxTokens + 2048, responseMimeType: 'application/json', temperature: 0.3 } }, 7000);
+      generationConfig: { maxOutputTokens: maxTokens + 2048, responseMimeType: 'application/json', temperature: 0.3 } }, ms);
   const c = (data.candidates || [])[0];
   return ((c && c.content && c.content.parts) || []).filter(x => x.text && !x.thought).map(x => x.text).join('\n');
 }
 
-// يجرب كل مزوّد بالترتيب حتى ينجح أحدهم
+// يجرب كل مزوّد بالترتيب حتى ينجح أحدهم، ضمن مهلة إجمالية لا تتجاوز 22 ثانية
 async function callAI(chain, system, content, maxTokens) {
+  const deadline = Date.now() + 22000;
   let lastErr = new Error('no provider');
+  const hasClaude = chain.some(x => x.name === 'claude');
   for (const s of chain) {
+    // نحجز 9 ثوانٍ لـ Claude حتى يأخذ فرصته دائماً إن وُجد
+    const left = deadline - Date.now() - (s.name === 'gemini' && hasClaude ? 9000 : 0);
+    if (left < 2500) continue;
     try {
-      const text = s.name === 'gemini' ? await callGemini(s, system, content, maxTokens) : await callClaude(s, system, content, maxTokens);
+      const ms = Math.min(s.name === 'gemini' ? 7000 : 9000, left);
+      const text = s.name === 'gemini' ? await callGemini(s, system, content, maxTokens, ms) : await callClaude(s, system, content, maxTokens, ms);
       if (text && text.includes('{')) { console.log('ai ok:', s.name, s.model); return text; }
       lastErr = new Error('empty output');
     } catch (e) {
@@ -85,7 +97,9 @@ const DIAG_SYSTEM = `أنت فني سيارات خبير في دول الخلي�
 أجب بكائن JSON فقط بدون أي نص آخر، بهذا الشكل:
 {"kb_id": string|null, "title": "اسم العطل المرجّح باختصار", "severity": "safe"|"caution"|"stop", "confidence": "high"|"medium"|"low",
  "explanation": "شرح مبسط في جملتين لسبب ترجيح هذا العطل", "advice": "نصيحة عملية للمالك في جملة أو جملتين",
- "checks": ["فحص محدد يطلبه من الفني", "..."], "question": "سؤال واحد للمالك إذا كانت الثقة منخفضة، وإلا null"}`;const INVOICE_SYSTEM = `أنت تقرأ صور فواتير ورش السيارات وقطع الغيار في دول الخليج.
+ "checks": ["فحص محدد يطلبه من الفني", "..."], "question": "سؤال واحد للمالك إذا كانت الثقة منخفضة، وإلا null"}`;
+
+const INVOICE_SYSTEM = `أنت تقرأ صور فواتير ورش السيارات وقطع الغيار في دول الخليج.
 استخرج بنود القطع وأسعارها كما هي في الفاتورة (السعر النهائي لكل بند بعد الكمية إن وجد)، وأجرة اليد إن وجدت.
 أجب بكائن JSON فقط: {"items":[{"name":"اسم القطعة بالعربية","price":number}], "labor": number|null, "total": number|null, "currency": "رمز العملة إن ظهر"|null}
 إذا لم تكن الصورة فاتورة واضحة فأرجع {"items":[]}.`;
@@ -94,8 +108,7 @@ module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
 
-  const chain = buildChain();
-  if (!chain.length) return res.status(503).json({ error: 'not_configured' });
+  if (!process.env.GEMINI_API_KEY && !process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'not_configured' });
 
   // نقبل الطلبات من نفس الموقع فقط
   const origin = req.headers.origin || '';
@@ -125,7 +138,7 @@ module.exports = async (req, res) => {
       ].filter(Boolean).join('\n');
       if (!body.description && !body.code && !body.sound) return res.status(400).json({ error: 'empty' });
 
-      const text = await callAI(chain, DIAG_SYSTEM, prompt, 700);
+      const text = await callAI(buildChain('main'), DIAG_SYSTEM, prompt, 700);
       const j = extractJson(text);
       if (!j || !j.title) return res.status(502).json({ error: 'bad_output' });
       return res.status(200).json({
@@ -147,7 +160,7 @@ module.exports = async (req, res) => {
         { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: image } },
         { type: 'text', text: 'اقرأ هذه الفاتورة. العملة المتوقعة: ' + clip(body.currency, 5) }
       ];
-      const text = await callAI(chain, INVOICE_SYSTEM, content, 800);
+      const text = await callAI(buildChain('main'), INVOICE_SYSTEM, content, 800);
       const j = extractJson(text) || { items: [] };
       const items = Array.isArray(j.items) ? j.items.slice(0, 20)
         .map(it => ({ name: clip(it.name, 60), price: Number(it.price) || 0 }))
