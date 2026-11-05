@@ -8,6 +8,8 @@
 //   GEMINI_GEMMA_MODELS    مثال: gemma-4-31b-it
 //   GEMINI_ESCALATE_MODELS مثال: gemini-3.6-flash,gemini-3.8-flash
 //   AI_PROVIDER = claude   لجعل Claude أولاً
+// 3) تخزين مؤقت (اختياري): إذا ربطت Upstash Redis من Vercel يُحفظ التشخيص المتكرر 30 يوماً ويُجاب فوراً بدون ذكاء اصطناعي
+//   KV_REST_API_URL + KV_REST_API_TOKEN  (أو UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN)
 
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-5-5';
 const list = v => String(v || '').split(',').map(x => x.trim()).filter(Boolean);
@@ -16,6 +18,38 @@ const LIGHT = list(process.env.GEMINI_LIGHT_MODELS || 'gemini-flash-lite-latest'
 const GEMMA = list(process.env.GEMINI_GEMMA_MODELS || 'gemma-4-31b-it');
 const ESCALATE = list(process.env.GEMINI_ESCALATE_MODELS || 'gemini-3.6-flash,gemini-flash-latest');
 const RANK = { low: 0, medium: 1, high: 2 };
+const crypto = require('crypto');
+
+// ---------- التخزين المؤقت (Upstash Redis عبر REST) ----------
+const KV_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
+const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
+const CACHE_TTL = 30 * 24 * 3600;   // 30 يوماً
+
+async function kv(cmd) {
+  if (!KV_URL || !KV_TOKEN) return null;
+  try {
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 1500);
+    const r = await fetch(KV_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + KV_TOKEN, 'content-type': 'application/json' }, body: JSON.stringify(cmd), signal: ctrl.signal });
+    clearTimeout(t);
+    if (!r.ok) return null;
+    return (await r.json()).result;
+  } catch (e) { return null; }
+}
+
+// توحيد النص العربي حتى تتطابق الأوصاف المتشابهة: "السيارة تفتف وترجّ" = "السياره ترج وتفتف"
+const STOP = new Set(['و', 'في', 'من', 'على', 'الى', 'عن', 'مع', 'انا', 'وانا', 'هي', 'وهي', 'هو', 'السياره', 'سيارتي', 'سياره', 'فيها', 'فيه', 'لما', 'اذا', 'كذا', 'شوي', 'جدا', 'مره', 'يا', 'ان', 'ما']);
+function normKey(t) {
+  return String(t || '').toLowerCase()
+    .replace(/[\u064B-\u0652\u0640]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي')
+    .replace(/[^\u0600-\u06FFa-z0-9 ]/g, ' ').split(/\s+/)
+    .map(w => w.replace(/^و(?=..)/, '')).filter(w => w && !STOP.has(w))
+    .filter((w, i, a) => a.indexOf(w) === i).sort().join(' ');
+}
+function cacheKey(body) {
+  const make = String(body.car || '').split(' ').slice(0, -1).join(' ');   // الشركة والموديل بدون السنة
+  const raw = [normKey(make), normKey(body.description), normKey(body.structured), String(body.code || '').toUpperCase()].join('|');
+  return 'diag:v1:' + crypto.createHash('sha256').update(raw).digest('hex').slice(0, 40);
+}
 
 function buildChain(task) {
   const g = process.env.GEMINI_API_KEY, a = process.env.ANTHROPIC_API_KEY;
@@ -133,6 +167,9 @@ const DIAG_SYSTEM = `أنت فني سيارات خبير في دول الخلي�
 - السلامة أولاً: إذا كان هناك خطر (حرارة، فرامل، زيت، توجيه، رائحة بنزين) فاجعل severity = "stop" أو "caution" بوضوح.
 - لا تخترع أسعاراً.
 - اختر kb_id من القائمة المعطاة فقط إذا كان العطل مطابقاً لها فعلاً، وإلا اجعله null.
+- استفد من الموديل والسنة والممشى: اذكر الأعطال الشائعة المعروفة لهذا الموديل إن كانت مرتبطة بالأعراض.
+- "المعلومات المحددة" اختارها المالك بنفسه، فاعتبرها موثوقة. لمبة الزيت أو الحرارة تعني severity = "stop".
+- إذا وُجدت أسئلة سابقة مع إجابات المالك فاستخدمها لتضييق التشخيص، ولا تكرر سؤالاً سبق طرحه؛ اسأل سؤالاً جديداً فقط إذا بقيت الثقة منخفضة.
 أجب بكائن JSON فقط بدون أي نص آخر، بهذا الشكل:
 {"kb_id": string|null, "title": "اسم العطل المرجّح باختصار", "severity": "safe"|"caution"|"stop", "confidence": "high"|"medium"|"low",
  "explanation": "شرح مبسط في جملتين لسبب ترجيح هذا العطل", "advice": "نصيحة عملية للمالك في جملة أو جملتين",
@@ -142,6 +179,27 @@ const INVOICE_SYSTEM = `أنت تقرأ صور فواتير ورش السيار�
 استخرج بنود القطع وأسعارها كما هي في الفاتورة (السعر النهائي لكل بند بعد الكمية إن وجد)، وأجرة اليد إن وجدت.
 أجب بكائن JSON فقط: {"items":[{"name":"اسم القطعة بالعربية","price":number}], "labor": number|null, "total": number|null, "currency": "رمز العملة إن ظهر"|null}
 إذا لم تكن الصورة فاتورة واضحة فأرجع {"items":[]}.`;
+
+const QUESTIONS_SYSTEM = `أنت فني سيارات خبير في دول الخليج. قبل أن تشخّص، اطرح على المالك أسئلة قصيرة تضيّق الاحتمالات.
+- اكتب من 3 إلى 4 أسئلة فقط، بالعربية البسيطة القريبة من اللهجة الخليجية.
+- اختر الأسئلة الأكثر تمييزاً بين الأعطال المحتملة لهذا الوصف (مكان الإحساس، متى يظهر، هل يتغير مع السرعة/اللف/الحرارة، لمبات، روائح، ألوان دخان…).
+- لا تسأل عن شيء ذكره المالك أو اختاره مسبقاً.
+- كل سؤال إما نعم/لا (type = "yesno") أو اختيار (type = "choice") مع 2 إلى 5 خيارات قصيرة جداً (كلمة إلى أربع كلمات).
+- اجعل أول سؤال عن أهم معلومة ناقصة، وإذا كان هناك خطر محتمل (حرارة، زيت، فرامل) فاسأل عنه.
+أجب بكائن JSON فقط: {"questions":[{"q":"...","type":"yesno"|"choice","options":["..."]}]}`;
+
+const PARTCHECK_SYSTEM = `أنت فني سيارات خبير ونزيه في دول الخليج، تساعد مالك السيارة على معرفة هل القطعة التي تقترحها الورشة لازمة فعلاً لهذا العطل.
+- احكم بأحد ثلاثة: "needed" (سبب شائع ومباشر للعطل)، "maybe" (ممكن لكن ليس أول احتمال، أو يوجد إصلاح أرخص يُجرّب أولاً)، "unlikely" (لا علاقة واضحة بالعطل).
+- كن منصفاً: لا تتهم الورشة، ولا تطمئن بلا سبب. إذا كانت القطعة من عناصر السلامة (فرامل، توجيه، إطارات) ومتآكلة فهي لازمة.
+- اذكر كيف يتأكد المالك (فحص، قراءة كمبيوتر، أن يريه الفني القطعة) وما الإصلاح الأرخص الذي يُجرّب أولاً إن وُجد.
+أجب بكائن JSON فقط: {"verdict":"needed"|"maybe"|"unlikely","reason":"جملة أو جملتان","how_to_verify":"جملة","cheaper_first":"إصلاح أرخص أولاً أو null"}`;
+
+const INSPECT_SYSTEM = `أنت خبير فحص سيارات مستعملة في دول الخليج، تساعد مشترياً قام بفحص ذاتي لسيارة قبل شرائها.
+- اكتب بالعربية الواضحة وباختصار، ولا تبالغ ولا تطمئن بلا سبب.
+- اربط الملاحظات ببعضها (مثل: صبغ مختلف + فراغات غير متساوية = حادث سابق محتمل).
+- اذكر الأعطال الشائعة المعروفة لهذا الموديل والسنة إن كانت ذات صلة.
+- لا تخترع أسعاراً، ولا تقدم نفسك كشهادة فحص رسمية.
+أجب بكائن JSON فقط: {"summary": "خلاصة في 2-3 جمل", "risks": ["أهم المخاطر بالترتيب"], "model_notes": "ملاحظة عن الموديل أو null", "next_steps": "ماذا يفعل المشتري الآن"}`;
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -171,17 +229,31 @@ module.exports = async (req, res) => {
       const prompt = [
         'السيارة: ' + clip(body.car, 60),
         'الموقع: ' + clip(body.country, 30) + ' - ' + clip(body.city, 30),
+        body.mileage ? 'الممشى: ' + clip(body.mileage, 30) : '',
+        body.structured ? 'معلومات محددة اختارها المالك: ' + clip(body.structured, 400) : '',
         body.description ? 'وصف المالك: ' + clip(body.description, 600) : '',
         body.code ? 'كود العطل: ' + clip(body.code, 10) : '',
         body.sound ? 'تحليل صوت مسجّل من الجوال: ' + clip(body.sound, 300) : '',
         body.context ? 'متى يظهر الصوت: ' + clip(body.context, 60) : '',
         body.localGuess ? 'ترجيح أولي من نظام بسيط: ' + clip(body.localGuess, 20) : '',
+        Array.isArray(body.followups) && body.followups.length
+          ? 'أسئلة سابقة وإجابات المالك:\n' + body.followups.slice(-6).map(f => '- س: ' + clip(f && f.q, 200) + '\n  ج: ' + clip(f && f.a, 200)).join('\n') : '',
         'قائمة kb_id المتاحة: ' + JSON.stringify(catalog)
       ].filter(Boolean).join('\n');
-      if (!body.description && !body.code && !body.sound) return res.status(400).json({ error: 'empty' });
+      if (!body.description && !body.code && !body.sound && !body.structured) return res.status(400).json({ error: 'empty' });
+
+      // نستخدم التخزين فقط للفحص الأول (بدون صوت أو أسئلة متابعة)
+      const cacheable = !body.sound && !(Array.isArray(body.followups) && body.followups.length);
+      const key = cacheable ? cacheKey(body) : null;
+      if (key) {
+        const hit = await kv(['GET', key]);
+        if (hit) {
+          try { const c = JSON.parse(hit); console.log('cache hit:', key.slice(0, 16)); return res.status(200).json(Object.assign(c, { cached: true })); } catch (e) {}
+        }
+      }
 
       const { data: j, model } = await diagnose(prompt, ctx);
-      return res.status(200).json({
+      const out = {
         kb_id: ids.has(j.kb_id) ? j.kb_id : null,
         title: clip(j.title, 120),
         severity: ['safe', 'caution', 'stop'].includes(j.severity) ? j.severity : 'caution',
@@ -191,6 +263,68 @@ module.exports = async (req, res) => {
         checks: Array.isArray(j.checks) ? j.checks.slice(0, 5).map(c => clip(c, 140)) : [],
         question: j.question ? clip(j.question, 200) : null,
         model
+      };
+      // لا نحفظ إلا التشخيص الواثق (عالي أو متوسط)
+      if (key && out.confidence !== 'low') kv(['SET', key, JSON.stringify(out), 'EX', CACHE_TTL]).then(() => console.log('cache set:', key.slice(0, 16)));
+      return res.status(200).json(out);
+    }
+
+    if (body.mode === 'questions') {
+      if (!body.description && !body.structured) return res.status(400).json({ error: 'empty' });
+      const qkey = 'q:v1:' + cacheKey(body).slice(8);
+      const hit = await kv(['GET', qkey]);
+      if (hit) { try { return res.status(200).json(Object.assign(JSON.parse(hit), { cached: true })); } catch (e) {} }
+      const prompt = [
+        'السيارة: ' + clip(body.car, 80),
+        body.mileage ? 'الممشى: ' + clip(body.mileage, 30) : '',
+        body.description ? 'وصف المالك: ' + clip(body.description, 600) : '',
+        body.structured ? 'معلومات اختارها المالك: ' + clip(body.structured, 400) : ''
+      ].filter(Boolean).join('\n');
+      const valid = d => Array.isArray(d.questions) && d.questions.length > 0;
+      const { data: j } = await callAI(buildChain('light'), QUESTIONS_SYSTEM, prompt, 500, ctx, valid);
+      const questions = j.questions.slice(0, 4).map(q => ({
+        q: clip(q.q, 140),
+        type: q.type === 'yesno' ? 'yesno' : 'choice',
+        options: q.type === 'yesno' ? null : (Array.isArray(q.options) ? q.options.slice(0, 5).map(o => clip(o, 40)) : [])
+      })).filter(q => q.q && (q.type === 'yesno' || q.options.length >= 2));
+      const out = { questions };
+      if (questions.length) kv(['SET', qkey, JSON.stringify(out), 'EX', CACHE_TTL]);
+      return res.status(200).json(out);
+    }
+
+    if (body.mode === 'partcheck') {
+      if (!body.fault || !body.part) return res.status(400).json({ error: 'empty' });
+      const make = String(body.car || '').split(' ').slice(0, -1).join(' ');
+      const pkey = 'p:v1:' + crypto.createHash('sha256').update([normKey(make), normKey(body.fault), normKey(body.part)].join('|')).digest('hex').slice(0, 40);
+      const hit = await kv(['GET', pkey]);
+      if (hit) { try { return res.status(200).json(Object.assign(JSON.parse(hit), { cached: true })); } catch (e) {} }
+      const prompt = [
+        'السيارة: ' + clip(body.car, 80),
+        'العطل كما وصفه المالك أو شخّصه التطبيق: ' + clip(body.fault, 700),
+        Array.isArray(body.known_parts) && body.known_parts.length ? 'القطع المعتادة لهذا العطل في قاعدة التطبيق: ' + body.known_parts.slice(0, 6).map(x => clip(x, 60)).join('، ') : '',
+        'القطعة التي تقترح الورشة تغييرها: ' + clip(body.part, 60)
+      ].filter(Boolean).join('\n');
+      const valid = d => ['needed', 'maybe', 'unlikely'].includes(d.verdict);
+      const { data: j } = await callAI(buildChain('light'), PARTCHECK_SYSTEM, prompt, 400, ctx, valid);
+      const out = { verdict: j.verdict, reason: clip(j.reason, 300), how_to_verify: clip(j.how_to_verify, 250), cheaper_first: j.cheaper_first ? clip(j.cheaper_first, 150) : null };
+      kv(['SET', pkey, JSON.stringify(out), 'EX', CACHE_TTL]);
+      return res.status(200).json(out);
+    }
+
+    if (body.mode === 'inspect') {
+      const prompt = [
+        'السيارة: ' + clip(body.car, 80),
+        body.price ? 'السعر المطلوب: ' + clip(body.price, 30) : '',
+        'التقييم المحسوب: ' + clip(body.score, 5) + '/100',
+        'نتائج الفحص الذاتي:\n' + clip(body.findings, 3000)
+      ].filter(Boolean).join('\n');
+      if (!body.findings) return res.status(400).json({ error: 'empty' });
+      const { data: j } = await callAI(buildChain('light'), INSPECT_SYSTEM, prompt, 700, ctx, d => typeof d.summary === 'string');
+      return res.status(200).json({
+        summary: clip(j.summary, 700),
+        risks: Array.isArray(j.risks) ? j.risks.slice(0, 5).map(x => clip(x, 200)) : [],
+        model_notes: j.model_notes ? clip(j.model_notes, 300) : '',
+        next_steps: j.next_steps ? clip(j.next_steps, 300) : ''
       });
     }
 
