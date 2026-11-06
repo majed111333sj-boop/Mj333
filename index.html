@@ -714,6 +714,10 @@ const CAR_KB = [
       kw: { 'حراره': 3, 'تسخن': 3, 'يسخن': 3, 'سخونه': 3, 'يغلي': 3, 'رديتر': 3, 'بخار': 2, 'مروحه': 2, 'ثرموستات': 3, 'ساعه الحراره': 3 },
       parts: [['ثرموستات', 150], ['ماء رديتر (كولنت)', 60]], labor: 120,
       advice: 'أوقف السيارة فوراً إذا تجاوز المؤشر المنتصف، ولا تفتح غطاء الرديتر والمحرك حار. القيادة مع الحرارة قد تتلف رأس المكينة.' },
+    { id: 'headgasket', title: 'تهريب وجه رأس المكينة (جوان الرأس)', codes: ['P0300', 'P0217'], sev: 'stop',
+      kw: { 'وجه الراس': 4, 'وجه المكينه': 4, 'جوان راس': 4, 'جوان الراس': 4, 'كاسكيت': 4, 'ماء في الزيت': 4, 'زيت حليبي': 4, 'رغوه بيضاء': 4, 'دخان ابيض': 3, 'بخار من الشكمان': 3, 'ينقص ماء الرديتر': 3, 'زيت في الماء': 4 },
+      parts: [['طقم جوانات وجه الرأس', 450], ['تجليخ وجه الرأس (عند الحاجة)', 350], ['ماء رديتر (كولنت)', 60], ['زيت وفلتر', 180]], labor: 1400,
+      advice: 'لا تقد السيارة: استمرار الحرارة مع التهريب قد يتلف المحرك بالكامل. اطلب فحص ضغط الأسطوانات واختبار تسريب الغازات في ماء الرديتر قبل فتح المكينة.' },
     { id: 'battery', title: 'ضعف البطارية أو السلف', codes: ['P0562'], sev: 'caution',
       kw: { 'ما يشتغل': 3, 'مايشتغل': 3, 'ما تشتغل': 3, 'تكتكه': 2, 'طقطقه عند التشغيل': 3, 'بطاريه': 3, 'سلف': 3, 'دينمو': 2, 'ثقيل في التشغيل': 3, 'اضاءه ضعيفه': 2 },
       parts: [['بطارية', 400]], labor: 30,
@@ -943,7 +947,7 @@ function renderDiagnosis(r, aiPending) {
         r.totalSar = r.kb.parts.filter(p => !isOptional(p)).reduce((a, p) => a + p[1], 0) + r.kb.labor;
         $('res-total').dataset.sar = r.totalSar;
     } else {
-        ul.appendChild(el('li', 'text-slate-500', 'يحدد الفني القطع المطلوبة بعد الفحص.'));
+        ul.appendChild(el('li', 'text-slate-500', r.costNote || 'يحدد الفني القطع المطلوبة بعد الفحص.'));
         delete $('res-total').dataset.sar;
         $('res-total').textContent = '—';
         r.totalSar = 0;
@@ -1102,9 +1106,19 @@ async function aiDiagnose(meta, local) {
     } catch (e) { return null; }
     finally { clearTimeout(t); }
 }
+// أعطال كبيرة: إذا ذكرها الذكاء الاصطناعي ولم تكن في العطل المرتبط فلا نعرض تكلفة قد تكون مضللة
+const MAJOR_TERMS = ['وجه الراس', 'وجه راس', 'جوان الراس', 'جوان راس', 'كاسكيت', 'head gasket', 'عمره', 'تخبيط', 'تبديل القير', 'قير كامل', 'كمبيوتر القير', 'دبه التلوث', 'بلوف', 'سبيكه'];
+function kbMatchesAi(kb, ai) {
+    if (!kb) return false;
+    const aiText = normalizeAr((ai.title || '') + ' ' + (ai.explanation || '')).toLowerCase();
+    const kbText = normalizeAr(kb.title + ' ' + Object.keys(kb.kw).join(' ') + ' ' + kb.parts.map(p => p[0]).join(' ')).toLowerCase();
+    return !MAJOR_TERMS.some(t => { const n = normalizeAr(t).toLowerCase(); return aiText.includes(n) && !kbText.includes(n); });
+}
 function mergeAi(local, ai) {
     if (!ai || typeof ai.title !== 'string' || !ai.title.trim()) return local;
-    const kb = ai.kb_id ? kbById(ai.kb_id) : null;
+    let kb = ai.kb_id ? kbById(ai.kb_id) : null;
+    let costNote = '';
+    if (kb && !kbMatchesAi(kb, ai)) { costNote = 'التكلفة تعتمد على نتيجة الفحص؛ هذا النوع من الأعطال قد تختلف تكلفته كثيراً.'; kb = null; }
     const confMap = { high: 'عالية', medium: 'متوسطة', low: 'منخفضة' };
     return Object.assign({}, local, {
         ai: true,
@@ -1117,7 +1131,8 @@ function mergeAi(local, ai) {
         advice: String(ai.advice || (kb ? kb.advice : '')).slice(0, 500),
         checks: Array.isArray(ai.checks) ? ai.checks.slice(0, 5).map(c => String(c).slice(0, 140)) : [],
         question: ai.question ? String(ai.question).slice(0, 200) : '',
-        alts: local.alts.filter(a => !kb || a !== kb.title)
+        alts: local.alts.filter(a => !kb || a !== kb.title),
+        costNote
     });
 }
 
