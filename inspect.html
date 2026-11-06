@@ -18,6 +18,7 @@
         .ans.bad.on { background: #dc2626; border-color: #dc2626; color: #fff; }
         .ans.skip.on { background: #64748b; border-color: #64748b; color: #fff; }
         .stage-btn.active { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+        #result.locked .paid { filter: blur(6px); pointer-events: none; user-select: none; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @media print {
@@ -108,17 +109,31 @@
             <div id="r-verdict" class="rounded-xl p-3 text-sm font-black text-center border"></div>
             <p id="r-confidence" class="text-[10px] text-slate-500 text-center"></p>
 
-            <div id="r-flags-box" class="hidden bg-red-50 border border-red-200 rounded-xl p-2.5">
+            <div id="i-paywall" class="hidden no-print bg-gradient-to-l from-amber-50 to-white border-2 border-amber-300 rounded-xl p-3 space-y-2">
+                <p class="font-black text-[13px]">🔓 افتح تقرير الفحص الكامل</p>
+                <ul class="text-[11px] text-slate-700 space-y-0.5">
+                    <li>🚩 علامات الخطر بالتفصيل</li><li>🔧 كل المشاكل وتكلفة إصلاح كل واحدة</li>
+                    <li>💰 السعر المقترح للتفاوض وجملة جاهزة للبائع</li><li>🤖 تحليل ذكي للموديل ومخاطره</li><li>📥 التقرير PDF ومشاركته واتساب</li>
+                </ul>
+                <p class="text-[11px] font-bold text-emerald-700">💡 ستدفع عشرات الآلاف في السيارة؛ اعرف عيوبها وسعرها العادل قبل القرار.</p>
+                <button id="ipw-btn" onclick="unlockInspect()" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl text-sm shadow-md">🔓 افتح التقرير</button>
+                <div class="flex gap-1.5">
+                    <input id="ipw-code" maxlength="12" placeholder="لديك كود؟ SD-XXXXXXXX" dir="ltr" class="flex-1 min-w-0 bg-white border border-slate-200 rounded-lg p-2 text-[11px] font-mono uppercase">
+                    <button onclick="redeemInspect()" class="shrink-0 bg-slate-900 text-white font-bold px-3 rounded-lg text-[11px]">تفعيل</button>
+                </div>
+            </div>
+
+            <div id="r-flags-box" class="paid hidden bg-red-50 border border-red-200 rounded-xl p-2.5">
                 <span class="font-black text-[11px] text-red-800 block mb-1">🚩 علامات خطر</span>
                 <ul id="r-flags" class="text-[11px] text-red-900 space-y-1 list-disc pr-4"></ul>
             </div>
 
-            <div>
+            <div class="paid">
                 <span class="font-black text-[11px] block mb-1">🔧 ملاحظات ومشاكل وتكلفتها التقديرية</span>
                 <ul id="r-issues" class="space-y-1 text-[11px]"></ul>
             </div>
 
-            <div class="bg-slate-950 text-white rounded-xl p-3 grid grid-cols-2 gap-2 text-center">
+            <div class="paid bg-slate-950 text-white rounded-xl p-3 grid grid-cols-2 gap-2 text-center">
                 <div>
                     <span class="text-[10px] text-slate-400 block">تكلفة الإصلاح المتوقعة</span>
                     <span id="r-cost" class="font-black font-mono text-amber-400"></span>
@@ -129,7 +144,7 @@
                 </div>
             </div>
 
-            <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 space-y-1.5">
+            <div class="paid bg-blue-50 border border-blue-200 rounded-xl p-3 space-y-1.5">
                 <div class="flex justify-between items-center">
                     <span class="font-black text-blue-950 text-[11px]">💬 جملة التفاوض مع البائع</span>
                     <button onclick="copyText('r-nego')" class="no-print text-[10px] bg-blue-600 text-white px-2.5 py-1 rounded font-bold">نسخ</button>
@@ -137,9 +152,9 @@
                 <p id="r-nego" class="text-slate-700 text-[11px] leading-relaxed bg-white p-2 rounded-lg border border-blue-100"></p>
             </div>
 
-            <div id="r-ai-box" class="hidden bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-[11px] leading-relaxed text-indigo-950 space-y-1"></div>
+            <div id="r-ai-box" class="paid hidden bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-[11px] leading-relaxed text-indigo-950 space-y-1"></div>
 
-            <div class="no-print grid grid-cols-2 gap-2">
+            <div class="paid no-print grid grid-cols-2 gap-2">
                 <button id="ai-btn" onclick="aiAnalyze()" class="bg-indigo-700 text-white font-extrabold py-2.5 rounded-xl text-[11px]">🤖 تحليل ذكي للنتائج</button>
                 <button onclick="shareWhatsApp()" class="bg-green-600 text-white font-extrabold py-2.5 rounded-xl text-[11px]">💬 مشاركة واتساب</button>
                 <button onclick="window.print()" class="bg-slate-900 text-white font-bold py-2.5 rounded-xl text-[11px]">📥 حفظ PDF</button>
@@ -362,6 +377,7 @@ function showResult() {
     $('r-nego').textContent = price && r.cost
         ? `"السيارة فيها ملاحظات تحتاج إصلاحاً تقديره ${fmt(r.cost)} تقريباً (${issuesTxt}). أقدر أشتريها بـ ${fmt(offer)} بدل ${fmt(price)}."`
         : (r.cost ? `"السيارة فيها ملاحظات تحتاج إصلاحاً تقديره ${fmt(r.cost)} تقريباً، وأحتاج خصماً يغطي هذا المبلغ."` : '"السيارة حالتها جيدة حسب فحصي، هل السعر قابل للتفاوض البسيط؟"');
+    applyInspectLock();
     $('result').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -389,6 +405,57 @@ function resetAll() {
     $('result').classList.add('hidden'); stageIdx = 0; render(); window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+
+// ---------- 💳 الدفع: خدمة واحدة مجانية، ثم وصول كامل لكل الخدمات بالمدة ----------
+function walletId() {
+    let w = store.get('sd_wallet', null);
+    if (!w || !/^w_[a-z0-9]{12,24}$/.test(w)) {
+        const a = new Uint8Array(12); crypto.getRandomValues(a);
+        w = 'w_' + Array.from(a, b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('') + Date.now().toString(36).slice(-4);
+        store.set('sd_wallet', w);
+    }
+    return w;
+}
+async function payApi(body) {
+    if (location.protocol === 'file:') return { status: 0, json: null };
+    try { const r = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ wid: walletId() }, body)) }); return { status: r.status, json: await r.json().catch(() => null) }; }
+    catch (e) { return { status: 0, json: null }; }
+}
+const carKey = () => [state.car.make, state.car.model, state.car.year, state.car.km].join('|');
+function inspectId() { const k = carKey(); let h = 5381; for (let i = 0; i < k.length; i++) h = ((h << 5) + h + k.charCodeAt(i)) >>> 0; return 'i' + h.toString(36) + k.length.toString(36); }
+let WS = null;   // حالة المحفظة
+const passActive = () => !!(WS && WS.passUntil > Date.now());
+const unlockedInspect = () => passActive() || !!(WS && WS.offline) || (WS && WS.freeDid === inspectId());
+function applyInspectLock() {
+    const locked = !unlockedInspect();
+    $('result').classList.toggle('locked', locked);
+    $('i-paywall').classList.toggle('hidden', !locked);
+    $('ipw-btn').textContent = WS && WS.freeAvailable ? '🎁 افتح مجاناً (خدمتك المجانية)' : '🔓 افتح كل الخدمات يوماً كاملاً بـ ' + (9 * CC.rate).toLocaleString('en', { maximumFractionDigits: CC.dec }) + ' ' + CC.cur;
+}
+async function walletRefresh() {
+    const r = await payApi({ mode: 'wallet' });
+    WS = r.status === 200 && r.json ? r.json : (r.status === 503 || r.status === 0 ? { offline: true } : WS);
+    if (!$('result').classList.contains('hidden')) applyInspectLock();
+}
+async function unlockInspect() {
+    if (WS && WS.freeAvailable) {
+        const r = await payApi({ mode: 'use_free', did: inspectId() });
+        if (r.status === 200 && r.json) { WS = r.json; applyInspectLock(); return; }
+        if (r.status === 503 || r.status === 0) { WS = { offline: true }; applyInspectLock(); return; }
+        if (r.json) WS = r.json;
+    }
+    if (unlockedInspect()) { applyInspectLock(); return; }
+    alert('استخدمت خدمتك المجانية.\nلفتح هذا التقرير وكل خدمات التطبيق افتح الوصول الكامل (يوم بـ 9 ر.س، أو 3 أيام بـ 19، أو سنة بـ 79).\nالدفع الإلكتروني سيتوفر قريباً، وإذا لديك كود تفعيل أدخله تحت الزر.');
+    $('ipw-code').focus();
+}
+async function redeemInspect() {
+    const code = $('ipw-code').value.trim().toUpperCase();
+    if (!/^SD-[A-Z0-9]{8}$/.test(code)) { alert('الكود غير صحيح. الشكل: SD-XXXXXXXX'); return; }
+    const r = await payApi({ mode: 'redeem', code });
+    if (r.status === 200 && r.json && r.json.ok) { WS = r.json; $('ipw-code').value = ''; alert('✅ تم التفعيل'); applyInspectLock(); }
+    else alert(r.status === 409 ? 'هذا الكود مستخدم من قبل.' : r.status === 404 ? 'الكود غير موجود.' : 'تعذر التفعيل، حاول لاحقاً.');
+}
+
 // ---------- تحليل ذكي اختياري ----------
 async function aiAnalyze() {
     const r = compute();
@@ -401,8 +468,9 @@ async function aiAnalyze() {
     try {
         const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 25000);
         const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
-            body: JSON.stringify({ mode: 'inspect', car: carText(), price: state.car.price ? fmt(state.car.price) : '', score: r.score, findings }) });
+            body: JSON.stringify({ mode: 'inspect', wid: walletId(), did: inspectId(), car: carText(), price: state.car.price ? fmt(state.car.price) : '', score: r.score, findings }) });
         clearTimeout(t);
+        if (res.status === 402) { box.textContent = 'التحليل الذكي ضمن الوصول الكامل.'; btn.disabled = false; btn.textContent = '🤖 تحليل ذكي للنتائج'; return; }
         if (!res.ok) throw new Error(res.status);
         const j = await res.json();
         box.innerHTML = '';
@@ -440,7 +508,7 @@ window.addEventListener('DOMContentLoaded', () => {
     mk.onchange = () => { $('i-model').value = ''; fillModels(); sync(); };
     [yr, $('i-model'), $('i-km'), $('i-price')].forEach(e => e.addEventListener('input', sync));
     yr.onchange = sync;
-    sync(); render();
+    sync(); render(); walletRefresh();
 });
 </script>
 </body>
