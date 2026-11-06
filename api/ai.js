@@ -1,5 +1,3 @@
-// نسخة Cloudflare Pages Functions من دالة الذكاء الاصطناعي (المسار: /api/ai)
-// تعمل بنفس منطق نسخة Vercel، مع واجهات الويب القياسية (Request/Response و Web Crypto)
 // دالة الذكاء الاصطناعي على Vercel: تشخيص الأعطال + قراءة الفواتير
 // 1) سلسلة احتياطية عند الفشل: الرئيسية ← الخفيفة ← Gemma ← Claude
 // 2) ترقية حسب الصعوبة: إذا جاء التشخيص بثقة "منخفضة" يُعاد على نماذج أقوى بالترتيب
@@ -13,23 +11,21 @@
 // 3) تخزين مؤقت (اختياري): إذا ربطت Upstash Redis من Vercel يُحفظ التشخيص المتكرر 30 يوماً ويُجاب فوراً بدون ذكاء اصطناعي
 //   KV_REST_API_URL + KV_REST_API_TOKEN  (أو UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN)
 
-let CLAUDE_MODEL; // يُضبط في initEnv
+const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-5-5';
 const list = v => String(v || '').split(',').map(x => x.trim()).filter(Boolean);
-let MAIN; // يُضبط في initEnv
-let LIGHT; // يُضبط في initEnv
-let GEMMA; // يُضبط في initEnv
-let ESCALATE; // يُضبط في initEnv
+const MAIN = list(process.env.GEMINI_MAIN_MODELS || process.env.GEMINI_MODEL || 'gemini-flash-lite-latest');
+const LIGHT = list(process.env.GEMINI_LIGHT_MODELS || 'gemini-flash-lite-latest');
+const GEMMA = list(process.env.GEMINI_GEMMA_MODELS || 'gemma-4-31b-it');
+const ESCALATE = list(process.env.GEMINI_ESCALATE_MODELS || 'gemini-3.6-flash,gemini-flash-latest');
 const RANK = { low: 0, medium: 1, high: 2 };
 // المراجعة الأسبوعية بأقوى نموذج متاح، والتنظيم التلقائي بنموذج ذي حد يومي كبير
-let REVIEW_MODELS; // يُضبط في initEnv
-let CURATE_MIN_USERS; // يُضبط في initEnv
-// ---------- Web Crypto بدل وحدة crypto في Node ----------
-const _enc = new TextEncoder();
-async function sha256hex(s) { const b = await crypto.subtle.digest('SHA-256', _enc.encode(String(s))); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+const REVIEW_MODELS = list(process.env.GEMINI_REVIEW_MODELS || 'gemini-flash-latest,gemini-3.6-flash');
+const CURATE_MIN_USERS = Math.max(2, parseInt(process.env.CURATE_MIN_USERS || '3'));
+const crypto = require('crypto');
 
 // ---------- التخزين المؤقت (Upstash Redis عبر REST) ----------
-let KV_URL; // يُضبط في initEnv
-let KV_TOKEN; // يُضبط في initEnv
+const KV_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
+const KV_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
 const CACHE_TTL = 30 * 24 * 3600;   // 30 يوماً
 
 async function kv(cmd) {
@@ -52,18 +48,18 @@ function normKey(t) {
     .map(w => w.replace(/^و(?=..)/, '')).filter(w => w && !STOP.has(w))
     .filter((w, i, a) => a.indexOf(w) === i).sort().join(' ');
 }
-async function cacheKey(body) {
+function cacheKey(body) {
   const make = String(body.car || '').split(' ').slice(0, -1).join(' ');   // الشركة والموديل بدون السنة
   const raw = [normKey(make), normKey(body.description), normKey(body.structured), String(body.code || '').toUpperCase()].join('|');
-  return 'diag:v1:' + (await sha256hex(raw)).slice(0, 40);
+  return 'diag:v1:' + crypto.createHash('sha256').update(raw).digest('hex').slice(0, 40);
 }
 
 function buildChain(task) {
-  const g = ENV.GEMINI_API_KEY, a = ENV.ANTHROPIC_API_KEY;
+  const g = process.env.GEMINI_API_KEY, a = process.env.ANTHROPIC_API_KEY;
   const order = (task === 'light' ? LIGHT.concat(MAIN) : MAIN.concat(LIGHT)).concat(GEMMA);
   const gem = g ? [...new Set(order)].map(m => ({ name: 'gemini', key: g, model: m })) : [];
   const cla = a ? [{ name: 'claude', key: a, model: CLAUDE_MODEL }] : [];
-  return String(ENV.AI_PROVIDER || '').toLowerCase() === 'claude' ? cla.concat(gem) : gem.concat(cla);
+  return String(process.env.AI_PROVIDER || '').toLowerCase() === 'claude' ? cla.concat(gem) : gem.concat(cla);
 }
 
 // حد بسيط لعدد الطلبات لكل IP (تقريبي، يعمل داخل نفس النسخة من الدالة)
@@ -149,7 +145,7 @@ async function callAI(chain, system, content, maxTokens, ctx, valid) {
 async function diagnose(prompt, ctx) {
   const valid = j => j && typeof j.title === 'string' && j.title.trim();
   let best = await callAI(buildChain('main'), DIAG_SYSTEM, prompt, 700, ctx, valid);
-  const key = ENV.GEMINI_API_KEY;
+  const key = process.env.GEMINI_API_KEY;
   for (const m of ESCALATE) {
     if (!key || RANK[best.data.confidence] !== 0) break;      // نترقى فقط إذا كانت الثقة منخفضة
     if (m === best.model) continue;
@@ -205,15 +201,15 @@ const GATED_PAID = new Set(['partcheck', 'invoice']);                // تحتا
 const validWid = w => typeof w === 'string' && /^w_[a-z0-9]{12,24}$/.test(w);
 const validDid = d => typeof d === 'string' && /^[a-z0-9]{4,40}$/.test(d);
 // الشبكات في الخليج يتشارك فيها كثيرون نفس العنوان، لذلك نحدّ الهدايا لكل عنوان بـ 3 يومياً بدلاً من منعها
-const ipKey = async ip => 'freeipn:' + (await sha256hex(ip)).slice(0, 16);
-let FREE_PER_IP_DAY; // يُضبط في initEnv
+const ipKey = ip => 'freeipn:' + crypto.createHash('sha256').update(String(ip)).digest('hex').slice(0, 16);
+const FREE_PER_IP_DAY = Math.max(1, parseInt(process.env.FREE_PER_IP_DAY || '3'));
 
 async function getWallet(wid) { try { return JSON.parse((await kv(['GET', 'w:' + wid])) || '{}'); } catch (e) { return {}; } }
 async function setWallet(wid, w) { await kv(['SET', 'w:' + wid, JSON.stringify(w), 'EX', 3 * 365 * 24 * 3600]); }
 const passActive = w => (w.pass || 0) > Date.now();
 async function freeState(wid, ip, w) {
   if (w.freeDid) return { used: true, did: w.freeDid };
-  const n = Number(await kv(['GET', (await ipKey(ip))])) || 0;
+  const n = Number(await kv(['GET', ipKey(ip)])) || 0;
   return { used: n >= FREE_PER_IP_DAY, did: null };
 }
 async function walletView(wid, ip, w) {
@@ -227,7 +223,7 @@ function applyProduct(w, product) {
 }
 function newCode() {
   const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = 'SD-';
-  const b = crypto.getRandomValues(new Uint8Array(8)); for (let i = 0; i < 8; i++) c += A[b[i] % A.length];
+  const b = crypto.randomBytes(8); for (let i = 0; i < 8; i++) c += A[b[i] % A.length];
   return c;
 }
 // يقرر هل يُسمح بالخدمة: وصول مدفوع فعّال، أو أنها نفس الخدمة المجانية الأولى (نفس المعرف did)
@@ -243,7 +239,7 @@ async function accessGate(body, ip) {
   if (!did) return { ok: false };
   if (body.mode === 'questions') return { ok: true };              // الأسئلة تسبق التشخيص في نفس الخدمة
   w.freeDid = did; await setWallet(body.wid, w);
-  await kv(['INCR', (await ipKey(ip))]); await kv(['EXPIRE', (await ipKey(ip)), 24 * 3600]);
+  await kv(['INCR', ipKey(ip)]); await kv(['EXPIRE', ipKey(ip), 24 * 3600]);
   await kv(['INCR', 'stat:free']);
   return { ok: true };
 }
@@ -299,7 +295,7 @@ async function payHandler(body, ip, res) {
 
   if (body.mode === 'pay_webhook') {
     // لبوابة الدفع لاحقاً: ترسل البوابة {secret, wid, product, orderId} بعد نجاح الدفع
-    const secret = ENV.PAY_WEBHOOK_SECRET;
+    const secret = process.env.PAY_WEBHOOK_SECRET;
     if (!secret || body.secret !== secret) return res.status(403).json({ error: 'forbidden' });
     if (!validWid(wid) || !PRODUCTS[body.product]) return res.status(400).json({ error: 'bad_request' });
     const oid = 'order:' + clip(body.orderId, 80);
@@ -314,18 +310,18 @@ async function payHandler(body, ip, res) {
 
 // ---------- التنظيم التلقائي (Gemma أولاً لأن حده اليومي كبير) ----------
 async function curate(body, out, ip, ctx) {
-  if (!KV_URL || !ENV.GEMINI_API_KEY || ctx.left() < 9000) return;
+  if (!KV_URL || !process.env.GEMINI_API_KEY || ctx.left() < 9000) return;
   const make = String(body.car || '').split(' ').slice(0, -1).join(' ');
-  const h = (await sha256hex([normKey(make), normKey(body.description), normKey(body.structured)].join('|'))).slice(0, 16);
+  const h = crypto.createHash('sha256').update([normKey(make), normKey(body.description), normKey(body.structured)].join('|')).digest('hex').slice(0, 16);
   if (await kv(['EXISTS', 'auto:' + h]) || await kv(['EXISTS', 'curblock:' + h])) return;
-  const who = (await sha256hex(ip)).slice(0, 12);
+  const who = crypto.createHash('sha256').update(String(ip)).digest('hex').slice(0, 12);
   await kv(['SADD', 'curu:' + h, who]); await kv(['EXPIRE', 'curu:' + h, 30 * 24 * 3600]);
   const users = Number(await kv(['SCARD', 'curu:' + h])) || 0;
   if (users < CURATE_MIN_USERS) return;
   const prompt = ['السيارة: ' + clip(body.car, 80), 'وصف المالك: ' + clip(body.description, 500),
     body.structured ? 'معلومات اختارها: ' + clip(body.structured, 300) : '',
     'تشخيص الذكاء الاصطناعي: ' + out.title + ' | الخطورة: ' + out.severity + ' | ' + clip(out.explanation, 300) + ' | نصيحة: ' + clip(out.advice, 200)].filter(Boolean).join('\n');
-  const chain = [...new Set(GEMMA.concat(LIGHT, MAIN))].map(m => ({ name: 'gemini', key: ENV.GEMINI_API_KEY, model: m }));
+  const chain = [...new Set(GEMMA.concat(LIGHT, MAIN))].map(m => ({ name: 'gemini', key: process.env.GEMINI_API_KEY, model: m }));
   const { data: d, model } = await callAI(chain, CURATE_SYSTEM, prompt, 900, { left: () => Math.min(ctx.left() - 1500, 9000) }, x => x && x.title && Array.isArray(x.keywords));
   const row = {
     id: 'a_' + h, auto: true, title: clip(d.title, 90), sev: ['safe', 'caution', 'stop'].includes(d.sev) ? d.sev : out.severity,
@@ -365,8 +361,8 @@ const REVIEW_SYSTEM = `أنت مدقق خبير لقاعدة معرفة أعطا
 أجب بكائن JSON فقط: {"reviews":[{"id":"","action":"keep|fix|delete|merge","reason":"","fix":{},"merge_into":null}]}`;
 
 // التحقق من أن الطلب من مالك التطبيق (رمز Firebase صالح لبريد الإدارة)
-let OWNER; // يُضبط في initEnv
-let FIREBASE_WEB_KEY; // يُضبط في initEnv
+const OWNER = String(process.env.OWNER_EMAIL || 'majed111333sj@gmail.com').toLowerCase();
+const FIREBASE_WEB_KEY = process.env.FIREBASE_API_KEY || 'AIzaSyACt18eL1b_k0udQwXNH0dq56DmMXL8iLE';
 async function verifyOwner(token) {
   if (!token || typeof token !== 'string' || token.length > 4000) return null;
   try {
@@ -404,7 +400,7 @@ const INSPECT_SYSTEM = `أنت خبير فحص سيارات مستعملة في 
 - لا تخترع أسعاراً، ولا تقدم نفسك كشهادة فحص رسمية.
 أجب بكائن JSON فقط: {"summary": "خلاصة في 2-3 جمل", "risks": ["أهم المخاطر بالترتيب"], "model_notes": "ملاحظة عن الموديل أو null", "next_steps": "ماذا يفعل المشتري الآن"}`;
 
-async function handle(req, res) {
+module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
 
@@ -424,9 +420,9 @@ async function handle(req, res) {
   if (PAY_MODES.has(body.mode)) return payHandler(body, ip, res);
   if (GATED_FREE.has(body.mode) || GATED_PAID.has(body.mode)) {
     const g = await accessGate(body, ip);
-    if (!g.ok) { BG(kv(['INCR', 'stat:blocked'])); return res.status(402).json({ error: 'payment_required' }); }
+    if (!g.ok) { kv(['INCR', 'stat:blocked']); return res.status(402).json({ error: 'payment_required' }); }
   }
-  if (!ENV.GEMINI_API_KEY && !ENV.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'not_configured' });
+  if (!process.env.GEMINI_API_KEY && !process.env.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'not_configured' });
 
   // مهلة إجمالية 22 ثانية لكل طلب (المتصفح ينتظر 25)
   const deadline = Date.now() + 22000;
@@ -456,7 +452,7 @@ async function handle(req, res) {
 
       // نستخدم التخزين فقط للفحص الأول (بدون صوت أو أسئلة متابعة)
       const cacheable = !body.sound && !(Array.isArray(body.followups) && body.followups.length);
-      const key = cacheable ? (await cacheKey(body)) : null;
+      const key = cacheable ? cacheKey(body) : null;
       if (key) {
         const hit = await kv(['GET', key]);
         if (hit) {
@@ -477,7 +473,7 @@ async function handle(req, res) {
         model
       };
       // لا نحفظ إلا التشخيص الواثق (عالي أو متوسط)
-      if (key && out.confidence !== 'low') BG(kv(['SET', key, JSON.stringify(out), 'EX', CACHE_TTL]));
+      if (key && out.confidence !== 'low') kv(['SET', key, JSON.stringify(out), 'EX', CACHE_TTL]).then(() => console.log('cache set:', key.slice(0, 16)));
       // 🤖 التعلّم التلقائي: إذا تكررت الحالة من عدة مستخدمين بثقة عالية نُنشئ صفاً "تلقائياً – غير معتمد"
       if (key && out.confidence === 'high' && !(body.reference || []).length) {
         try { await curate(body, out, ip, ctx); } catch (e) { console.error('curate', String(e.message || e).slice(0, 150)); }
@@ -487,7 +483,7 @@ async function handle(req, res) {
 
     if (body.mode === 'questions') {
       if (!body.description && !body.structured) return res.status(400).json({ error: 'empty' });
-      const qkey = 'q:v1:' + (await cacheKey(body)).slice(8);
+      const qkey = 'q:v1:' + cacheKey(body).slice(8);
       const hit = await kv(['GET', qkey]);
       if (hit) { try { return res.status(200).json(Object.assign(JSON.parse(hit), { cached: true })); } catch (e) {} }
       const prompt = [
@@ -504,7 +500,7 @@ async function handle(req, res) {
         options: q.type === 'yesno' ? null : (Array.isArray(q.options) ? q.options.slice(0, 5).map(o => clip(o, 40)) : [])
       })).filter(q => q.q && (q.type === 'yesno' || q.options.length >= 2));
       const out = { questions };
-      if (questions.length) BG(kv(['SET', qkey, JSON.stringify(out), 'EX', CACHE_TTL]));
+      if (questions.length) kv(['SET', qkey, JSON.stringify(out), 'EX', CACHE_TTL]);
       return res.status(200).json(out);
     }
 
@@ -527,7 +523,7 @@ async function handle(req, res) {
 
     if (body.mode === 'review') {
       if (!(await verifyOwner(body.token))) return res.status(403).json({ error: 'forbidden' });
-      const key = ENV.GEMINI_API_KEY;
+      const key = process.env.GEMINI_API_KEY;
       if (!key) return res.status(503).json({ error: 'not_configured' });
       const rows = Array.isArray(body.rows) ? body.rows.slice(0, 8) : [];
       if (!rows.length) return res.status(400).json({ error: 'empty' });
@@ -558,7 +554,7 @@ async function handle(req, res) {
       // للمالك فقط: نتحقق من هويته عبر رمز Firebase قبل استهلاك حدود البحث
       const email = await verifyOwner(body.token);
       if (!email) return res.status(403).json({ error: 'forbidden' });
-      const key = ENV.GEMINI_API_KEY;
+      const key = process.env.GEMINI_API_KEY;
       if (!key) return res.status(503).json({ error: 'not_configured' });
       const topic = clip(body.topic, 120);
       if (topic.length < 4) return res.status(400).json({ error: 'empty' });
@@ -600,7 +596,7 @@ async function handle(req, res) {
     if (body.mode === 'partcheck') {
       if (!body.fault || !body.part) return res.status(400).json({ error: 'empty' });
       const make = String(body.car || '').split(' ').slice(0, -1).join(' ');
-      const pkey = 'p:v1:' + (await sha256hex([normKey(make), normKey(body.fault), normKey(body.part)].join('|'))).slice(0, 40);
+      const pkey = 'p:v1:' + crypto.createHash('sha256').update([normKey(make), normKey(body.fault), normKey(body.part)].join('|')).digest('hex').slice(0, 40);
       const hit = await kv(['GET', pkey]);
       if (hit) { try { return res.status(200).json(Object.assign(JSON.parse(hit), { cached: true })); } catch (e) {} }
       const prompt = [
@@ -612,7 +608,7 @@ async function handle(req, res) {
       const valid = d => ['needed', 'maybe', 'unlikely'].includes(d.verdict);
       const { data: j } = await callAI(buildChain('light'), PARTCHECK_SYSTEM, prompt, 400, ctx, valid);
       const out = { verdict: j.verdict, reason: clip(j.reason, 300), how_to_verify: clip(j.how_to_verify, 250), cheaper_first: j.cheaper_first ? clip(j.cheaper_first, 150) : null };
-      BG(kv(['SET', pkey, JSON.stringify(out), 'EX', CACHE_TTL]));
+      kv(['SET', pkey, JSON.stringify(out), 'EX', CACHE_TTL]);
       return res.status(200).json(out);
     }
 
@@ -652,41 +648,4 @@ async function handle(req, res) {
     console.error(e);
     return res.status(502).json({ error: 'ai_failed' });
   }
-}
-
-// ---------- متغيرات البيئة: في Cloudflare تأتي مع كل طلب ----------
-let ENV = {};
-let BG = p => p;   // الكتابات الخلفية: تُكمَل بعد إرسال الرد عبر waitUntil
-function initEnv() {
-  CLAUDE_MODEL = ENV.ANTHROPIC_MODEL || 'claude-haiku-5-5';
-  MAIN = list(ENV.GEMINI_MAIN_MODELS || ENV.GEMINI_MODEL || 'gemini-flash-lite-latest');
-  LIGHT = list(ENV.GEMINI_LIGHT_MODELS || 'gemini-flash-lite-latest');
-  GEMMA = list(ENV.GEMINI_GEMMA_MODELS || 'gemma-4-31b-it');
-  ESCALATE = list(ENV.GEMINI_ESCALATE_MODELS || 'gemini-3.6-flash,gemini-flash-latest');
-  REVIEW_MODELS = list(ENV.GEMINI_REVIEW_MODELS || 'gemini-flash-latest,gemini-3.6-flash');
-  CURATE_MIN_USERS = Math.max(2, parseInt(ENV.CURATE_MIN_USERS || '3'));
-  KV_URL = ENV.KV_REST_API_URL || ENV.UPSTASH_REDIS_REST_URL || '';
-  KV_TOKEN = ENV.KV_REST_API_TOKEN || ENV.UPSTASH_REDIS_REST_TOKEN || '';
-  FREE_PER_IP_DAY = Math.max(1, parseInt(ENV.FREE_PER_IP_DAY || '3'));
-  OWNER = String(ENV.OWNER_EMAIL || 'majed111333sj@gmail.com').toLowerCase();
-  FIREBASE_WEB_KEY = ENV.FIREBASE_API_KEY || 'AIzaSyACt18eL1b_k0udQwXNH0dq56DmMXL8iLE';
-}
-
-// ---------- نقطة الدخول في Cloudflare Pages Functions ----------
-export async function onRequest(context) {
-  ENV = Object.assign({}, context.env || {});
-  initEnv();
-  BG = p => { try { context.waitUntil(Promise.resolve(p).catch(() => {})); } catch (e) {} return p; };
-  const request = context.request;
-  const headers = {};
-  request.headers.forEach((v, k) => { headers[k] = v; });
-  headers['x-forwarded-for'] = request.headers.get('cf-connecting-ip') || headers['x-forwarded-for'] || '';
-  if (!headers.host) { try { headers.host = new URL(request.url).host; } catch (e) {} }
-  const body = request.method === 'POST' ? await request.text() : '';
-  let status = 200, out = {};
-  const resHeaders = { 'content-type': 'application/json; charset=utf-8' };
-  const res = { setHeader(k, v) { resHeaders[k] = v; }, status(c) { status = c; return this; }, json(o) { out = o; return this; } };
-  try { await handle({ method: request.method, headers, body }, res); }
-  catch (e) { console.error(e); status = 500; out = { error: 'server_error' }; }
-  return new Response(JSON.stringify(out), { status, headers: resHeaders });
-}
+};
