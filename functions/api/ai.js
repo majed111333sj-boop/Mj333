@@ -218,7 +218,71 @@ async function freeState(wid, ip, w) {
 }
 async function walletView(wid, ip, w) {
   const f = await freeState(wid, ip, w);
-  return { passUntil: passActive(w) ? w.pass : 0, freeAvailable: !f.used, freeDid: f.did };
+  return { passUntil: passActive(w) ? w.pass : 0, freeAvailable: !f.used, freeDid: f.did, links: checkoutLinks() };
+}
+// روابط صفحات الدفع في Lemon Squeezy (تُضبط من متغيرات البيئة بدون تعديل الكود)
+function checkoutLinks() {
+  const l = {};
+  [['day', 'LEMON_CHECKOUT_DAY'], ['day3', 'LEMON_CHECKOUT_DAY3'], ['annual', 'LEMON_CHECKOUT_ANNUAL']].forEach(([k, e]) => {
+    const v = String(ENV[e] || '').trim();
+    if (/^https:\/\/[a-z0-9.-]+\.lemonsqueezy\.com\//i.test(v)) l[k] = v;
+  });
+  return l;
+}
+
+// =====================================================================
+// 🍋 Lemon Squeezy: تفعيل تلقائي فور الدفع عبر Webhook موقّع
+// المنتج يُحدَّد من رقم النسخة (variant) القادم من Lemon نفسه، وليس من الرابط، فلا يمكن التلاعب به
+// =====================================================================
+async function hmacHex(secret, text) {
+  const key = await crypto.subtle.importKey('raw', _enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', key, _enc.encode(text));
+  return [...new Uint8Array(sig)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+function safeEqual(a, b) {
+  a = String(a || ''); b = String(b || '');
+  if (a.length !== b.length || !a.length) return false;
+  let r = 0; for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return r === 0;
+}
+function variantMap() {   // LEMON_VARIANTS = "123456:day,123457:day3,123458:annual"
+  const m = {};
+  String(ENV.LEMON_VARIANTS || '').split(',').forEach(x => { const [v, p] = x.split(':').map(y => (y || '').trim()); if (v && PRODUCTS[p]) m[v] = p; });
+  return m;
+}
+async function lemonWebhook(rawBody, signature) {
+  const secret = ENV.LEMON_SIGNING_SECRET;
+  if (!secret || !KV_URL) return [503, { error: 'not_configured' }];
+  if (!safeEqual(await hmacHex(secret, rawBody), String(signature || '').toLowerCase())) return [401, { error: 'bad_signature' }];
+  let ev; try { ev = JSON.parse(rawBody); } catch (e) { return [400, { error: 'bad_json' }]; }
+  const name = ev.meta && ev.meta.event_name;
+  const wid = ev.meta && ev.meta.custom_data && ev.meta.custom_data.wid;
+  const a = (ev.data && ev.data.attributes) || {};
+  const orderId = String((ev.data && ev.data.id) || '');
+  const item = a.first_order_item || {};
+  // المنتج: من رقم النسخة إن ضُبط LEMON_VARIANTS، وإلا من اسم المنتج في Lemon (موقّع وموثوق)
+  const pname = String((item.product_name || '') + ' ' + (item.variant_name || '')).toLowerCase();
+  const product = variantMap()[String(item.variant_id || '')]
+    || (/annual|year|سنة|سنوي/.test(pname) ? 'annual' : /3|three|ثلاث/.test(pname) ? 'day3' : /day|يوم/.test(pname) ? 'day' : null);
+  if (!['order_created', 'order_refunded'].includes(name)) return [200, { ok: true, ignored: name }];
+  if (!product) { await kv(['SET', 'lemon:unmapped:' + orderId, rawBody.slice(0, 4000), 'EX', 90 * 864e2]); return [200, { ok: true, unmapped: true }]; }
+  if (!validWid(wid)) { await kv(['SET', 'lemon:nowallet:' + orderId, JSON.stringify({ product, email: a.user_email || '' }), 'EX', 365 * 864e2]); return [200, { ok: true, no_wallet: true }]; }
+  const w = await getWallet(wid);
+  if (name === 'order_created') {
+    if (a.status && a.status !== 'paid') return [200, { ok: true, pending: a.status }];
+    const oid = 'order:lemon:' + orderId;
+    if (await kv(['EXISTS', oid])) return [200, { ok: true, duplicate: true }];
+    applyProduct(w, product); await setWallet(wid, w);
+    await kv(['SET', oid, JSON.stringify({ wid, product, at: Date.now(), test: !!a.test_mode }), 'EX', 2 * 365 * 864e2]);
+    await kv(['INCR', 'stat:paid:' + product]);
+    return [200, { ok: true }];
+  }
+  // استرجاع: نخصم مدة المنتج من الوصول
+  const rid = 'refund:lemon:' + orderId;
+  if (await kv(['EXISTS', rid])) return [200, { ok: true, duplicate: true }];
+  w.pass = Math.max(Date.now(), (w.pass || 0) - PRODUCTS[product].days * 864e5); await setWallet(wid, w);
+  await kv(['SET', rid, '1', 'EX', 2 * 365 * 864e2]); await kv(['INCR', 'stat:refund:' + product]);
+  return [200, { ok: true, refunded: true }];
 }
 function applyProduct(w, product) {
   const p = PRODUCTS[product]; if (!p) return false;
@@ -292,7 +356,7 @@ async function payHandler(body, ip, res) {
 
   if (body.mode === 'pay_stats') {
     if (!(await verifyOwner(body.token))) return res.status(403).json({ error: 'forbidden' });
-    const keys = ['free', 'blocked'].concat(Object.keys(PRODUCTS).flatMap(t => ['redeem:' + t, 'codes:' + t, 'paid:' + t]));
+    const keys = ['free', 'blocked'].concat(Object.keys(PRODUCTS).flatMap(t => ['redeem:' + t, 'codes:' + t, 'paid:' + t, 'refund:' + t]));
     const vals = (await kv(['MGET'].concat(keys.map(k => 'stat:' + k)))) || [];
     return res.status(200).json(Object.fromEntries(keys.map((k, i) => [k, Number(vals[i]) || 0])));
   }
@@ -683,6 +747,10 @@ export async function onRequest(context) {
   headers['x-forwarded-for'] = request.headers.get('cf-connecting-ip') || headers['x-forwarded-for'] || '';
   if (!headers.host) { try { headers.host = new URL(request.url).host; } catch (e) {} }
   const body = request.method === 'POST' ? await request.text() : '';
+  if (new URL(request.url).searchParams.get('src') === 'lemon' && request.method === 'POST') {
+    const [st, o] = await lemonWebhook(body, request.headers.get('x-signature'));
+    return new Response(JSON.stringify(o), { status: st, headers: { 'content-type': 'application/json' } });
+  }
   let status = 200, out = {};
   const resHeaders = { 'content-type': 'application/json; charset=utf-8' };
   const res = { setHeader(k, v) { resHeaders[k] = v; }, status(c) { status = c; return this; }, json(o) { out = o; return this; } };
