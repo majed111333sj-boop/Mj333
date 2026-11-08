@@ -2396,7 +2396,7 @@ const PRODUCTS = {
     annual: { sar: 79, title: 'سنة كاملة', desc: 'كل الخدمات لمدة 365 يوماً' }
 };
 // روابط الدفع تُضاف بعد اختيار بوابة الدفع؛ {WID} يُستبدل برقم محفظة المستخدم
-const PAY_LINKS = { day: '', day3: '', annual: '' };
+const PAY_LINKS = { day: '', day3: '', annual: '' };   // تأتي تلقائياً من الخادم (متغيرات LEMON_CHECKOUT_*)
 const Wallet = { state: null };
 function walletId() {
     let w = store.get('sd_wallet', null);
@@ -2475,11 +2475,33 @@ function openPayModal(msg) {
     openModal('pay-modal');
 }
 function buyProduct(k) {
-    const link = PAY_LINKS[k];
+    const links = Object.assign({}, PAY_LINKS, (Wallet.state && Wallet.state.links) || {});
+    const link = links[k];
     if (!link) { alert('الدفع الإلكتروني سيتوفر قريباً.\nإذا لديك كود تفعيل، أدخله في الأسفل.'); $('pm-code').focus(); return; }
-    window.open(link.replace('{WID}', encodeURIComponent(walletId())), '_blank');
-    alert('بعد إتمام الدفع ارجع هنا، وسيُفعّل وصولك تلقائياً خلال لحظات.');
-    setTimeout(() => walletRefresh(), 15000);
+    // رقم المحفظة يُرسل مع الطلب، فيُفعَّل الوصول تلقائياً فور الدفع
+    const url = link.replace('{WID}', encodeURIComponent(walletId()))
+        + (link.includes('{WID}') ? '' : (link.includes('?') ? '&' : '?') + 'checkout[custom][wid]=' + encodeURIComponent(walletId()));
+    store.set('sd_pay_pending', { k, at: Date.now() });
+    location.href = url;
+}
+// بعد الرجوع من صفحة الدفع: ننتظر إشعار البوابة ونفعّل تلقائياً
+async function watchPayment() {
+    const pend = store.get('sd_pay_pending', null);
+    const params = new URLSearchParams(location.search);
+    if (params.get('pay') === '1') setTimeout(() => openPayModal(), 600);
+    if (!pend || Date.now() - pend.at > 30 * 60 * 1000) { store.del('sd_pay_pending'); return; }
+    const pb = $('pass-banner');
+    pb.textContent = '⏳ جاري تأكيد الدفع وتفعيل وصولك…'; pb.classList.remove('hidden');
+    for (let i = 0; i < 24; i++) {
+        await walletRefresh();
+        if (passActive()) {
+            store.del('sd_pay_pending');
+            alert('✅ تم الدفع وتفعيل الوصول الكامل!\n' + passText() + '\nشكراً لثقتك 🌟');
+            return;
+        }
+        await sleep(5000);
+    }
+    pb.textContent = '⏳ لم يصل تأكيد الدفع بعد. إذا دفعت فعلاً سيُفعّل خلال دقائق، أعد فتح التطبيق.';
 }
 async function redeemCode() {
     const code = $('pm-code').value.trim().toUpperCase();
@@ -2515,7 +2537,7 @@ async function ownerPayStats() {
     const r = await payApi({ mode: 'pay_stats', token }); if (r.status !== 200 || !r.json) return;
     const s = r.json;
     $('oc-stats').textContent = 'خدمات مجانية: ' + s['free'] + ' • محاولات بعد المجاني: ' + s['blocked']
-        + ' | مدفوعات: ' + ['day', 'day3', 'annual'].map(t => PRODUCTS[t].title + ' ' + s['paid:' + t]).join('، ')
+        + ' | مدفوعات: ' + ['day', 'day3', 'annual'].map(t => PRODUCTS[t].title + ' ' + s['paid:' + t] + (s['refund:' + t] ? ' (مسترجع ' + s['refund:' + t] + ')' : '')).join('، ')
         + ' | أكواد مستخدمة: ' + ['day', 'day3', 'annual'].reduce((a, t) => a + s['redeem:' + t], 0);
 }
 // =====================================================================
@@ -3059,7 +3081,7 @@ function renderOwnerPanel() {
 // 🚀 التشغيل
 // =====================================================================
 window.addEventListener('DOMContentLoaded', () => {
-    kbApplyCache(); kbLoadAuto(); walletRefresh();
+    kbApplyCache(); kbLoadAuto(); walletRefresh().then(watchPayment);
     const mk = $('car-make'); CAR_MAKES.forEach(m => mk.appendChild(el('option', null, m)));
     const yr = $('car-year'), nowY = new Date().getFullYear(); for (let y = nowY + 1; y >= 2005; y--) yr.appendChild(el('option', null, String(y))); yr.appendChild(el('option', null, 'أقدم من 2005')); yr.value = String(nowY - 3);
     ['car-make', 'car-year', 'car-model', 'car-km'].forEach(id => {

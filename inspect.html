@@ -445,8 +445,8 @@ async function unlockInspect() {
         if (r.json) WS = r.json;
     }
     if (unlockedInspect()) { applyInspectLock(); return; }
-    alert('استخدمت خدمتك المجانية.\nلفتح هذا التقرير وكل خدمات التطبيق افتح الوصول الكامل (يوم بـ 9 ر.س، أو 3 أيام بـ 19، أو سنة بـ 79).\nالدفع الإلكتروني سيتوفر قريباً، وإذا لديك كود تفعيل أدخله تحت الزر.');
-    $('ipw-code').focus();
+    if (confirm('استخدمت خدمتك المجانية.\nلفتح هذا التقرير وكل خدمات التطبيق افتح الوصول الكامل (يوم بـ 9 ر.س، أو 3 أيام بـ 19، أو سنة بـ 79).\n\nالانتقال لصفحة الدفع؟ (تقدّمك هنا محفوظ)')) location.href = '/?pay=1';
+    else $('ipw-code').focus();
 }
 async function redeemInspect() {
     const code = $('ipw-code').value.trim().toUpperCase();
