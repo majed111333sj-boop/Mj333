@@ -33,10 +33,52 @@
     <li>الوصول الكامل يشمل: التكلفة والقطع، وما تطلبه من الفني، وفحص القطع، والتقرير PDF والإرسال للورش، والأسعار وتدقيق الفواتير، والفحص قبل الشراء، وعدد غير محدود من الفحوصات خلال المدة.</li>
     <li>تبدأ المدة من لحظة التفعيل، وترتبط بمحفظة جهازك؛ احتفظ برقم محفظتك لنقله لجهاز آخر. أكواد التفعيل تُستخدم مرة واحدة.</li>
     <li>تحذيرات السلامة وأرقام الطوارئ مجانية دائماً.</li>
-    <li>سياسة الاسترجاع: [حدّدها هنا قبل الإطلاق].</li>
+    <li>الدفع الإلكتروني يتم عبر <b>Lemon Squeezy</b> بصفته البائع المسجّل (Merchant of Record)، وقد تظهر في كشف حسابك باسمه.</li>
   </ul>
-  <h2 class="font-black">7. التعديلات</h2>
+
+  <h2 id="refund" class="font-black">7. سياسة الاسترجاع (ضمان الرضا)</h2>
+  <ul class="list-disc pr-5 space-y-1">
+    <li><b>خلل تقني:</b> إذا لم تعمل الخدمة المدفوعة بسبب خلل تقني (مثل عدم ظهور التشخيص أو التقرير)، يحق لك <b>استرجاع كامل المبلغ خلال 7 أيام</b> من الشراء، لأي باقة.</li>
+    <li><b>الباقة السنوية:</b> يحق لك <b>استرجاع كامل المبلغ خلال 3 أيام</b> من الشراء دون الحاجة لذكر سبب.</li>
+    <li><b>باقة اليوم و3 أيام:</b> خدمة رقمية تُفعَّل وتُستهلك فوراً، لذلك لا تُسترجع بعد استخدامها إذا عملت الخدمة بشكل سليم.</li>
+    <li><b>كيف تطلب الاسترجاع:</b> راسلنا على <a class="refund-email text-blue-700 underline" href="#"></a> مع رقم الطلب أو البريد المستخدم في الدفع، ووصف مختصر للمشكلة. نرد خلال 3 أيام عمل.</li>
+    <li>عند قبول الطلب يُعاد المبلغ لنفس وسيلة الدفع خلال 5 إلى 10 أيام عمل حسب البنك، ويُلغى الوصول المرتبط بالطلب تلقائياً.</li>
+  </ul>
+
+  <h2 class="font-black">8. التواصل</h2>
+  <p>للاستفسارات والاسترجاع: <a class="refund-email text-blue-700 underline" href="#"></a></p>
+  <h2 class="font-black">9. التعديلات</h2>
   <p>قد نحدّث هذه الشروط، ويُعد استمرارك في الاستخدام موافقة عليها.</p>
+
+  <hr class="my-6">
+  <section dir="ltr" lang="en" class="text-left space-y-3">
+    <h1 class="text-xl font-black">Terms of Service (English summary)</h1>
+    <h2 class="font-black">Service</h2>
+    <p>Smart Diag (الفاحص الذكي) is an AI-assisted car diagnostics web app. Diagnoses and prices are <b>estimates</b> to help you understand a problem and talk to a workshop; they do not replace an inspection by a qualified mechanic. Safety warnings and emergency numbers are always free.</p>
+    <h2 class="font-black">Paid access</h2>
+    <ul class="list-disc pl-5 space-y-1">
+      <li>Every new user gets one free service (one diagnosis) showing the fault name, severity and safety advice.</li>
+      <li>After that, the app's services require a "Full Access" pass: 1 day (24 hours), 3 days, or 1 year, at the prices shown in the app at checkout.</li>
+      <li>Full Access includes repair cost estimates, parts lists, technician checks, the part-necessity check, PDF reports and sending reports to workshops, price lookup and invoice audit, pre-purchase inspection reports, and unlimited diagnoses during the pass period.</li>
+      <li>The pass starts at activation and is linked to your device wallet; keep your wallet ID to move it to another device. Activation codes are single-use.</li>
+      <li>Payments are processed by <b>Lemon Squeezy</b>, our Merchant of Record.</li>
+    </ul>
+    <h2 id="refund-en" class="font-black">Refund Policy (Satisfaction Guarantee)</h2>
+    <ul class="list-disc pl-5 space-y-1">
+      <li><b>Technical failure:</b> if a paid service did not work because of a technical problem (for example, the diagnosis or report did not load), you are entitled to a <b>full refund within 7 days</b> of purchase, for any pass.</li>
+      <li><b>Annual pass:</b> full refund within <b>3 days</b> of purchase, no questions asked.</li>
+      <li><b>1-day and 3-day passes:</b> these are digital services delivered and consumed immediately, so they are non-refundable once used if the service worked as described.</li>
+      <li><b>How to request:</b> email <a class="refund-email text-blue-700 underline" href="#"></a> with your order number or the email used at checkout, and a short description. We reply within 3 business days.</li>
+      <li>Approved refunds are returned to the original payment method within 5–10 business days depending on your bank, and the related access is revoked automatically.</li>
+    </ul>
+    <h2 class="font-black">Contact</h2>
+    <p>Support and refunds: <a class="refund-email text-blue-700 underline" href="#"></a></p>
+  </section>
 </main>
+<script>
+  // ✉️ بريد الاسترجاع والتواصل: غيّره هنا فقط (سطر واحد) ويتحدّث في كل الصفحة
+  const REFUND_EMAIL = 'majed111333sj@gmail.com';
+  document.querySelectorAll('.refund-email').forEach(a => { a.textContent = REFUND_EMAIL; a.href = 'mailto:' + REFUND_EMAIL + '?subject=' + encodeURIComponent('Refund request / طلب استرجاع'); });
+</script>
 </body>
 </html>
