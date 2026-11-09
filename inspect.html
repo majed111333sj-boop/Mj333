@@ -430,7 +430,7 @@ function applyInspectLock() {
     const locked = !unlockedInspect();
     $('result').classList.toggle('locked', locked);
     $('i-paywall').classList.toggle('hidden', !locked);
-    $('ipw-btn').textContent = WS && WS.freeAvailable ? '🎁 افتح مجاناً (خدمتك المجانية)' : '🔓 افتح كل الخدمات يوماً كاملاً بـ ' + (9 * CC.rate).toLocaleString('en', { maximumFractionDigits: CC.dec }) + ' ' + CC.cur;
+    $('ipw-btn').textContent = WS && WS.freeAvailable ? '🎁 افتح مجاناً (خدمتك المجانية)' : '🔓 افتح كل الخدمات يوماً كاملاً بـ ' + (9.99 * CC.rate).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: Math.max(2, CC.dec || 0) }) + ' ' + CC.cur;
 }
 async function walletRefresh() {
     const r = await payApi({ mode: 'wallet' });
@@ -445,7 +445,7 @@ async function unlockInspect() {
         if (r.json) WS = r.json;
     }
     if (unlockedInspect()) { applyInspectLock(); return; }
-    if (confirm('استخدمت خدمتك المجانية.\nلفتح هذا التقرير وكل خدمات التطبيق افتح الوصول الكامل (يوم بـ 9 ر.س، أو 3 أيام بـ 19، أو سنة بـ 79).\n\nالانتقال لصفحة الدفع؟ (تقدّمك هنا محفوظ)')) location.href = '/?pay=1';
+    if (confirm('استخدمت خدمتك المجانية.\nلفتح هذا التقرير وكل خدمات التطبيق افتح الوصول الكامل (يوم بـ 9.99 ر.س، أو 3 أيام بـ 19.99، أو سنة بـ 79.99).\n\nالانتقال لصفحة الدفع؟ (تقدّمك هنا محفوظ)')) location.href = '/?pay=1';
     else $('ipw-code').focus();
 }
 async function redeemInspect() {

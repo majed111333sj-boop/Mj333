@@ -2391,9 +2391,9 @@ async function providerLogin() {
 const PAYWALL_ON = true;
 // خدمة واحدة مجانية (أول فحص)، ثم وصول كامل لكل الخدمات بالمدة
 const PRODUCTS = {
-    day:    { sar: 9,  title: 'يوم كامل', desc: 'كل الخدمات لمدة 24 ساعة' },
-    day3:   { sar: 19, title: '3 أيام', desc: 'كل الخدمات لمدة 72 ساعة • وفّر 8 ر.س', badge: 'الأكثر طلباً' },
-    annual: { sar: 79, title: 'سنة كاملة', desc: 'كل الخدمات لمدة 365 يوماً' }
+    day:    { sar: 9.99,  title: 'يوم كامل', desc: 'كل الخدمات لمدة 24 ساعة' },
+    day3:   { sar: 19.99, title: '3 أيام', desc: 'كل الخدمات لمدة 72 ساعة • وفّر 10 ر.س', badge: 'الأكثر طلباً' },
+    annual: { sar: 79.99, title: 'سنة كاملة', desc: 'كل الخدمات لمدة 365 يوماً' }
 };
 // روابط الدفع تُضاف بعد اختيار بوابة الدفع؛ {WID} يُستبدل برقم محفظة المستخدم
 const PAY_LINKS = { day: '', day3: '', annual: '' };   // تأتي تلقائياً من الخادم (متغيرات LEMON_CHECKOUT_*)
@@ -2407,7 +2407,7 @@ function walletId() {
     }
     return w;
 }
-const priceText = sar => { const c = C(); return (sar * c.rate).toLocaleString('en', { maximumFractionDigits: c.dec ?? 0 }) + ' ' + c.cur; };
+const priceText = sar => { const c = C(); const v = sar * c.rate; return v.toLocaleString('en', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: Math.max(2, c.dec ?? 0) }) + ' ' + c.cur; };
 async function payApi(body) {
     if (location.protocol === 'file:') return { status: 0, json: null };
     try {
