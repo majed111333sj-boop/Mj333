@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F172A">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="الفاحص الذكي">
+    <meta property="og:title" content="أدوات فحص السيارة بالجوال">
+    <meta property="og:description" content="الكاميرا، وصوت المحرك، والاهتزاز، والكفرات، وسماكة الدهان.">
+    <meta property="og:image" content="https://alfahis.pages.dev/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="https://alfahis.pages.dev/tools.html">
+    <meta name="twitter:card" content="summary_large_image">
+<title>أدوات الفحص | الفاحص الذكي</title>
+<script src="js/00-i18n.js?v=3.1.0"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F4F6F9;--card:#FFFFFF;--line:#E2E8F0;--ink:#0F172A;--muted:#475569;--green:#047857;--green-d:#064E3B;--green-l:#ECFDF5;--navy:#0F172A;--navy-2:#1E293B;--primary:#1D4ED8;--primary-d:#1E3A8A;--primary-l:#EFF6FF;--amber:#F59E0B;--amber-l:#FFFBEB;--red:#991B1B;--red-l:#FEE2E2;--blue:#1D4ED8;--blue-l:#EFF6FF}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;font-size:15px;line-height:1.7;padding-bottom:env(safe-area-inset-bottom,0px)}
+header{position:sticky;top:0;z-index:10;background:var(--navy);color:#fff;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:10px}
+header a,header button.icon{width:44px;height:44px;border-radius:12px;background:var(--navy-2);color:#fff;display:flex;align-items:center;justify-content:center;border:0;text-decoration:none;font-size:20px;flex:none}
+header .t{display:flex;flex-direction:column;line-height:1.35}
+header .t b{font-size:17px}header .t span{font-size:13px;color:#93C5FD}
+main{max-width:560px;margin:0 auto;padding:14px;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.h{font-size:16px;font-weight:700;margin:0 0 6px}
+.muted{color:var(--muted);font-size:14px}
+.btn{height:50px;border-radius:14px;border:0;font-family:inherit;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;cursor:pointer;text-decoration:none}
+.btn.g{background:var(--primary);color:#fff}.btn.w{background:#fff;color:var(--ink);border:1px solid #CBD5E1}.btn.a{background:var(--amber);color:var(--ink)}
+.btn:disabled{opacity:.55}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 14px;border-radius:22px;border:1px solid #CBD5E1;background:#fff;font-family:inherit;font-size:15px;color:var(--ink);cursor:pointer}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700}
+.tag{display:inline-flex;align-items:center;border-radius:8px;padding:2px 10px;font-size:13px;font-weight:700}
+.tag.ok{background:var(--green-l);color:#065F46}.tag.att{background:#FEF3C7;color:#92400E}.tag.bad{background:var(--red-l);color:var(--red)}.tag.n{background:#E2E8F0;color:#1E293B}
+.note{background:var(--blue-l);border:1px solid #BFDBFE;border-radius:14px;padding:12px;font-size:14px;color:#1E3A8A}
+.warn{background:var(--amber-l);border:1px solid #FCD34D;border-radius:14px;padding:12px;font-size:14px;color:#78350F}
+.danger{background:var(--red-l);border:1px solid #FECACA;border-radius:14px;padding:12px;font-size:14px;color:var(--red)}
+.hidden{display:none!important}
+input.f{width:100%;height:46px;border:1px solid #CBD5E1;border-radius:12px;padding:0 12px;font-family:inherit;font-size:16px;background:#F8FAFC}
+textarea.f{width:100%;border:1px solid #CBD5E1;border-radius:12px;padding:10px 12px;font-family:inherit;font-size:15px;background:#F8FAFC;resize:none}
+/* الكاميرا */
+.cam{position:relative;background:#05070D;border-radius:18px;overflow:hidden;aspect-ratio:3/4}
+.cam video{width:100%;height:100%;object-fit:cover;display:block}
+.cam .frame{position:absolute;inset:8% 6%;border:2px dashed #60A5FA;border-radius:14px;pointer-events:none}
+.cam .step{position:absolute;top:10px;right:10px;left:10px;background:rgba(15,23,42,.8);color:#fff;border-radius:12px;padding:8px 12px;font-size:15px}
+.cam .q{position:absolute;bottom:10px;right:10px;left:10px;display:flex;flex-wrap:wrap;gap:6px}
+.cam .q span{background:rgba(6,78,59,.9);color:#A7F3D0;border-radius:14px;padding:2px 10px;font-size:13px;font-weight:600}
+.cam .q span.bad{background:rgba(120,53,15,.92);color:#FDE68A}
+.shutter{width:76px;height:76px;border-radius:50%;border:5px solid var(--primary);background:#fff;flex:none !important;cursor:pointer}
+.dots{display:grid;gap:4px}.dots span{height:8px;border-radius:4px;background:#CBD5E1}.dots span.done{background:#34D399}.dots span.now{background:#60A5FA}
+.thumbs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.thumbs div{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#E2E8F0}
+.thumbs img{width:100%;height:100%;object-fit:cover}
+.thumbs small{position:absolute;bottom:0;right:0;left:0;background:rgba(15,23,42,.7);color:#fff;font-size:11px;text-align:center}
+.find{display:flex;gap:12px;align-items:flex-start}
+.find img{width:84px;height:84px;object-fit:cover;border-radius:10px;flex:none;background:#E2E8F0}
+.bars{height:90px;display:flex;align-items:flex-end;gap:3px}
+.bars span{flex:1;background:#64748B;border-radius:3px 3px 0 0;min-height:2px}
+.bars span.pk{background:var(--primary)}
+.big{font-size:44px;font-weight:700;line-height:1;text-align:center}
+.metric{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.metric div{background:#F8FAFC;border-radius:12px;padding:10px}
+.metric b{display:block;font-size:20px}
+.meter{height:10px;border-radius:5px;background:#E2E8F0;overflow:hidden}.meter i{display:block;height:100%;background:var(--primary);width:0}
+</style>
+</head>
+<body>
+<header>
+  <a id="back" href="/" aria-label="رجوع">→</a>
+  <div class="t"><b id="title">أدوات الفحص</b><span id="subtitle"></span></div>
+</header>
+
+<main>
+  <div id="flow-banner" class="note hidden"></div>
+  <div id="pay-banner" class="warn hidden"></div>
+
+  <!-- اختيار الأداة -->
+  <section id="v-pick" class="hidden"></section>
+
+  <!-- سيارتك (للأدوات المستقلة) -->
+  <section id="car-box" class="card hidden">
+    <p class="h">سيارتك</p>
+    <div class="row"><input id="car" class="f" maxlength="60" placeholder="الشركة والموديل والسنة، مثل: كامري 2020"><input id="km" class="f" maxlength="9" inputmode="numeric" placeholder="الممشى كم" style="flex:.6"></div>
+  </section>
+
+  <!-- ===== الكاميرا ===== -->
+  <section id="v-cam" class="hidden" style="display:flex;flex-direction:column;gap:12px">
+    <div id="cam-kinds" class="card hidden"><p class="h">وش تبي تفحص؟</p><div class="chips" id="kind-chips"></div></div>
+    <div class="card" id="cam-intro"></div>
+    <div id="cam-live" class="hidden" style="display:flex;flex-direction:column;gap:10px">
+      <div class="cam"><video id="video" playsinline muted autoplay></video><div class="frame"></div><div class="step" id="step-label"></div><div class="q" id="quality"></div></div>
+      <div class="dots" id="step-dots"></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn w" id="skip-btn" style="height:46px;font-size:15px">تخطَّ</button>
+        <button class="shutter" id="shutter" aria-label="التقاط"></button>
+        <button class="btn g" id="done-btn" style="height:46px;font-size:15px">تحليل</button>
+      </div>
+    </div>
+    <div class="card" id="cam-start-box">
+      <button class="btn g" id="cam-start">ابدأ التصوير الموجّه</button>
+      <label class="btn w" style="margin-top:8px;cursor:pointer">اختر صوراً أو فيديو من الجوال<input id="file" type="file" accept="image/*,video/*" multiple class="hidden"></label>
+    </div>
+    <div class="card hidden" id="shots-box"><p class="h">اللقطات (<span id="shot-count">0</span>)</p><p class="muted" style="margin:0 0 8px">اضغط أي لقطة لتغطية اللوحة أو حذفها قبل الإرسال.</p><div class="thumbs" id="thumbs"></div></div>
+    <div class="card hidden" id="notes-box"><p class="h">ملاحظاتك (اختياري)</p><textarea id="cam-notes" class="f" rows="2" placeholder="أي شيء لاحظته بنفسك"></textarea></div>
+  </section>
+
+  <!-- ===== الاهتزاز ===== -->
+  <section id="v-vib" class="hidden" style="display:flex;flex-direction:column;gap:12px">
+    <div class="card"><p class="h">نوع القياس</p><div class="chips" id="vib-modes"></div></div>
+    <div class="card" id="vib-intro"></div>
+    <div class="card hidden" id="vib-live">
+      <p class="h" id="vib-phase"></p>
+      <div class="big" id="vib-count">0</div>
+      <div class="meter" style="margin-top:12px"><i id="vib-meter"></i></div>
+      <p class="muted" id="vib-rate" style="margin:8px 0 0"></p>
+    </div>
+    <button class="btn g" id="vib-start">ابدأ القياس</button>
+  </section>
+
+  <!-- ===== صوت المحرك ===== -->
+  <section id="v-snd" class="hidden" style="display:flex;flex-direction:column;gap:12px">
+    <div class="card"><p class="h">متى تسجّل؟</p><div class="chips" id="snd-ctx"></div></div>
+    <div class="card" id="snd-intro"><p class="h">كيف تسجّل؟</p><p class="muted" style="margin:0">افتح الكبوت، وقرّب الجوال من المحرك نحو 30 سم (بعيداً عن المروحة والسير)، وثبّته 8 ثوانٍ.</p></div>
+    <div class="card hidden" id="snd-live"><p class="h">جاري التسجيل…</p><div class="big" id="snd-count">8</div><div class="meter" style="margin-top:12px"><i id="snd-meter"></i></div></div>
+    <button class="btn g" id="snd-start">ابدأ التسجيل</button>
+  </section>
+
+  <!-- ===== سماكة الدهان ===== -->
+  <section id="v-paint" class="hidden" style="display:flex;flex-direction:column;gap:12px">
+    <div class="card">
+      <p class="h">كيف تقيس؟</p>
+      <p style="margin:0">استخدم جهاز قياس سماكة الدهان (يُباع في محلات قطع الغيار والمتاجر الإلكترونية). ضعه على منتصف كل قطعة واكتب الرقم بالميكرون. الصدامات البلاستيكية لا يقرؤها أغلب الأجهزة، فاتركها فارغة.</p>
+    </div>
+    <div class="card"><div id="paint-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px"></div></div>
+    <button class="btn g" id="paint-go">حلّل القراءات</button>
+  </section>
+
+  <!-- ===== النتيجة ===== -->
+  <section id="v-res" class="hidden" style="display:flex;flex-direction:column;gap:12px"></section>
+</main>
+
+<div id="mask" class="hidden" style="position:fixed;inset:0;background:rgba(5,7,13,.92);z-index:60;display:flex;flex-direction:column;padding:12px;gap:10px">
+  <p style="color:#fff;margin:0;font-size:15px">اسحب بإصبعك فوق اللوحة أو أي معلومة شخصية لتغطيتها بالأسود.</p>
+  <canvas id="mask-cv" style="width:100%;max-height:70vh;object-fit:contain;touch-action:none;border-radius:12px;background:#111"></canvas>
+  <div class="row"><button class="btn g" id="mask-save">حفظ</button><button class="btn w" id="mask-del">حذف اللقطة</button><button class="btn w" id="mask-close">إغلاق</button></div>
+</div>
+<script>
+// ---------- الإصدار وتسجيل الأخطاء: أي خطأ عند المستخدم يصل للوحة الإدارة (3 كحد أقصى لكل جلسة) ----------
+const APP_VERSION = '3.1.0';
+(() => {
+    let n = 0;
+    const send = m => { if (n++ >= 3 || location.protocol === 'file:') return; try { fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ mode: 'clienterr', msg: String(m).slice(0, 200), page: location.pathname.slice(-20), ver: APP_VERSION, ua: navigator.userAgent.slice(0, 60) }) }).catch(() => {}); } catch (e) {} };
+    window.addEventListener('error', e => send((e.message || 'error') + ' @' + (e.lineno || 0)));
+    window.addEventListener('unhandledrejection', e => send('promise: ' + ((e.reason && e.reason.message) || e.reason)));
+    document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('p'); v.textContent = 'الإصدار ' + APP_VERSION; v.style.cssText = 'text-align:center;font-size:11px;color:#94A3B8;margin:14px 0 90px'; (document.querySelector('main') || document.body).appendChild(v); });
+})();
+// ---------- نسخة تجريبية + "أبلغ عن مشكلة" ----------
+window.reportIssue = async function (ctx) {
+    const text = prompt('وش المشكلة اللي واجهتك؟ (نقرأ كل بلاغ ونصلحه)');
+    if (!text || text.trim().length < 3) return;
+    const contact = prompt('رقم واتساب أو بريد للرد عليك (اختياري)') || '';
+    try {
+        const r = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'issue', text: text.trim(), contact: contact.trim(), page: location.pathname.slice(-20), ver: APP_VERSION, ctx: String(ctx || '').slice(0, 200) }) });
+        alert(r.ok ? 'وصلنا بلاغك، شكراً لك. سنعمل عليه بأسرع وقت.' : 'تعذر الإرسال الآن، حاول بعد قليل.');
+    } catch (e) { alert('تعذر الإرسال الآن، حاول بعد قليل.'); }
+};
+document.addEventListener('DOMContentLoaded', () => {
+    const h = document.querySelector('header h1, header .t b, header > b');
+    if (h && !document.getElementById('beta-badge')) {
+        const b = document.createElement('span'); b.id = 'beta-badge'; b.textContent = 'نسخة تجريبية';
+        b.style.cssText = 'display:inline-block;margin-inline-start:6px;font-size:11px;font-weight:700;color:#0F172A;background:#FCD34D;border-radius:6px;padding:1px 7px;vertical-align:middle;line-height:1.6';
+        h.appendChild(b);
+    }
+    const host = document.querySelector('main') || document.body;
+    const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = '⚠️ أبلغ عن مشكلة';
+    btn.style.cssText = 'display:block;margin:18px auto 0;min-height:44px;padding:0 18px;border-radius:12px;border:1px solid #CBD5E1;background:#fff;color:#0F172A;font:inherit;font-size:14px;font-weight:600;cursor:pointer';
+    btn.onclick = () => window.reportIssue('أسفل الصفحة');
+    host.appendChild(btn);
+});
+
+
+// =====================================================================
+// أدوات الفحص: كاميرا موجّهة، وتحليل صوت المحرك، وقياس الاهتزاز
+// تعمل مستقلة، أو كمرحلة من الفحص الكامل قبل الشراء (inspect.html)
+// =====================================================================
+const $ = id => document.getElementById(id);
+const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const P = new URLSearchParams(location.search);
+const STAGE = parseInt(P.get('stage')) || 0;
+const TK = P.get('tk') || '';
+const FLOW = !!STAGE && /^[a-z0-9]{4,40}$/.test(P.get('insp') || '') && TK.length >= 10;
+const INSP = FLOW ? P.get('insp') : null;
+const REMOTE = FLOW && P.get('remote') === '1';   // مساعد عن بعد: تصوير مباشر من الكاميرا فقط
+let FLOW_CAR = { car: '', km: '', year: '' };
+let TOOL = P.get('t') || '';
+
+// ---------- المحفظة والدفع (نفس نظام التطبيق) ----------
+function walletId() {
+    let w = store.get('sd_wallet', null);
+    if (!w || !/^w_[a-z0-9]{12,24}$/.test(w)) {
+        const a = new Uint8Array(12); crypto.getRandomValues(a);
+        w = 'w_' + Array.from(a, b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('') + Date.now().toString(36).slice(-4);
+        store.set('sd_wallet', w);
+    }
+    return w;
+}
+// كل استخدام لأداة مستقلة = خدمة؛ وكل الفحص الكامل = خدمة واحدة
+const DID = FLOW ? ('i' + INSP).slice(0, 40) : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6));
+let WS = null;
+async function api(body, ms) {
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), ms || 30000);
+    try {
+        const r = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal, body: JSON.stringify(Object.assign({ wid: walletId(), did: DID }, FLOW ? { insp: INSP, tk: TK } : {}, body)) });
+        return { status: r.status, json: await r.json().catch(() => null) };
+    } catch (e) { return { status: 0, json: null }; }
+    finally { clearTimeout(t); }
+}
+const passActive = () => !!(WS && WS.passUntil > Date.now());
+// الأدوات المستقلة خارج باقات اليوم والأسبوع: الخدمة المجانية، أو باقة الأدوات، أو داخل فحص مستعملة مدفوع
+function canUse() { return FLOW || !WS || WS.offline || WS.freeAvailable || (WS.freeDid && WS.freeDid === DID) || (WS.toolUses || 0) > 0; }
+function payNeeded() {
+    if (FLOW) { alert('هذا الفحص غير مفعّل أو انتهت صلاحيته. اطلب من صاحب الفحص رابطاً جديداً.'); return; }
+    if (confirm('الأدوات المستقلة تحتاج «باقة الأدوات»: 5 استخدامات بـ ' + ((window.SD && SD.price('tools')) || '14.99 ر.س') + '.\n\nالانتقال لصفحة الدفع؟')) location.href = '/?pay=1';
+}
+async function loadWallet() {
+    const r = await api({ mode: 'wallet' }, 10000);
+    WS = r.status === 200 && r.json ? r.json : (r.status === 503 || r.status === 0 ? { offline: true } : null);
+    const pb = $('pay-banner');
+    if (WS && !canUse()) { pb.textContent = 'استخدمت خدمتك المجانية. الأدوات المستقلة ضمن «باقة الأدوات» (5 استخدامات بـ ' + ((window.SD && SD.price('tools')) || '14.99 ر.س') + ').'; pb.classList.remove('hidden'); }
+    else if (WS && !FLOW && !WS.freeAvailable && WS.toolUses > 0) { pb.textContent = 'رصيد الأدوات: ' + WS.toolUses + ' استخدامات.'; pb.className = 'note'; }
+}
+
+// ---------- الفحص الكامل: حفظ النتيجة في مرحلتها ----------
+function carCtx() {
+    if (FLOW) return { car: FLOW_CAR.car, km: FLOW_CAR.km };
+    return { car: $('car').value.trim(), km: $('km').value.trim() };
+}
+// النتيجة تُحفظ في الفحص على الخادم، فتصل للمشتري حتى لو صوّرها مساعد عن بعد من جوال آخر
+async function saveToFlow(key, entry) {
+    if (!FLOW) return;
+    const r = await api({ mode: 'insp_save', id: INSP, op: 'tool', stage: STAGE, key, entry }, 15000);
+    if (r.status !== 200) alert('تعذر حفظ النتيجة في الفحص الآن. تأكد من الإنترنت ثم أعد الإرسال.');
+}
+function finishButtons(box) {
+    const rb = el('button', 'btn w', '⚠️ النتيجة غير صحيحة؟ أبلغنا'); rb.style.cssText = 'height:44px;font-size:14px;color:#991B1B'; rb.onclick = () => window.reportIssue('أداة: ' + (TOOL || '') + (kind ? '/' + kind : '')); box.appendChild(rb);
+    if (FLOW) { const a = el('a', 'btn g', 'رجوع للفحص الكامل'); a.href = REMOTE ? 'inspect.html?join=' + INSP + '&tk=' + encodeURIComponent(TK) : 'inspect.html'; box.appendChild(a); }
+    else { const a = el('a', 'btn w', 'أداة أخرى'); a.href = 'tools.html'; box.appendChild(a); }
+}
+function shareText(text) {
+    const url = 'https://wa.me/?text=' + encodeURIComponent(text + '\n\n— من تطبيق الفاحص الذكي ' + location.origin);
+    window.open(url, '_blank');
+}
+
+// =====================================================================
+// 📷 الكاميرا
+// =====================================================================
+const KINDS = {
+    exterior: { name: 'الهيكل الخارجي 360°', steps: ['الأمام', 'الأمام من اليمين', 'الجانب الأيمن', 'الخلف من اليمين', 'الخلف', 'الخلف من اليسار', 'الجانب الأيسر', 'الأمام من اليسار'],
+        tip: 'صوّر في ضوء النهار وفي الظل؛ الشمس المباشرة تخفي فروق الدهان. ابتعد مترين حتى تظهر القطعة كاملة.', limit: 'الكاميرا تكشف الفروق الظاهرة فقط؛ سماكة الدهان تحتاج جهاز قياس، والشاصيه يحتاج رفع السيارة.' },
+    tires: { name: 'الكفرات', steps: ['الكفر الأمامي الأيمن', 'الكفر الخلفي الأيمن', 'الكفر الخلفي الأيسر', 'الكفر الأمامي الأيسر', 'رقم DOT قريب (4 أرقام على جانب الكفر)'],
+        tip: 'اجعل النقشة والجانب ظاهرين في كل صورة. رقم DOT محفور على جانب الكفر، صوّره قريباً وبوضوح.', limit: 'عمق النقشة تقديري من الصورة؛ للدقة استخدم مقياس العمق أو عملة معدنية.' },
+    engine: { name: 'حجرة المحرك', steps: ['نظرة عامة على المحرك', 'الجهة اليمنى', 'الجهة اليسرى', 'خزان ماء الرديتر', 'السيور والخراطيم'],
+        tip: 'افتح الكبوت والمحرك بارد. استخدم فلاش الجوال للأماكن المظلمة.', limit: 'بعض التسريبات لا تظهر إلا والمحرك حار أو من أسفل السيارة.' },
+    interior: { name: 'المقصورة', steps: ['الدركسون', 'مقعد السائق', 'الدواسات', 'العداد', 'الأرضية تحت المقاعد'],
+        tip: 'صوّر بإضاءة جيدة. تآكل الدركسون والدواسات يكشف الممشى الحقيقي.', limit: 'تقدير التلاعب بالعداد مؤشر وليس دليلاً قاطعاً.' },
+    lights: { name: 'لمبات الطبلون', steps: ['الطبلون عند تشغيل المفتاح (قبل تشغيل المحرك)', 'الطبلون بعد تشغيل المحرك'],
+        tip: 'الطبيعي أن تضيء معظم اللمبات عند تشغيل المفتاح ثم تنطفئ بعد تشغيل المحرك.', limit: 'معنى اللمبة قد يختلف قليلاً بين الشركات؛ راجع دليل السيارة عند الشك.' },
+    vin: { name: 'رقم الهيكل', steps: ['رقم الهيكل أسفل الزجاج الأمامي', 'رقم الهيكل على إطار باب السائق (اختياري)'],
+        tip: 'صوّر الرقم من السيارة فقط، وليس من الاستمارة (فيها بيانات البائع). اقترب حتى يملأ الرقم الصورة.', limit: 'سنة الصنع من الخانة العاشرة تنطبق على أغلب الشركات وليس كلها.' },
+    battery: { name: 'البطارية', steps: ['ملصق أو ختم تاريخ البطارية', 'أقطاب البطارية'],
+        tip: 'التاريخ غالباً على ملصق أعلى البطارية أو محفور على جانبها.', limit: 'عمر البطارية تقديري؛ الفحص الدقيق بجهاز قياس البطارية.' },
+    glass: { name: 'تواريخ الزجاج والأحزمة', steps: ['الزجاج الأمامي (ركن العلامة)', 'زجاج الباب الأمامي الأيمن', 'زجاج الباب الأمامي الأيسر', 'الزجاج الخلفي', 'ملصق حزام السائق', 'ملصق حزام الراكب'],
+        tip: 'رمز السنة صغير في ركن كل زجاج، وملصق الحزام عند أسفله. اقترب حتى يكون الرمز واضحاً.', limit: 'قطعة أحدث من السيارة تعني غالباً استبدالاً، والسبب قد يكون حادثاً أو كسراً عادياً.' },
+    oil: { name: 'ملصق تغيير الزيت', steps: ['ملصق تغيير الزيت (الزجاج أو إطار الباب)'],
+        tip: 'غالباً أعلى يسار الزجاج الأمامي أو على إطار باب السائق.', limit: 'غياب الملصق لا يعني إهمالاً؛ اطلب فواتير الصيانة.' },
+    smoke: { name: 'دخان العادم (تشغيل بارد)', steps: ['العادم عند أول تشغيل', 'بعد 30 ثانية', 'بعد دعسة خفيفة'],
+        tip: 'الأفضل أن يكون المحرك بارداً تماماً (لم يُشغّل منذ ساعات). اطلب من البائع ألا يشغّلها قبل وصولك.', limit: 'البخار الخفيف في الصباح البارد طبيعي ويختفي خلال دقيقة.' },
+    under: { name: 'أسفل السيارة', steps: ['الأرض تحت المحرك', 'تحت منتصف السيارة', 'تحت الخلف'],
+        tip: 'ابحث عن بقع على الأرض بعد وقوف السيارة. استخدم الفلاش.', limit: 'الشاصيه الكامل يحتاج رفع السيارة في ورشة.' },
+    general: { name: 'فحص عام', steps: ['لقطة 1', 'لقطة 2', 'لقطة 3', 'لقطة 4'], tip: 'صوّر الجزء الذي تشك فيه بوضوح ومن قريب.', limit: 'التحليل يعتمد على وضوح الصور.' }
+};
+const PICKABLE = ['exterior', 'glass', 'engine', 'battery', 'interior', 'oil', 'under', 'general'];
+let kind = null, shots = [], stepI = 0, stream = null;
+
+function selectKind(k) {
+    kind = k; shots = []; stepI = 0; stopCam();
+    document.querySelectorAll('#kind-chips .chip').forEach(c => c.classList.toggle('on', c.dataset.k === k));
+    const K = KINDS[k];
+    $('subtitle').textContent = K.name;
+    const intro = $('cam-intro'); intro.innerHTML = '';
+    intro.appendChild(el('p', 'h', 'خطوات التصوير (' + K.steps.length + ')'));
+    const ol = el('ol'); ol.style.cssText = 'margin:0;padding-inline-start:20px;font-size:15px';
+    K.steps.forEach(s => ol.appendChild(el('li', null, s))); intro.appendChild(ol);
+    const tip = el('p', 'muted', '💡 ' + K.tip); tip.style.margin = '8px 0 0'; intro.appendChild(tip);
+    renderShots();
+}
+function consentOk() {
+    if (store.get('sd_cam_ok', false)) return true;
+    if (!confirm('الصور تُرسل للتحليل ثم تُحذف ولا نحفظها.\nإن كانت السيارة لغيرك فاستأذن صاحبها قبل التصوير، وتجنّب تصوير الأوراق والأشخاص.\n\nموافق؟')) return false;
+    store.set('sd_cam_ok', true); return true;
+}
+async function startCam() {
+    if (WS && !canUse()) return payNeeded();
+    if (!consentOk()) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { alert('المتصفح لا يدعم الكاميرا هنا. اختر صوراً من الجوال بدلاً من ذلك.'); return; }
+    try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1440 } }, audio: false }); }
+    catch (e) { alert('لم يُسمح بالكاميرا. فعّل الإذن من إعدادات المتصفح، أو اختر صوراً من الجوال.'); return; }
+    $('video').srcObject = stream;
+    $('cam-live').classList.remove('hidden'); $('cam-start-box').classList.add('hidden'); $('cam-intro').classList.add('hidden'); $('cam-kinds').classList.add('hidden');
+    renderStep(); liveQuality();
+}
+function stopCam() { if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; } }
+function renderStep() {
+    const K = KINDS[kind];
+    $('step-label').textContent = stepI < K.steps.length ? ('(' + (stepI + 1) + '/' + K.steps.length + ') صوّر: ' + K.steps[stepI]) : 'اكتملت الخطوات، اضغط «تحليل» أو التقط لقطة إضافية';
+    const d = $('step-dots'); d.innerHTML = ''; d.style.gridTemplateColumns = 'repeat(' + K.steps.length + ',minmax(0,1fr))';
+    K.steps.forEach((s, i) => d.appendChild(el('span', i < stepI ? 'done' : i === stepI ? 'now' : '')));
+}
+// جودة اللقطة: الإضاءة والوضوح (تباين لابلاس)
+function quality(canvas) {
+    const w = 128, h = Math.round(128 * canvas.height / canvas.width);
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x = c.getContext('2d'); x.drawImage(canvas, 0, 0, w, h);
+    const d = x.getImageData(0, 0, w, h).data, g = new Float32Array(w * h);
+    let sum = 0;
+    for (let i = 0; i < w * h; i++) { g[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]; sum += g[i]; }
+    const mean = sum / (w * h);
+    let lap = 0, lap2 = 0, n = 0;
+    for (let y = 1; y < h - 1; y++) for (let xx = 1; xx < w - 1; xx++) {
+        const i = y * w + xx, v = g[i - 1] + g[i + 1] + g[i - w] + g[i + w] - 4 * g[i];
+        lap += v; lap2 += v * v; n++;
+    }
+    const varL = lap2 / n - (lap / n) ** 2;
+    return { mean, sharp: varL, dark: mean < 45, bright: mean > 225, blurry: varL < 30 };
+}
+function grab(src, maxSide) {
+    const vw = src.videoWidth || src.naturalWidth || src.width, vh = src.videoHeight || src.naturalHeight || src.height;
+    const sc = Math.min(1, (maxSide || 800) / Math.max(vw, vh));
+    const c = document.createElement('canvas'); c.width = Math.round(vw * sc); c.height = Math.round(vh * sc);
+    c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+    return c;
+}
+let qTimer = null;
+function liveQuality() {
+    clearInterval(qTimer);
+    qTimer = setInterval(() => {
+        const v = $('video'); if (!stream || !v.videoWidth) return;
+        const q = quality(grab(v, 256));
+        const box = $('quality'); box.innerHTML = '';
+        box.appendChild(el('span', q.dark || q.bright ? 'bad' : '', q.dark ? 'الإضاءة ضعيفة' : q.bright ? 'انعكاس قوي' : 'الإضاءة جيدة ✓'));
+        box.appendChild(el('span', q.blurry ? 'bad' : '', q.blurry ? 'ثبّت الجوال' : 'الوضوح جيد ✓'));
+    }, 700);
+}
+function addShot(canvas, label) {
+    const q = quality(canvas);
+    shots.push({ data: canvas.toDataURL('image/jpeg', 0.6), label, q, live: !!stream });
+    renderShots();
+    return q;
+}
+function renderShots() {
+    $('shots-box').classList.toggle('hidden', !shots.length);
+    $('notes-box').classList.toggle('hidden', !shots.length);
+    $('shot-count').textContent = shots.length;
+    const t = $('thumbs'); t.innerHTML = '';
+    shots.forEach((s, i) => {
+        const d = el('div'); const im = el('img'); im.src = s.data; im.alt = s.label; d.appendChild(im);
+        d.appendChild(el('small', null, (s.q.blurry || s.q.dark ? '⚠️ ' : '') + s.label)); t.appendChild(d);
+        d.onclick = () => openMask(i);
+    });
+}
+// محرر بسيط: يسحب المستخدم مستطيلاً أسود فوق اللوحة أو أي معلومة شخصية قبل الإرسال
+function openMask(i) {
+    const shot = shots[i], m = $('mask'), cv = $('mask-cv'), cx = cv.getContext('2d'), img = new Image();
+    img.onload = () => {
+        cv.width = img.width; cv.height = img.height; cx.drawImage(img, 0, 0);
+        let st = null;
+        const pt = e => { const r = cv.getBoundingClientRect(), t = e.touches ? e.touches[0] : e; return { x: (t.clientX - r.left) * cv.width / r.width, y: (t.clientY - r.top) * cv.height / r.height }; };
+        cv.onpointerdown = e => { st = pt(e); cv.setPointerCapture(e.pointerId); };
+        cv.onpointerup = e => { if (!st) return; const en = pt(e); cx.fillStyle = '#000'; cx.fillRect(Math.min(st.x, en.x), Math.min(st.y, en.y), Math.abs(en.x - st.x), Math.abs(en.y - st.y)); st = null; };
+        m.classList.remove('hidden');
+    };
+    img.src = shot.data;
+    $('mask-save').onclick = () => { shot.data = cv.toDataURL('image/jpeg', 0.6); m.classList.add('hidden'); renderShots(); };
+    $('mask-del').onclick = () => { shots.splice(i, 1); m.classList.add('hidden'); renderShots(); };
+    $('mask-close').onclick = () => m.classList.add('hidden');
+}
+function shutter() {
+    const K = KINDS[kind], v = $('video'); if (!v.videoWidth) return;
+    if (shots.length >= 8) { alert('الحد 8 لقطات للتحليل. اضغط «تحليل».'); return; }
+    const label = K.steps[stepI] || ('إضافية ' + (shots.length + 1));
+    const q = addShot(grab(v, 800), label);
+    if ((q.blurry || q.dark) && !confirm((q.blurry ? 'اللقطة غير واضحة (مهزوزة).' : 'الإضاءة ضعيفة.') + '\nاحتفظ بها؟ (إلغاء = أعد التصوير)')) { shots.pop(); renderShots(); return; }
+    if (navigator.vibrate) navigator.vibrate(30);
+    if (stepI < K.steps.length) stepI++;
+    renderStep();
+}
+// الصور أو الفيديو من الجوال: من الفيديو نستخرج أوضح اللقطات
+async function fromFiles(files) {
+    if (WS && !canUse()) return payNeeded();
+    if (!consentOk()) return;
+    for (const f of Array.from(files)) {
+        if (shots.length >= 8) break;
+        if (f.type.startsWith('image/')) {
+            const img = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = URL.createObjectURL(f); });
+            if (img) addShot(grab(img, 800), KINDS[kind].steps[shots.length] || ('صورة ' + (shots.length + 1)));
+        } else if (f.type.startsWith('video/')) {
+            await framesFromVideo(f);
+        }
+    }
+}
+async function framesFromVideo(file) {
+    const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = URL.createObjectURL(file);
+    await new Promise(r => { v.onloadedmetadata = r; v.onerror = r; });
+    if (!v.duration || !isFinite(v.duration)) { alert('تعذر قراءة الفيديو. جرّب صوراً.'); return; }
+    const N = Math.min(24, Math.max(6, Math.round(v.duration * 1.5))), cands = [];
+    for (let i = 0; i < N; i++) {
+        v.currentTime = (v.duration * (i + 0.5)) / N;
+        await new Promise(r => { v.onseeked = r; setTimeout(r, 1500); });
+        const c = grab(v, 800), q = quality(c);
+        cands.push({ c, q, t: v.currentTime });
+    }
+    // نختار الأوضح من كل جزء من الفيديو حتى تغطي اللقطات السيارة كاملة
+    const need = Math.min(8 - shots.length, 8), per = Math.ceil(cands.length / need), picked = [];
+    for (let i = 0; i < cands.length; i += per) {
+        const grp = cands.slice(i, i + per).filter(x => !x.q.dark);
+        if (grp.length) picked.push(grp.sort((a, b) => b.q.sharp - a.q.sharp)[0]);
+    }
+    picked.slice(0, need).forEach((p, i) => addShot(p.c, 'من الفيديو ' + Math.round(p.t) + 'ث'));
+}
+async function analyze() {
+    if (!shots.length) { alert('التقط لقطة واحدة على الأقل.'); return; }
+    stopCam(); clearInterval(qTimer);
+    const b = $('done-btn'); b.disabled = true;
+    showRes(null, 'جاري التحليل… قد يأخذ حتى 30 ثانية');
+    let imgs = shots.map(s => s.data.split(',')[1]);
+    if (imgs.reduce((a, x) => a + x.length, 0) > 700000) imgs = await Promise.all(shots.map(s => new Promise(res => { const im = new Image(); im.onload = () => { const c = grab(im, 700); res(c.toDataURL('image/jpeg', 0.5).split(',')[1]); }; im.src = s.data; })));
+    const ctx = carCtx();
+    const r = await api({ mode: 'vision', kind, car: ctx.car, km: ctx.km, notes: $('cam-notes').value.trim(), labels: shots.map(s => s.label), images: imgs }, 50000);
+    b.disabled = false;
+    if (r.status === 402) { showRes(null, ''); return payNeeded(); }
+    if (r.status === 429) { showRes(null, 'وصلت للحد اليومي لتحليل الصور. يتجدد غداً.', true); return; }
+    if (r.status !== 200 || !r.json) { showRes(null, 'تعذر التحليل الآن. تأكد من الإنترنت وحاول مرة أخرى.', true); return; }
+    renderVision(r.json);
+}
+const SEV = { ok: ['tag ok', 'سليم'], attention: ['tag att', 'يحتاج انتباه'], problem: ['tag bad', 'مشكلة'] };
+// سنة الصنع من الخانة العاشرة (دورة كل 30 سنة؛ نختار الأقرب للسنة المعلنة)
+function vinYear(vin, declared) {
+    if (!vin || vin.length !== 17) return null;
+    const i = 'ABCDEFGHJKLMNPRSTVWXY123456789'.indexOf(vin[9]); if (i < 0) return null;
+    const c = [1980 + i, 2010 + i].filter(y => y <= new Date().getFullYear() + 1);
+    if (!c.length) return null;
+    const d = parseInt(declared) || 0;
+    return d ? c.sort((a, b) => Math.abs(a - d) - Math.abs(b - d))[0] : c[c.length - 1];
+}
+const maskVin = v => v ? '•'.repeat(Math.max(0, v.length - 6)) + v.slice(-6) : '';
+const VER = { good: ['tag ok', 'جيد'], attention: ['tag att', 'يحتاج انتباه'], problem: ['tag bad', 'مشكلة'] };
+const CONF = { high: 'ثقة عالية', medium: 'ثقة متوسطة', low: 'ثقة منخفضة' };
+function renderVision(j) {
+    const K = KINDS[kind], box = $('v-res'); box.innerHTML = ''; box.classList.remove('hidden');
+    $('v-cam').classList.add('hidden');
+    const top = el('div', 'card');
+    const hr = el('div'); hr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px';
+    hr.appendChild(el('p', 'h', 'نتيجة: ' + K.name)); hr.lastChild.style.margin = '0';
+    hr.appendChild(el('span', VER[j.verdict][0], VER[j.verdict][1])); top.appendChild(hr);
+    if (j.summary) { const p = el('p', null, j.summary); p.style.margin = '8px 0 0'; top.appendChild(p); }
+    box.appendChild(top);
+    if (j.ok && j.ok.length) { const c = el('div', 'chips'); j.ok.forEach(o => c.appendChild(el('span', 'tag ok', o + ' ✓'))); box.appendChild(c); }
+    const ex = j.extracted || {}; const exLines = [];
+    let vinNote = '';
+    if (ex.vin) {
+        const dy = FLOW ? FLOW_CAR.year : (($('car').value.match(/(19|20)\d{2}/) || [])[0] || '');
+        const vy = vinYear(ex.vin, dy);
+        exLines.push('رقم الهيكل: ' + ex.vin + ' (يُعرض الآن فقط ولا يُحفظ)');
+        if (vy) { vinNote = 'سنة الصنع حسب رقم الهيكل: ' + vy + (dy ? (Math.abs(vy - dy) >= 1 ? ' ⚠️ تختلف عن السنة المعلنة ' + dy : ' ✓ تطابق السنة المعلنة') : ''); exLines.push(vinNote); }
+        exLines.push('طابق آخر 6 أرقام (' + ex.vin.slice(-6) + ') مع الاستمارة بنفسك.');
+    }
+    if (ex.battery) exLines.push('تاريخ البطارية: ' + ex.battery);
+    if (ex.dates && ex.dates.length) exLines.push('التواريخ: ' + ex.dates.join('، '));
+    if (ex.oil) exLines.push('ملصق الزيت: ' + ex.oil);
+    if (ex.dot && ex.dot.length) exLines.push('رموز DOT: ' + ex.dot.join('، '));
+    if (ex.odometer) exLines.push('العداد: ' + ex.odometer);
+    if (ex.lights && ex.lights.length) exLines.push('اللمبات: ' + ex.lights.join('، '));
+    if (exLines.length) { const c = el('div', 'card'); c.appendChild(el('p', 'h', 'ما قرأناه من الصور')); exLines.forEach(l => c.appendChild(el('div', null, l))); box.appendChild(c); }
+    (j.findings || []).forEach(f => {
+        const c = el('div', 'card find');
+        if (f.frame != null && shots[f.frame]) { const im = el('img'); im.src = shots[f.frame].data; im.alt = shots[f.frame].label; c.appendChild(im); }
+        const t = el('div'); t.style.flex = '1';
+        const h = el('div'); h.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;align-items:center';
+        h.appendChild(el('b', null, f.title)); h.appendChild(el('span', SEV[f.severity][0], SEV[f.severity][1])); t.appendChild(h);
+        if (f.location) t.appendChild(el('div', 'muted', '📍 ' + f.location + ' · ' + CONF[f.confidence]));
+        if (f.advice) { const a = el('div', null, f.advice); a.style.cssText = 'color:#065F46;font-weight:600;font-size:14px'; t.appendChild(a); }
+        c.appendChild(t); box.appendChild(c);
+    });
+    if (!(j.findings || []).length) box.appendChild(el('div', 'note', 'لم نلاحظ مشاكل ظاهرة في الصور.'));
+    if (j.retake && j.retake.length) box.appendChild(el('div', 'warn', 'لقطات غير واضحة: ' + j.retake.map(n => (shots[n] ? shots[n].label : n + 1)).join('، ') + '. أعد تصويرها لدقة أعلى.'));
+    box.appendChild(el('div', 'note', 'ℹ️ ' + K.limit));
+    const text = [K.name + ': ' + VER[j.verdict][1], j.summary].concat((j.findings || []).map(f => '• ' + f.title + (f.location ? ' (' + f.location + ')' : '') + ' — ' + SEV[f.severity][1])).filter(Boolean).join('\n');
+    // لا نخزّن رقم الهيكل الكامل في الجوال: آخر 6 أرقام وسنة الصنع فقط
+    const safeLines = exLines.filter(l => !l.startsWith('رقم الهيكل:')).map(l => ex.vin ? l.split(ex.vin).join(maskVin(ex.vin)) : l);
+    const live = shots.length > 0 && shots.every(x => x.live);
+    saveToFlow(kind, { verdict: j.verdict, summary: j.summary, text: (live ? '[تصوير مباشر] ' : '[صور من المعرض] ') + text + (safeLines.length ? '\n' + safeLines.join('\n') : ''), vinTail: ex.vin ? ex.vin.slice(-6) : undefined, live });
+    const row = el('div', 'row'); const sh = el('button', 'btn w', 'مشاركة'); sh.onclick = () => shareText(text); row.appendChild(sh);
+    const again = el('button', 'btn w', 'أعد الفحص'); again.onclick = () => { box.classList.add('hidden'); $('v-cam').classList.remove('hidden'); $('cam-start-box').classList.remove('hidden'); $('cam-intro').classList.remove('hidden'); if (!FLOW && PICKABLE.includes(kind) && TOOL === 'camera') $('cam-kinds').classList.remove('hidden'); $('cam-live').classList.add('hidden'); shots = []; stepI = 0; renderShots(); };
+    row.appendChild(again); box.appendChild(row);
+    finishButtons(box);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function showRes(_, msg, err) {
+    const box = $('v-res'); box.innerHTML = '';
+    if (!msg) { box.classList.add('hidden'); return; }
+    box.classList.remove('hidden');
+    box.appendChild(el('div', err ? 'danger' : 'note', msg));
+}
+
+// =====================================================================
+// 📳 الاهتزاز (مستشعر الحركة)
+// =====================================================================
+const VMODES = {
+    idle: { name: 'المحرك وهو واقف', base: 'المحرك مطفأ', meas: 'شغّل المحرك واتركه على الوقوف', secs: 10, lim: [0.02, 0.05],
+        how: 'ضع الجوال مسطحاً على الطبلون أو الكونسول. نسجّل 3 ثوانٍ والمحرك مطفأ كمرجع، ثم 10 ثوانٍ والمحرك يعمل. لا تلمس الجوال.' },
+    drive: { name: 'أثناء القيادة', base: 'السيارة واقفة والمحرك يعمل', meas: 'حافظ على سرعة ثابتة 80 إلى 100 كم/س', secs: 15, lim: [0.04, 0.10],
+        how: 'ضع الجوال مسطحاً على الكونسول. يبدأ القياس شخص آخر غير السائق، والسيارة على طريق مستوٍ وسرعة ثابتة.' },
+};
+let vmode = 'idle';
+function selectVMode(m) {
+    vmode = m;
+    document.querySelectorAll('#vib-modes .chip').forEach(c => c.classList.toggle('on', c.dataset.m === m));
+    const M = VMODES[m], box = $('vib-intro'); box.innerHTML = '';
+    box.appendChild(el('p', 'h', 'كيف تقيس؟'));
+    const p = el('p', null, M.how); p.style.margin = '0'; box.appendChild(p);
+    if (m !== 'idle') {
+        const w = el('div', 'danger', '⚠️ لا يمسك السائق الجوال أثناء القيادة إطلاقاً. ثبّت الجوال قبل التحرك، وليشغّل القياس الراكب.'); w.style.marginTop = '10px'; box.appendChild(w);
+        const lb = el('label'); lb.style.cssText = 'display:flex;gap:10px;align-items:flex-start;margin-top:10px;font-size:15px';
+        const cb = el('input'); cb.type = 'checkbox'; cb.id = 'passenger-ok'; cb.style.cssText = 'width:22px;height:22px;flex:none;margin-top:3px';
+        lb.appendChild(cb); lb.appendChild(document.createTextNode('أؤكد أن الراكب هو من يشغّل القياس، وأن السائق لن يلمس الجوال.')); box.appendChild(lb);
+    }
+}
+async function motionPermission() {
+    if (typeof DeviceMotionEvent === 'undefined') return false;
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+        // iPhone يطلب إذناً صريحاً؛ في غيره قد تفشل الدالة فنكمل ونتحقق من وصول القراءات
+        try { return (await DeviceMotionEvent.requestPermission()) !== 'denied'; } catch (e) { return true; }
+    }
+    return true;
+}
+function recordMotion(secs, onTick) {
+    return new Promise(resolve => {
+        const s = []; let lastG = null;
+        const h = e => {
+            let a = e.acceleration;
+            let x, y, z;
+            if (a && a.x != null) { x = a.x; y = a.y; z = a.z; }
+            else if (e.accelerationIncludingGravity) {
+                // نزيل الجاذبية بمرشح بسيط إن لم يوفر الجهاز التسارع الصافي
+                const g = e.accelerationIncludingGravity;
+                lastG = lastG ? { x: lastG.x * 0.9 + g.x * 0.1, y: lastG.y * 0.9 + g.y * 0.1, z: lastG.z * 0.9 + g.z * 0.1 } : { x: g.x, y: g.y, z: g.z };
+                x = g.x - lastG.x; y = g.y - lastG.y; z = g.z - lastG.z;
+            } else return;
+            s.push({ t: performance.now(), x, y, z, m: Math.sqrt(x * x + y * y + z * z) });
+        };
+        window.addEventListener('devicemotion', h);
+        const t0 = performance.now();
+        const iv = setInterval(() => {
+            const el2 = (performance.now() - t0) / 1000;
+            const recent = s.slice(-20); const rms = recent.length ? Math.sqrt(recent.reduce((a, b) => a + b.m * b.m, 0) / recent.length) : 0;
+            onTick(Math.max(0, Math.ceil(secs - el2)), rms);
+            if (el2 >= secs) { clearInterval(iv); window.removeEventListener('devicemotion', h); resolve(s); }
+        }, 200);
+    });
+}
+function vibStats(s) {
+    if (s.length < 20) return null;
+    const dur = (s[s.length - 1].t - s[0].t) / 1000, fs = (s.length - 1) / dur;
+    const m = s.map(x => x.m);
+    const rms = Math.sqrt(m.reduce((a, b) => a + b * b, 0) / m.length) / 9.81;
+    const peak = Math.max(...m) / 9.81;
+    // الطيف من المحور الأكثر اهتزازاً (المقدار المطلق يضاعف التردد ظاهرياً)
+    const axisVar = k => { const v = s.map(q => q[k]); const mu = v.reduce((a, b) => a + b, 0) / v.length; return v.reduce((a, b) => a + (b - mu) ** 2, 0); };
+    const ax = ['x', 'y', 'z'].sort((a, b) => axisVar(b) - axisVar(a))[0];
+    const sig = s.map(q => q[ax]), mean = sig.reduce((a, b) => a + b, 0) / sig.length;
+    // طيف التردد: تحويل فورييه مباشر من 1 إلى نصف معدل العينات
+    const maxF = Math.min(30, Math.floor(fs / 2)), spec = [];
+    for (let f = 1; f <= maxF; f++) {
+        let re = 0, im = 0;
+        for (let i = 0; i < sig.length; i++) { const tt = (s[i].t - s[0].t) / 1000, v = sig[i] - mean; re += v * Math.cos(2 * Math.PI * f * tt); im -= v * Math.sin(2 * Math.PI * f * tt); }
+        spec.push(Math.sqrt(re * re + im * im) / sig.length);
+    }
+    let pk = 0; spec.forEach((v, i) => { if (v > spec[pk]) pk = i; });
+    // للفرملة: نسبة أعلى نافذة (ثانية) إلى الوسيط
+    const win = Math.max(5, Math.round(fs)), wins = [];
+    for (let i = 0; i + win <= m.length; i += Math.round(win / 2)) wins.push(Math.sqrt(m.slice(i, i + win).reduce((a, b) => a + b * b, 0) / win));
+    const sorted = wins.slice().sort((a, b) => a - b), med = sorted[Math.floor(sorted.length / 2)] || 1e-9;
+    return { fs, rms, peak, spec, peakHz: pk + 1, ratio: Math.max(...wins) / med };
+}
+async function startVib() {
+    if (WS && !canUse()) return payNeeded();
+    if (vmode !== 'idle' && !($('passenger-ok') && $('passenger-ok').checked)) { alert('أكّد أولاً أن الراكب هو من يشغّل القياس.'); return; }
+    if (!(await motionPermission())) { alert('مستشعر الحركة غير متاح أو لم يُسمح به. على iPhone اسمح بـ «الحركة والاتجاه» عند السؤال.'); return; }
+    const M = VMODES[vmode], btn = $('vib-start'); btn.disabled = true;
+    $('vib-live').classList.remove('hidden');
+    let base = null;
+    {
+        $('vib-phase').textContent = 'المرجع: ' + M.base + ' (3 ثوانٍ)';
+        await sleep(1500);
+        const bs = await recordMotion(3, (left, r) => { $('vib-count').textContent = left; $('vib-meter').style.width = Math.min(100, r * 300) + '%'; });
+        base = vibStats(bs);
+        if (!base) { alert('جوالك لا يرسل بيانات مستشعر الحركة بسرعة كافية. جرّب متصفح Chrome أو جوالاً آخر.'); btn.disabled = false; $('vib-live').classList.add('hidden'); return; }
+        $('vib-phase').textContent = 'استعد: ' + M.meas;
+        for (let i = 5; i > 0; i--) { $('vib-count').textContent = i; await sleep(1000); }
+    }
+    $('vib-phase').textContent = 'جاري القياس: ' + M.meas;
+    const ms = await recordMotion(M.secs, (left, r) => { $('vib-count').textContent = left; $('vib-meter').style.width = Math.min(100, r * 300) + '%'; });
+    const st = vibStats(ms);
+    btn.disabled = false; $('vib-live').classList.add('hidden');
+    if (!st) { alert('لم نحصل على قراءات كافية. أعد المحاولة.'); return; }
+    renderVib(st, base);
+}
+async function renderVib(st, base) {
+    const M = VMODES[vmode], box = $('v-res'); box.innerHTML = ''; box.classList.remove('hidden'); $('v-vib').classList.add('hidden');
+    const net = Math.sqrt(Math.max(0, st.rms ** 2 - (base ? base.rms ** 2 : 0)));
+    const v = net < M.lim[0] ? 'good' : net < M.lim[1] ? 'attention' : 'problem';
+    const LOCAL = {
+        idle: { good: 'اهتزاز المحرك وهو واقف ضمن الطبيعي.', attention: 'اهتزاز أعلى من المعتاد قليلاً. قد تكون قواعد المكينة أو تقطيع خفيف.', problem: 'اهتزاز مرتفع وهو واقف. افحص قواعد المكينة والبواجي والكويلات.' },
+        drive: { good: 'الاهتزاز أثناء القيادة ضمن الطبيعي.', attention: 'اهتزاز أعلى من المعتاد مع السرعة. غالباً اتزان الكفرات أو ترصيصها.', problem: 'اهتزاز مرتفع مع السرعة. افحص اتزان الكفرات والعكوس والمساعدات.' }
+    }[vmode][v];
+    const top = el('div', 'card');
+    const hr = el('div'); hr.style.cssText = 'display:flex;justify-content:space-between;align-items:center';
+    hr.appendChild(el('p', 'h', 'اهتزاز ' + M.name)); hr.lastChild.style.margin = '0'; hr.appendChild(el('span', VER[v][0], VER[v][1])); top.appendChild(hr);
+    const p = el('p', null, LOCAL); p.style.margin = '8px 0 0'; top.appendChild(p); box.appendChild(top);
+    const sp = el('div', 'card'); sp.appendChild(el('p', 'h', 'طيف الاهتزاز (1–' + st.spec.length + ' هرتز)'));
+    const bars = el('div', 'bars'); const mx = Math.max(...st.spec) || 1;
+    st.spec.forEach((x, i) => { const b = el('span', i === st.peakHz - 1 ? 'pk' : ''); b.style.height = Math.max(2, x / mx * 100) + '%'; bars.appendChild(b); }); sp.appendChild(bars);
+    const mt = el('div', 'metric'); mt.style.marginTop = '10px';
+    const add = (k, val) => { const d = el('div'); d.appendChild(el('span', 'muted', k)); d.appendChild(el('b', null, val)); mt.appendChild(d); };
+    add('شدة الاهتزاز الصافي', net.toFixed(3) + ' g'); add('التردد الغالب', st.peakHz + ' هرتز');
+    sp.appendChild(mt); box.appendChild(sp);
+    box.appendChild(el('div', 'note', 'ℹ️ القياس بالجوال مؤشر وليس جهازاً احترافياً، ويتأثر بنوع الجوال ومكانه. معدل العينات: ' + Math.round(st.fs) + ' قراءة/ثانية.'));
+    const summary = 'شدة الاهتزاز الصافي ' + net.toFixed(3) + ' g، التردد الغالب ' + st.peakHz + ' هرتز، معدل العينات ' + Math.round(st.fs) + '، الحكم المبدئي: ' + VER[v][1];
+    const aiBox = el('div', 'card'); aiBox.appendChild(el('p', 'muted', 'جاري تفسير القياس…')); box.appendChild(aiBox);
+    const ctx = carCtx();
+    const r = await api({ mode: 'measure', kind: 'اهتزاز ' + M.name, car: ctx.car, summary, vib: { mode: vmode, net, hz: st.peakHz, fs: st.fs } }, 25000);
+    aiBox.innerHTML = '';
+    let text = 'اهتزاز ' + M.name + ': ' + VER[v][1] + ' — ' + summary;
+    if (r.status === 200 && r.json) {
+        const j = r.json; aiBox.appendChild(el('p', 'h', j.title)); if (j.explanation) aiBox.appendChild(el('p', null, j.explanation));
+        if (j.causes && j.causes.length) { const ul = el('ul'); ul.style.margin = '0'; j.causes.forEach(c => ul.appendChild(el('li', null, c))); aiBox.appendChild(ul); }
+        if (j.advice) { const a = el('p', null, '✅ ' + j.advice); a.style.cssText = 'margin:6px 0 0;color:#065F46;font-weight:600'; aiBox.appendChild(a); }
+        text += '\nالتفسير: ' + j.title + (j.causes && j.causes.length ? ' (' + j.causes.join('، ') + ')' : '');
+    } else if (r.status === 402) { aiBox.remove(); payNeeded(); }
+    else aiBox.remove();
+    saveToFlow('vib_' + vmode, { verdict: v, summary: LOCAL, text, live: true });
+    // حكم الفني الحقيقي يضبط حدود الاهتزاز للجميع مع الوقت
+    const vf = el('div', 'card'); vf.appendChild(el('p', 'h', 'بعد فحصها عند فني: ماذا وجد؟'));
+    vf.appendChild(el('p', 'muted', 'إجابتك (بدون أي بيانات شخصية) تحسّن دقة هذا القياس للجميع.'));
+    const vr = el('div', 'row');
+    [['normal', '✅ سليمة'], ['problem', '❌ فيها مشكلة اهتزاز']].forEach(([k, t]) => { const b2 = el('button', 'btn w', t); b2.style.height = '46px'; b2.onclick = async () => { await api({ mode: 'vibfb', vmode, net, ok: k }, 10000); vf.innerHTML = ''; vf.appendChild(el('p', 'h', 'شكراً، سُجّل ✓')); }; vr.appendChild(b2); });
+    vf.appendChild(vr); box.appendChild(vf);
+    const row = el('div', 'row'); const sh = el('button', 'btn w', 'مشاركة'); sh.onclick = () => shareText(text); row.appendChild(sh);
+    const again = el('button', 'btn w', 'أعد القياس'); again.onclick = () => { box.classList.add('hidden'); $('v-vib').classList.remove('hidden'); }; row.appendChild(again);
+    box.appendChild(row); finishButtons(box);
+}
+
+// =====================================================================
+// 🔊 صوت المحرك (نفس محلل الصوت في التطبيق)
+// =====================================================================
+const SCTX = { idle: 'المحرك على الوقوف', cold: 'التشغيل البارد', rev: 'عند الدعسة' };
+let sctx = 'idle';
+function analyzeSound(power, frames, binHz, env, fps) {
+    const n = power.length, avg = Array.from(power, p => p / Math.max(1, frames));
+    const band = (lo, hi) => { let s = 0; for (let i = Math.floor(lo / binHz); i < Math.min(n, Math.ceil(hi / binHz)); i++) s += avg[i]; return s; };
+    const low = band(40, 300), mid = band(300, 1500), high = band(1500, 6000), vhigh = band(6000, 12000), tot = low + mid + high + vhigh || 1e-12;
+    const start = Math.ceil(60 / binHz), stop = Math.min(n, Math.floor(10000 / binHz));
+    let peakI = start; for (let i = start; i < stop; i++) if (avg[i] > avg[peakI]) peakI = i;
+    const slice = avg.slice(start, stop).sort((a, b) => a - b), median = slice[Math.floor(slice.length / 2)] || 1e-12;
+    const tonality = 10 * Math.log10(avg[peakI] / median);
+    const mean = env.reduce((a, b) => a + b, 0) / env.length, sd = Math.sqrt(env.reduce((a, b) => a + (b - mean) ** 2, 0) / env.length), cv = mean > 0 ? sd / mean : 0;
+    const e = env.map(v => v - mean), e0 = e.reduce((a, b) => a + b * b, 0) || 1e-12;
+    const ac = [], maxLag = Math.min(Math.floor(fps * 1.2), Math.floor(e.length / 2));
+    for (let lag = 0; lag <= maxLag; lag++) { let s = 0; for (let i = 0; i + lag < e.length; i++) s += e[i] * e[i + lag]; ac.push(s / e0); }
+    let bestR = 0, bestLag = 0;
+    const minLag = Math.max(2, Math.floor(fps / 10));
+    for (let lag = minLag; lag < ac.length - 1; lag++) if (ac[lag] > ac[lag - 1] && ac[lag] >= ac[lag + 1] && ac[lag] > bestR) { bestR = ac[lag]; bestLag = lag; }
+    return { peakHz: Math.round(peakI * binHz), tonality, cv, rhythm: bestR, rhythmHz: bestLag ? fps / bestLag : 0, lowR: low / tot, highR: (high + vhigh) / tot, quiet: mean < 0.003 };
+}
+function describeSound(f) {
+    const p = ['أقوى تردد: ' + f.peakHz.toLocaleString('en') + ' هرتز'];
+    const tonal = f.tonality > 18;
+    if (tonal && f.peakHz >= 1800) p.push('صوت حاد بنغمة واحدة (صفير/زيقة)');
+    else if (tonal && f.peakHz >= 250) p.push('صوت نغمي متصل (ونين)');
+    if (f.rhythm > 0.35 && f.cv > 0.15) p.push('طقطقة منتظمة بمعدل ~' + f.rhythmHz.toFixed(1) + ' مرة/ثانية');
+    else if (f.cv > 0.35) p.push('صوت غير منتظم (تقطّع)');
+    if (f.lowR > 0.6) p.push('هدير منخفض التردد');
+    else if (f.highR > 0.35 && !tonal) p.push('ترددات عالية قوية (خشخشة/احتكاك)');
+    return p.join(' • ');
+}
+function soundVerdict(f) {
+    const tonal = f.tonality > 18;
+    if (f.quiet) return ['attention', 'الصوت المسجّل ضعيف جداً؛ قرّب الجوال من المحرك وأعد التسجيل.'];
+    if (f.cv > 0.35) return ['problem', 'صوت غير منتظم يشير غالباً إلى تقطيع احتراق (بواجي، كويلات، بخاخات).'];
+    if (f.rhythm > 0.35 && f.cv > 0.15) return ['attention', 'طقطقة منتظمة؛ قد تكون صبابات (تكتكة) أو صوت بخاخات طبيعي. قارن مع محرك سليم من نفس النوع.'];
+    if (tonal && f.peakHz >= 1800) return ['attention', 'صفير حاد؛ غالباً سير أو بكرة أو بلية دينمو.'];
+    if (f.highR > 0.35 && !tonal) return ['attention', 'خشخشة عالية التردد؛ قد تكون واقي حراري مرتخٍ أو احتكاك.'];
+    return ['good', 'صوت المحرك منتظم ولا يظهر نمط غير طبيعي واضح.'];
+}
+async function startSnd() {
+    if (WS && !canUse()) return payNeeded();
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { alert('المتصفح لا يدعم المايكروفون.'); return; }
+    let st; try { st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); }
+    catch (e) { alert('لم يُسمح بالمايكروفون. فعّل الإذن من إعدادات المتصفح.'); return; }
+    const btn = $('snd-start'); btn.disabled = true; $('snd-live').classList.remove('hidden');
+    const AC = window.AudioContext || window.webkitAudioContext, ac = new AC();
+    if (ac.state === 'suspended') await ac.resume().catch(() => {});
+    const an = ac.createAnalyser(); an.fftSize = 4096; an.smoothingTimeConstant = 0; ac.createMediaStreamSource(st).connect(an);
+    const fd = new Float32Array(an.frequencyBinCount), tb = new Float32Array(an.fftSize), power = new Float64Array(an.frequencyBinCount), binHz = ac.sampleRate / an.fftSize, env = [];
+    let frames = 0; const D = 8000, t0 = performance.now();
+    await new Promise(res => { const tick = () => { const e2 = performance.now() - t0; an.getFloatTimeDomainData(tb); let sq = 0; for (let i = 0; i < tb.length; i++) sq += tb[i] * tb[i]; const r = Math.sqrt(sq / tb.length); env.push(r); an.getFloatFrequencyData(fd); for (let i = 0; i < fd.length; i++) power[i] += Math.pow(10, fd[i] / 10); frames++; $('snd-meter').style.width = Math.min(100, r * 400) + '%'; $('snd-count').textContent = Math.max(0, Math.ceil((D - e2) / 1000)); if (e2 < D) requestAnimationFrame(tick); else res(); }; tick(); });
+    const secs = (performance.now() - t0) / 1000; st.getTracks().forEach(t => t.stop()); ac.close().catch(() => {});
+    btn.disabled = false; $('snd-live').classList.add('hidden');
+    const f = analyzeSound(power, frames, binHz, env, frames / secs);
+    renderSnd(f);
+}
+async function renderSnd(f) {
+    const box = $('v-res'); box.innerHTML = ''; box.classList.remove('hidden'); $('v-snd').classList.add('hidden');
+    const [v, msg] = soundVerdict(f), desc = describeSound(f);
+    const top = el('div', 'card'); const hr = el('div'); hr.style.cssText = 'display:flex;justify-content:space-between;align-items:center';
+    hr.appendChild(el('p', 'h', 'صوت المحرك · ' + SCTX[sctx])); hr.lastChild.style.margin = '0'; hr.appendChild(el('span', VER[v][0], VER[v][1])); top.appendChild(hr);
+    const p = el('p', null, msg); p.style.margin = '8px 0 4px'; top.appendChild(p); top.appendChild(el('div', 'muted', desc)); box.appendChild(top);
+    box.appendChild(el('div', 'note', 'ℹ️ تحليل الصوت بالجوال مؤشر؛ الضوضاء المحيطة ونوع المحرك تؤثر على النتيجة.'));
+    const aiBox = el('div', 'card'); aiBox.appendChild(el('p', 'muted', 'جاري تفسير الصوت…')); box.appendChild(aiBox);
+    const ctx = carCtx(); let text = 'صوت المحرك (' + SCTX[sctx] + '): ' + VER[v][1] + ' — ' + desc;
+    const r = await api({ mode: 'measure', kind: 'صوت المحرك عند ' + SCTX[sctx], car: ctx.car, summary: desc + ' • التقدير المحلي: ' + msg }, 25000);
+    aiBox.innerHTML = '';
+    if (r.status === 200 && r.json) { const j = r.json; aiBox.appendChild(el('p', 'h', j.title)); if (j.explanation) aiBox.appendChild(el('p', null, j.explanation)); if (j.advice) { const a = el('p', null, '✅ ' + j.advice); a.style.cssText = 'margin:6px 0 0;color:#065F46;font-weight:600'; aiBox.appendChild(a); } text += '\nالتفسير: ' + j.title; }
+    else if (r.status === 402) { aiBox.remove(); payNeeded(); } else aiBox.remove();
+    saveToFlow('sound', { verdict: v, summary: msg, text, live: true });
+    const row = el('div', 'row'); const sh = el('button', 'btn w', 'مشاركة'); sh.onclick = () => shareText(text); row.appendChild(sh);
+    const again = el('button', 'btn w', 'أعد التسجيل'); again.onclick = () => { box.classList.add('hidden'); $('v-snd').classList.remove('hidden'); }; row.appendChild(again);
+    box.appendChild(row); finishButtons(box);
+}
+
+// =====================================================================
+// 🎨 سماكة الدهان (إدخال يدوي من جهاز القياس)
+// المرجع هو السيارة نفسها: الوسيط يمثل دهان المصنع، والقطعة الأعلى بوضوح رُشّت
+// =====================================================================
+const PANELS = [['hood', 'الكبوت'], ['roof', 'السقف'], ['fl_fender', 'الرفرف الأمامي الأيسر'], ['fr_fender', 'الرفرف الأمامي الأيمن'], ['fl_door', 'الباب الأمامي الأيسر'], ['fr_door', 'الباب الأمامي الأيمن'], ['rl_door', 'الباب الخلفي الأيسر'], ['rr_door', 'الباب الخلفي الأيمن'], ['rl_qtr', 'الرفرف الخلفي الأيسر'], ['rr_qtr', 'الرفرف الخلفي الأيمن'], ['trunk', 'الشنطة']];
+function buildPaint() {
+    const g = $('paint-grid'), saved = store.get('sd_paint_draft', {});
+    PANELS.forEach(([k, n]) => {
+        const lb = el('label'); lb.style.cssText = 'display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600';
+        lb.appendChild(document.createTextNode(n));
+        const i = el('input', 'f'); i.inputMode = 'numeric'; i.maxLength = 4; i.placeholder = 'ميكرون'; i.dataset.k = k; i.value = saved[k] || '';
+        i.oninput = () => { const d = store.get('sd_paint_draft', {}); d[k] = i.value.replace(/[^\d]/g, ''); store.set('sd_paint_draft', d); };
+        lb.appendChild(i); g.appendChild(lb);
+    });
+}
+function paintClass(v, med) {
+    if (v > 300) return ['problem', 'معجون أو سمكرة غالباً'];
+    if (v > Math.max(170, med + 60)) return ['attention', 'مرشوشة غالباً'];
+    if (v < med * 0.6) return ['attention', 'أقل من المعتاد (تلميع قوي أو قطعة مستبدلة)'];
+    return ['good', 'أصلي غالباً'];
+}
+function analyzePaint() {
+    const vals = []; document.querySelectorAll('#paint-grid input').forEach(i => { const v = parseInt(i.value); if (v > 20 && v < 3000) vals.push([i.dataset.k, v]); });
+    if (vals.length < 4) { alert('أدخل قراءات 4 قطع على الأقل، حتى نعرف مستوى دهان المصنع لهذه السيارة.'); return; }
+    const sorted = vals.map(x => x[1]).sort((a, b) => a - b), med = sorted[Math.floor(sorted.length / 2)];
+    const res = vals.map(([k, v]) => [k, v].concat(paintClass(v, med)));
+    const worst = res.some(r => r[2] === 'problem') ? 'problem' : res.some(r => r[2] === 'attention') ? 'attention' : 'good';
+    const box = $('v-res'); box.innerHTML = ''; box.classList.remove('hidden'); $('v-paint').classList.add('hidden');
+    const top = el('div', 'card'); const hr = el('div'); hr.style.cssText = 'display:flex;justify-content:space-between;align-items:center';
+    hr.appendChild(el('p', 'h', 'سماكة الدهان')); hr.lastChild.style.margin = '0'; hr.appendChild(el('span', VER[worst][0], VER[worst][1])); top.appendChild(hr);
+    const bad = res.filter(r => r[2] !== 'good');
+    top.appendChild(el('p', null, bad.length ? bad.length + ' قطعة من ' + res.length + ' تختلف عن دهان المصنع (المرجع ' + med + ' ميكرون).' : 'كل القطع المقاسة قريبة من دهان المصنع (' + med + ' ميكرون).')); top.lastChild.style.margin = '8px 0 0';
+    box.appendChild(top);
+    // خريطة السيارة من الأعلى
+    const C = { good: '#A7F3D0', attention: '#FCD34D', problem: '#FCA5A5' }, R = Object.fromEntries(res.map(r => [r[0], r]));
+    const cell = (k, label) => { const r = R[k]; const d = el('div', null, label + (r ? '\n' + r[1] : '')); d.style.cssText = 'white-space:pre-line;text-align:center;font-size:12px;border-radius:8px;padding:6px 2px;background:' + (r ? C[r[2]] : '#E2E8F0'); return d; };
+    const map = el('div', 'card'); map.appendChild(el('p', 'h', 'خريطة السيارة (من الأعلى، الأمام للأعلى)'));
+    const g = el('div'); g.style.cssText = 'display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:6px';
+    [['fl_fender', 'رفرف أ.يسار'], ['hood', 'الكبوت'], ['fr_fender', 'رفرف أ.يمين'], ['fl_door', 'باب أ.يسار'], ['roof', 'السقف'], ['fr_door', 'باب أ.يمين'], ['rl_door', 'باب خ.يسار'], [null, ''], ['rr_door', 'باب خ.يمين'], ['rl_qtr', 'رفرف خ.يسار'], ['trunk', 'الشنطة'], ['rr_qtr', 'رفرف خ.يمين']]
+        .forEach(([k, l]) => g.appendChild(k ? cell(k, l) : el('div')));
+    map.appendChild(g); box.appendChild(map);
+    bad.forEach(r => { const c = el('div', 'card find'); const t = el('div'); t.style.flex = '1'; const h = el('div'); h.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;align-items:center'; h.appendChild(el('b', null, PANELS.find(p => p[0] === r[0])[1] + ': ' + r[1] + ' ميكرون')); h.appendChild(el('span', VER[r[2]][0], r[3])); t.appendChild(h); c.appendChild(t); box.appendChild(c); });
+    box.appendChild(el('div', 'note', 'ℹ️ دهان المصنع عادة بين 80 و150 ميكرون ويختلف بين الشركات، لذلك نقارن كل قطعة بباقي قطع نفس السيارة. الرش بعد خدش بسيط شائع ولا يعني حادثاً بالضرورة.'));
+    const text = 'سماكة الدهان: ' + VER[worst][1] + ' (المرجع ' + med + ' ميكرون)\n' + res.map(r => '• ' + PANELS.find(p => p[0] === r[0])[1] + ': ' + r[1] + ' — ' + r[3]).join('\n');
+    saveToFlow('paint', { verdict: worst, summary: bad.length ? bad.length + ' قطع تختلف عن دهان المصنع' : 'الدهان أصلي غالباً', text: '[قراءات جهاز مُدخلة يدوياً] ' + text, live: false });
+    const row = el('div', 'row'); const sh = el('button', 'btn w', 'مشاركة'); sh.onclick = () => shareText(text); row.appendChild(sh);
+    const again = el('button', 'btn w', 'تعديل القراءات'); again.onclick = () => { box.classList.add('hidden'); $('v-paint').classList.remove('hidden'); }; row.appendChild(again);
+    box.appendChild(row); finishButtons(box);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// =====================================================================
+// التهيئة
+// =====================================================================
+const TOOLS = [
+    ['camera', 'الفحص بالكاميرا', 'صوّر أي جزء من السيارة ونحلله'],
+    ['sound', 'تحليل صوت المحرك', 'سجّل 8 ثوانٍ من صوت المحرك'],
+    ['vibration', 'قياس الاهتزاز', 'وقوف أو قيادة'],
+    ['paint', 'سماكة الدهان', 'خريطة الرش والمعجون'],
+    ['glass', 'تواريخ الزجاج والأحزمة', 'كشف القطع المستبدلة'],
+    ['tires', 'فحص الكفرات', 'سنة الصنع والنقشة والتآكل'],
+    ['lights', 'لمبات الطبلون', 'صوّر اللمبة واعرف معناها'],
+    ['code', 'قراءة كود العطل', 'معنى الكود وما يجب فعله']
+];
+function showPicker() {
+    $('title').textContent = 'أدوات الفحص'; $('subtitle').textContent = 'استخدم أي أداة وحدها لسيارتك';
+    const box = $('v-pick'); box.classList.remove('hidden'); box.style.cssText = 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px';
+    TOOLS.forEach(([k, n, d]) => { const a = el('a', 'card'); a.href = k === 'code' ? '/?tab=code' : 'tools.html?t=' + k; a.style.cssText = 'text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:4px;min-height:96px'; a.appendChild(el('b', null, n)); a.appendChild(el('span', 'muted', d)); box.appendChild(a); });
+}
+function init() {
+    if (FLOW) {
+        $('back').href = REMOTE ? 'inspect.html?join=' + INSP + '&tk=' + encodeURIComponent(TK) : 'inspect.html';
+        const fb = $('flow-banner'); fb.textContent = REMOTE ? '📲 أنت تساعد في فحص سيارة عن بعد (المرحلة ' + STAGE + '). التصوير مباشر من الكاميرا فقط، والنتيجة تصل لصاحب الفحص فوراً.' : '🔗 أنت في المرحلة ' + STAGE + ' من الفحص الكامل قبل الشراء. النتيجة تُحفظ في تقرير الفحص.'; fb.classList.remove('hidden');
+        api({ mode: 'insp_get', id: INSP }, 12000).then(r => { if (r.status === 200 && r.json && r.json.car) { const c = r.json.car; FLOW_CAR = { car: [c.make, c.year].filter(Boolean).join(' '), km: c.km || '', year: c.year || '' }; } else if (r.status === 403) { fb.className = 'danger'; fb.textContent = 'رابط الفحص غير صالح أو انتهت صلاحيته.'; } });
+        if (REMOTE) { const g = $('file') && $('file').closest('label'); if (g) g.classList.add('hidden'); }
+    } else {
+        const c = store.get('sd_tool_car', {}); $('car').value = c.car || ''; $('km').value = c.km || '';
+        ['car', 'km'].forEach(id => $(id).addEventListener('change', () => store.set('sd_tool_car', { car: $('car').value.trim(), km: $('km').value.trim() })));
+    }
+    if (!TOOL) { showPicker(); return; }
+    if (!FLOW) $('car-box').classList.remove('hidden');
+    if (TOOL === 'docs') TOOL = 'vin';
+    const camKinds = ['camera', 'tires', 'lights', 'exterior', 'engine', 'interior', 'vin', 'smoke', 'under', 'battery', 'glass', 'oil'];
+    if (camKinds.includes(TOOL)) {
+        $('title').textContent = TOOL === 'camera' ? 'الفحص بالكاميرا' : 'فحص بالكاميرا';
+        $('v-cam').classList.remove('hidden');
+        if (TOOL === 'camera') {
+            $('cam-kinds').classList.remove('hidden');
+            PICKABLE.forEach(k => { const b = el('button', 'chip', KINDS[k].name); b.dataset.k = k; b.onclick = () => selectKind(k); $('kind-chips').appendChild(b); });
+            selectKind('exterior');
+        } else selectKind(TOOL);
+        $('cam-start').onclick = startCam; $('shutter').onclick = shutter; $('done-btn').onclick = analyze;
+        $('skip-btn').onclick = () => { if (stepI < KINDS[kind].steps.length) { stepI++; renderStep(); } };
+        $('file').onchange = e => { fromFiles(e.target.files); e.target.value = ''; $('cam-start-box').insertAdjacentElement('afterend', $('shots-box')); };
+        // زر تحليل للصور المختارة من الجوال
+        const ab = el('button', 'btn g', 'حلّل الصور'); ab.id = 'analyze-files'; ab.style.marginTop = '8px'; ab.onclick = analyze; $('shots-box').appendChild(ab);
+    } else if (TOOL === 'paint') {
+        $('title').textContent = 'سماكة الدهان'; $('v-paint').classList.remove('hidden');
+        buildPaint(); $('paint-go').onclick = analyzePaint;
+        return;   // تحليل محلي بالكامل: لا يحتاج اتصالاً ولا يستهلك خدمة
+    } else if (TOOL === 'vibration') {
+        $('title').textContent = 'قياس الاهتزاز'; $('v-vib').classList.remove('hidden');
+        const allowed = (P.get('m') || 'idle,drive').split(',').filter(m => VMODES[m]);
+        allowed.forEach(m => { const b = el('button', 'chip', VMODES[m].name); b.dataset.m = m; b.onclick = () => selectVMode(m); $('vib-modes').appendChild(b); });
+        selectVMode(allowed[0]); $('vib-start').onclick = startVib;
+    } else if (TOOL === 'sound') {
+        $('title').textContent = 'تحليل صوت المحرك'; $('v-snd').classList.remove('hidden');
+        const allowed = (P.get('c') || 'idle,cold,rev').split(',').filter(c => SCTX[c]);
+        allowed.forEach(c => { const b = el('button', 'chip', SCTX[c]); b.dataset.c = c; b.onclick = () => { sctx = c; document.querySelectorAll('#snd-ctx .chip').forEach(x => x.classList.toggle('on', x.dataset.c === c)); }; $('snd-ctx').appendChild(b); });
+        sctx = allowed[0]; $('snd-ctx').firstChild.classList.add('on'); $('snd-start').onclick = startSnd;
+    } else { showPicker(); return; }
+    loadWallet();
+}
+window.addEventListener('pagehide', stopCam);
+init();
+</script>
+</body>
+</html>

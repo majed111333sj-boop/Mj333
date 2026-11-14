@@ -3,7 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>الفاحص الذكي | شخّص عطل سيارتك واعرف السعر العادل</title>
+        <meta property="og:type" content="website">
+    <meta property="og:site_name" content="الفاحص الذكي">
+    <meta property="og:title" content="الفاحص الذكي: شخّص عطل سيارتك واعرف السعر العادل">
+    <meta property="og:description" content="صف المشكلة واعرف العطل والخطورة والتكلفة العادلة خلال دقيقة. أول فحص مجاني.">
+    <meta property="og:image" content="https://alfahis.pages.dev/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:url" content="https://alfahis.pages.dev/">
+    <meta name="twitter:card" content="summary_large_image">
+<title>الفاحص الذكي | شخّص عطل سيارتك واعرف السعر العادل</title>
     <meta name="description" content="شخّص عطل سيارتك بالوصف أو الصوت أو كود العطل، واعرف السعر العادل في مدينتك، وتواصل مع ورش ووكلاء قطع غيار معتمدين في دول الخليج.">
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,21 +21,32 @@
     <!-- التصميم: ملف CSS ثابت يُبنى تلقائياً من Tailwind 3.4.17 عند كل نشر على Vercel -->
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Cairo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: #F4F6F9 !important; font-family: 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, sans-serif; -webkit-tap-highlight-color: transparent; }
         input, textarea, select, button { font-family: inherit; }
+        /* خطوط أوضح على الجوال: الحد الأدنى 12–13 بكسل */
+        .text-\[10px\] { font-size: 12px !important; }
+        .text-\[11px\] { font-size: 13px !important; }
+        .text-xs { font-size: 13.5px !important; }
+        .tool-tile { min-height: 92px; background: #fff; border: 1px solid #E2E8F0; border-radius: 16px; padding: 12px; text-decoration: none; color: #0F172A; display: flex; flex-direction: column; gap: 8px; text-align: right; font-family: inherit; }
+        .tool-tile .ico { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .tool-tile b { font-size: 15px; } .tool-tile small { font-size: 12.5px; color: #475569; line-height: 1.5; }
         .nav-btn.active { color: #1d4ed8; }
         .nav-btn.active .nav-ico { background: #dbeafe; }
         #car-results.locked .paid, #tab-prices.locked .paid { filter: blur(6px); pointer-events: none; user-select: none; }
-        .chip { white-space: nowrap; padding: .3rem .65rem; border-radius: 9999px; background: #f1f5f9; border: 1px solid #e2e8f0; font-size: 11px; font-weight: 600; color: #334155; }
+        #car-results.locked.freeview .paid.lite { filter: none; pointer-events: auto; user-select: auto; }
+        .chip { white-space: nowrap; padding: .45rem .8rem; border-radius: 9999px; background: #f1f5f9; border: 1px solid #e2e8f0; font-size: 13px; font-weight: 600; color: #334155; }
         .chip.on { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
         .mode-btn.active { background: #fff; color: #1e3a8a; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .shimmer { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        #print-report { display: none; }
         @media print {
+            body.print-polished > *:not(#print-report) { display: none !important; }
+            body.print-polished #print-report { display: block !important; padding: 18px; font-size: 14px; line-height: 1.9; color: #0F172A; }
             header, nav, footer, .no-print, #providers-area, #provider-panel, .modal { display: none !important; }
             main { padding-bottom: 0 !important; }
             body { background: #fff !important; }
@@ -35,6 +55,7 @@
     </style>
 </head>
 <body class="bg-slate-200 text-slate-900">
+<div id="print-report" dir="rtl"></div>
 <div class="max-w-md mx-auto min-h-screen flex flex-col bg-slate-50 relative shadow-xl">
 
     <!-- ================= HEADER ================= -->
@@ -59,14 +80,24 @@
         <!-- ================= TAB: DIAGNOSE ================= -->
         <section id="tab-diagnose" class="space-y-3.5">
             <p id="pass-banner" class="hidden text-center text-[11px] font-black bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl py-1.5"></p>
-            <a href="inspect.html" class="no-print flex items-center gap-3 bg-gradient-to-l from-emerald-600 to-emerald-800 text-white rounded-2xl p-3.5 shadow-md">
-                <span class="text-2xl">🔍</span>
-                <span class="flex-1 min-w-0">
-                    <span class="block font-black text-sm">ناوي تشتري سيارة مستعملة؟</span>
-                    <span class="block text-[11px] text-emerald-100">افحصها بنفسك خطوة بخطوة: 40 نقطة، تقييم، وسعر تفاوض مقترح. مجاناً</span>
+            <div id="welcome-card" class="no-print flex items-start gap-3 bg-white border border-blue-200 rounded-2xl p-3.5">
+                <span class="shrink-0 w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center text-xl">👋</span>
+                <span class="flex-1 min-w-0 space-y-1">
+                    <span class="block font-black text-[15px] text-slate-900">أهلاً بك في الفاحص الذكي</span>
+                    <span class="block text-[14px] leading-relaxed text-slate-600">صف المشكلة، أجب على أسئلة سريعة، واعرف العطل والخطورة والسعر العادل خلال دقيقة.</span>
+                    <span id="welcome-free" class="inline-block text-[12px] font-black text-emerald-800 bg-emerald-50 rounded-lg px-2.5 py-0.5">أول فحص مجاني</span>
                 </span>
-                <span class="text-lg">←</span>
-            </a>
+            </div>
+            <div id="fb-card" class="hidden no-print bg-white border border-emerald-200 rounded-2xl p-3.5 space-y-2">
+                <p class="font-black text-[15px] text-slate-900">ساعدنا نكون أدق 🙏</p>
+                <p class="text-[14px] text-slate-600 leading-relaxed">قبل أيام شخّصنا: <b id="fb-title"></b>. ما نسبة دقة التشخيص بعد الإصلاح؟</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="sendFeedback('a')" class="bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-[13px]">✅ 90% – 100%</button>
+                    <button onclick="sendFeedback('b')" class="bg-amber-100 text-amber-900 font-bold py-2.5 rounded-xl text-[13px]">🔶 80% – 90%</button>
+                    <button onclick="sendFeedback('c')" class="bg-rose-100 text-rose-900 font-bold py-2.5 rounded-xl text-[13px]">❌ أقل من 80%</button>
+                    <button onclick="sendFeedback('later')" class="bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl text-[13px]">لم أصلحه بعد</button>
+                </div>
+            </div>
             <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-3">
                 <h2 class="font-extrabold text-sm text-slate-900">🚗 افحص سيارتك</h2>
                 <div class="grid grid-cols-2 gap-2">
@@ -191,7 +222,7 @@
                             <span class="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">تجريبي</span>
                         </div>
                         <p class="text-[10px] text-slate-400 leading-relaxed">يحتاج قارئ OBD2 بلوتوث من نوع ELM327 BLE، ومتصفح Chrome على أندرويد أو كمبيوتر. شغّل السيارة (أو المفتاح على وضع ON) قبل الاتصال.</p>
-                        <button id="obd-btn" onclick="connectOBD()" class="w-full bg-emerald-500 text-slate-950 font-black py-2.5 rounded-xl text-xs">اتصل بالقارئ واقرأ الأكواد</button>
+                        <button id="obd-btn" onclick="connectOBD()" class="w-full bg-blue-500 text-slate-950 font-black py-2.5 rounded-xl text-xs">اتصل بالقارئ واقرأ الأكواد</button>
                         <p id="obd-status" class="text-[10px] text-slate-300"></p>
                         <div id="obd-codes" class="flex flex-wrap gap-1.5"></div>
                     </div>
@@ -225,7 +256,7 @@
                 <div class="bg-slate-950 text-white rounded-xl p-3 flex justify-between items-center gap-2">
                     <div>
                         <span class="text-[10px] text-slate-400 block font-semibold">التكلفة العادلة المتوقعة في <span class="city-name"></span></span>
-                        <span class="paid text-lg font-black text-amber-400 font-mono" id="res-total">—</span>
+                        <span class="paid lite text-lg font-black text-amber-400 font-mono" id="res-total">—</span>
                     </div>
                     <div class="text-left">
                         <span class="text-[10px] text-slate-400 font-bold block mb-0.5">هل أكمل القيادة؟</span>
@@ -234,7 +265,7 @@
                 </div>
 
                 <div id="paywall" class="hidden no-print bg-gradient-to-l from-amber-50 to-white border-2 border-amber-300 rounded-xl p-3 space-y-2">
-                    <p class="font-black text-[13px] text-slate-900">🔓 افتح كل الخدمات ليوم كامل</p>
+                    <p id="pw-title" class="font-black text-[13px] text-slate-900">🔓 افتح كل الخدمات ليوم كامل</p>
                     <ul class="text-[11px] text-slate-700 space-y-0.5">
                         <li>💰 التكلفة العادلة بالتفصيل في <span class="city-name"></span></li>
                         <li>🔧 القطع اللازمة وأسعارها</li>
@@ -249,11 +280,11 @@
                 </div>
 
                 <div class="space-y-2 text-[11px]">
-                    <div class="paid">
+                    <div class="paid lite">
                         <span class="font-black text-slate-800 block mb-1">🔧 القطع المتوقعة:</span>
                         <ul id="res-parts" class="space-y-1"></ul>
                     </div>
-                    <div id="res-checks-box" class="hidden paid">
+                    <div id="res-checks-box" class="hidden paid lite">
                         <span class="font-black text-slate-800 block mb-1">🔍 اطلب من الفني فحص:</span>
                         <ul id="res-checks" class="list-disc pr-5 space-y-0.5 text-slate-700"></ul>
                     </div>
@@ -269,7 +300,7 @@
                     <p id="res-alt" class="text-[10px] text-slate-500"></p>
                 </div>
 
-                <div class="paid bg-blue-50/80 border border-blue-200 rounded-xl p-2.5">
+                <div class="paid lite bg-blue-50/80 border border-blue-200 rounded-xl p-2.5">
                     <span class="font-black text-blue-950 text-[11px] block mb-1">💡 قبل ما تدفع</span>
                     <ul id="protect-list" class="text-[11px] text-slate-700 space-y-1 leading-relaxed"></ul>
                     <p id="negotiator-script" class="hidden"></p>
@@ -286,11 +317,37 @@
 
                 <div class="paid grid grid-cols-2 gap-2 no-print">
                     <button onclick="scrollToProviders('workshop')" class="bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl text-[11px]">🔧 أرسل لورشة</button>
-                    <button onclick="scrollToProviders('agent')" class="bg-emerald-600 text-white font-black py-2.5 rounded-xl text-[11px]">🧩 سعّر القطع عند وكيل</button>
+                    <button onclick="scrollToProviders('agent')" class="bg-blue-600 text-white font-black py-2.5 rounded-xl text-[11px]">🧩 سعّر القطع عند وكيل</button>
                 </div>
+                <button id="res-share" onclick="shareResult()" class="no-print w-full bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs">📤 شارك النتيجة في واتساب</button>
                 <button onclick="exportReportPDF()" class="paid no-print w-full bg-slate-900 text-white font-bold py-2 rounded-xl text-xs">📥 حفظ التقرير PDF</button>
                 <p class="text-[10px] text-slate-400 leading-relaxed">تشخيص مبدئي يساعدك تفهم المشكلة وتتفاوض على السعر، ولا يغني عن فحص الفني.</p>
             </div>
+
+            <section class="no-print space-y-2.5" aria-label="أدوات الفحص المستقلة">
+                <div>
+                    <h2 class="font-extrabold text-[16px] text-slate-900">🧰 أدوات الفحص</h2>
+                    <p class="text-[13px] text-slate-500">استخدم أي أداة وحدها لسيارتك</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2.5">
+                    <a href="tools.html?t=camera" class="tool-tile"><span class="ico" style="background:#DBEAFE">🎥</span><b>الفحص بالكاميرا</b><small>صوّر أي جزء ونحلله</small></a>
+                    <a href="tools.html?t=sound" class="tool-tile"><span class="ico" style="background:#D1FAE5">🔊</span><b>تحليل صوت المحرك</b><small>تقطيع، طقطقة، صياح</small></a>
+                    <a href="tools.html?t=vibration" class="tool-tile"><span class="ico" style="background:#EDE9FE">📳</span><b>قياس الاهتزاز</b><small>وقوف أو قيادة</small></a>
+                    <a href="tools.html?t=tires" class="tool-tile"><span class="ico" style="background:#FEF3C7">🛞</span><b>فحص الكفرات</b><small>سنة الصنع والتآكل</small></a>
+                    <a href="tools.html?t=lights" class="tool-tile"><span class="ico" style="background:#FEE2E2">⚠️</span><b>لمبات الطبلون</b><small>صوّرها واعرف معناها</small></a>
+                    <button type="button" onclick="openCodeTool()" class="tool-tile"><span class="ico" style="background:#E2E8F0">🔢</span><b>قراءة كود العطل</b><small>معنى الكود وما تفعل</small></button>
+                    <a href="tools.html?t=paint" class="tool-tile"><span class="ico" style="background:#FCE7F3">🎨</span><b>سماكة الدهان</b><small>خريطة الرش والمعجون</small></a>
+                    <a href="tools.html?t=glass" class="tool-tile"><span class="ico" style="background:#E0F2FE">🪟</span><b>كشف القطع المستبدلة</b><small>تواريخ الزجاج والأحزمة</small></a>
+                </div>
+            </section>
+            <a href="inspect.html" class="no-print flex items-center gap-3 rounded-2xl p-4 text-white" style="background:#1E3A8A">
+                <span class="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background:#1D4ED8">🔍</span>
+                <span class="flex-1 min-w-0">
+                    <span class="block font-black text-[16px]">فحص السيارة المستعملة</span>
+                    <span class="block text-[13px]" style="color:#DBEAFE">ناوي تشتري؟ فحص كامل بالكاميرا والصوت والاهتزاز، وتقرير وسعر تفاوض</span>
+                </span>
+                <span class="text-lg">←</span>
+            </a>
         </section>
 
         <!-- ================= TAB: PRICES ================= -->
@@ -341,7 +398,7 @@
                 <p class="text-[10px] text-slate-500">سعرك يساعد غيرك في <span class="city-name"></span> يعرف السعر الحقيقي. لا نعرض اسمك.</p>
                 <select id="contrib-part" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold outline-none"></select>
                 <input type="number" inputmode="decimal" id="contrib-price" placeholder="المبلغ المدفوع للقطعة" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono">
-                <button onclick="contributePrice()" class="w-full bg-emerald-700 text-white font-extrabold py-2.5 rounded-xl text-xs">إضافة السعر</button>
+                <button onclick="contributePrice()" class="w-full bg-blue-700 text-white font-extrabold py-2.5 rounded-xl text-xs">إضافة السعر</button>
             </div>
         </section>
 
@@ -399,18 +456,26 @@
                 <button onclick="openJoinModal('workshop')" class="w-full bg-slate-800 text-amber-300 border border-amber-500/40 font-bold py-2.5 rounded-xl text-[11px]">🏢 سجّل ورشتك مجاناً</button>
             </section>
 
-            <section id="agents-section" class="bg-emerald-950 text-white rounded-2xl p-4 shadow-xl border border-emerald-500/40 space-y-3">
-                <div class="flex items-center justify-between border-b border-emerald-900 pb-2.5">
+            <section id="agents-section" class="bg-blue-950 text-white rounded-2xl p-4 shadow-xl border border-blue-500/40 space-y-3">
+                <div class="flex items-center justify-between border-b border-blue-900 pb-2.5">
                     <div>
-                        <h2 class="font-black text-sm text-emerald-300">🧩 وكلاء وقطع غيار في <span class="city-name"></span></h2>
-                        <p class="text-[10px] text-emerald-100/60">اطلب تسعير القطع (أصلي/تجاري) قبل الشراء.</p>
+                        <h2 class="font-black text-sm text-blue-300">🧩 وكلاء وقطع غيار في <span class="city-name"></span></h2>
+                        <p class="text-[10px] text-blue-100/60">اطلب تسعير القطع (أصلي/تجاري) قبل الشراء.</p>
                     </div>
-                    <span id="ag-count" class="text-[10px] font-mono bg-emerald-900 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded shrink-0">0</span>
+                    <span id="ag-count" class="text-[10px] font-mono bg-blue-900 text-blue-300 border border-blue-500/40 px-2 py-0.5 rounded shrink-0">0</span>
                 </div>
                 <div id="ag-list" class="space-y-2.5"></div>
-                <button onclick="openJoinModal('agent')" class="w-full bg-emerald-900 text-emerald-200 border border-emerald-500/40 font-bold py-2.5 rounded-xl text-[11px]">🏪 سجّل محلك أو وكالتك مجاناً</button>
+                <button onclick="openJoinModal('agent')" class="w-full bg-blue-900 text-blue-200 border border-blue-500/40 font-bold py-2.5 rounded-xl text-[11px]">🏪 سجّل محلك أو وكالتك مجاناً</button>
             </section>
 
+            <div id="join-compact" class="hidden bg-white border border-slate-200 rounded-2xl p-3.5 space-y-2">
+                <p class="font-black text-[15px] text-slate-900">صاحب ورشة أو محل قطع غيار؟</p>
+                <p class="text-[13px] text-slate-600 leading-relaxed">سجّل مجاناً لتصلك طلبات العملاء في مدينتك.</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="openJoinModal('workshop')" class="bg-slate-900 text-white font-bold py-2.5 rounded-xl text-[13px]">🔧 سجّل ورشتك</button>
+                    <button onclick="openJoinModal('agent')" class="bg-blue-700 text-white font-bold py-2.5 rounded-xl text-[13px]">🧩 سجّل محلك</button>
+                </div>
+            </div>
             <button id="provider-login-btn" onclick="openModal('login-modal')" class="w-full bg-white border border-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-[11px]">🔐 دخول الورش والوكلاء</button>
         </div>
 
@@ -421,6 +486,9 @@
                 <button onclick="openOwnerModal()" class="underline">لوحة الإدارة</button>
             </p>
             <p>الأسعار تقديرية وتتحدث من مساهمات المستخدمين. أسماء الشركات للتوضيح فقط.</p>
+            <p id="accuracy-line" class="hidden font-bold text-emerald-700"></p>
+            <p>الدفع الآمن عبر Lemon Squeezy · <a href="terms.html#refund" class="underline">سياسة الاسترجاع</a> · تحذيرات السلامة مجانية دائماً</p>
+            <p class="font-mono opacity-60">الإصدار 3.0 · 2026-11</p>
         </footer>
     </main>
 
@@ -445,11 +513,15 @@
         </div>
         <div>
             <label for="loc-country" class="text-[10px] text-slate-500 font-bold block mb-1">الدولة</label>
-            <select id="loc-country" onchange="fillCitySelect('loc-city', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm font-semibold outline-none"></select>
+            <select id="loc-country" onchange="onCountryPicked(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm font-semibold outline-none"></select>
         </div>
         <div>
             <label for="loc-city" class="text-[10px] text-slate-500 font-bold block mb-1">المدينة</label>
             <select id="loc-city" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm font-semibold outline-none"></select>
+        </div>
+        <div>
+            <label for="loc-lang" class="text-[10px] text-slate-500 font-bold block mb-1">اللغة · Language</label>
+            <select id="loc-lang" data-noi18n class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm font-semibold outline-none"></select>
         </div>
         <button onclick="saveLocationFromModal()" class="w-full bg-blue-700 text-white font-black py-3 rounded-xl text-sm">حفظ</button>
     </div>
@@ -504,6 +576,8 @@
             <button onclick="closeModal('send-modal')" class="text-slate-400 px-2 text-sm">✕</button>
         </div>
         <pre id="send-preview" class="whitespace-pre-wrap bg-slate-50 border border-slate-200 rounded-xl p-2 text-[10px] leading-relaxed text-slate-700 max-h-40 overflow-y-auto" style="font-family:inherit"></pre>
+        <p id="send-status" class="text-[11px] text-slate-500"></p>
+        <div id="send-issues" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-2 text-[11px] text-amber-900"></div>
         <input id="send-name" maxlength="40" placeholder="اسمك" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs">
         <input id="send-phone" type="tel" inputmode="tel" maxlength="16" placeholder="جوالك (اختياري ليتواصلوا معك)" dir="ltr" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-mono">
         <textarea id="send-note" rows="2" maxlength="300" placeholder="ملاحظة (اختياري): الموعد المناسب، أصلي أو تجاري…" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs resize-none"></textarea>
@@ -538,19 +612,32 @@
         </div>
         <div id="owner-panel" class="hidden space-y-3">
             <div id="owner-stats" class="grid grid-cols-3 gap-2 text-center"></div>
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 space-y-1.5 text-[11px]">
+                <h4 class="text-xs font-black text-slate-900">📊 أرقام آخر 7 أيام</h4>
+                <div id="ins-funnel" class="grid grid-cols-3 gap-1.5 text-center"></div>
+                <p id="ins-acc" class="font-bold text-emerald-800"></p>
+                <div id="ins-miss" class="space-y-1"></div>
+                <button onclick="ownerHealth()" class="w-full bg-white border border-slate-300 font-bold py-2 rounded-lg">🩺 فحص سلامة الموقع</button>
+                <p id="ins-health" class="hidden leading-relaxed"></p>
+            </div>
             <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2 space-y-1.5 text-[11px]">
                 <h4 class="text-xs font-black text-emerald-900">💳 المبيعات وأكواد التفعيل</h4>
                 <p id="oc-stats" class="text-[10px] text-emerald-900"></p>
                 <p class="text-[10px] text-emerald-800">أنشئ أكواداً لبيعها يدوياً أو كهدايا وعروض. كل كود يُستخدم مرة واحدة.</p>
                 <div class="grid grid-cols-3 gap-1.5">
                     <select id="oc-product" class="col-span-2 bg-white border border-emerald-200 rounded-lg p-1.5">
-                        <option value="day">يوم كامل</option><option value="day3">3 أيام</option><option value="annual">سنة كاملة</option>
+                        <option value="pack3">باقة 3 فحوصات</option><option value="day">يوم كامل</option><option value="week">أسبوع كامل</option><option value="report">فحص سيارة مستعملة</option><option value="tools">باقة الأدوات</option>
                     </select>
                     <input id="oc-count" type="number" min="1" max="50" value="5" class="bg-white border border-emerald-200 rounded-lg p-1.5 font-mono">
                 </div>
                 <input id="oc-note" maxlength="60" placeholder="ملاحظة (اختياري): مثل عرض الافتتاح" class="w-full bg-white border border-emerald-200 rounded-lg p-1.5">
                 <button onclick="ownerCreateCodes()" class="w-full bg-emerald-700 text-white font-bold py-2 rounded-lg">🎟️ إنشاء أكواد</button>
                 <textarea id="oc-out" rows="4" readonly class="hidden w-full bg-white border border-emerald-200 rounded-lg p-1.5 font-mono text-[11px]" dir="ltr"></textarea>
+                <div class="border-t border-emerald-200 pt-2 space-y-1.5">
+                    <div class="flex items-center justify-between"><h4 class="text-xs font-black text-blue-900">💳 طلبات تم pay المعلّقة</h4><button onclick="ownerTamList()" class="bg-blue-700 text-white font-bold px-3 py-1 rounded-lg text-[11px]">تحديث</button></div>
+                    <p class="text-[10px] text-slate-600">قارن رقم العملية بقائمة «المعاملات» في تم pay، ثم اعتمد أو ارفض.</p>
+                    <div id="tam-list" class="space-y-1.5 text-[12px]"></div>
+                </div>
             </div>
             <div>
                 <h4 class="text-xs font-black mb-1.5">⏳ طلبات بانتظار الموافقة</h4>
@@ -660,2447 +747,19 @@
     </div>
 </div>
 
-<script>
-// =====================================================================
-// ⚙️ الإعدادات — عدّل هذا القسم فقط عند الربط (التفاصيل في README.md)
-// =====================================================================
-const FIREBASE_CONFIG = {               // مشروع Firebase: mj333-24cde
-    apiKey: "AIzaSyACt18eL1b_k0udQwXNH0dq56DmMXL8iLE",
-    authDomain: "mj333-24cde.firebaseapp.com",
-    projectId: "mj333-24cde",
-    storageBucket: "mj333-24cde.firebasestorage.app",
-    messagingSenderId: "432865728090",
-    appId: "1:432865728090:web:59bf809cf19f58a320aa63"
-};
-const OWNER_EMAIL = "majed111333sj@gmail.com";   // بريد مالك التطبيق المسجّل في Firebase Authentication
-const DEMO_OWNER_PASSWORD = "1234";    // كلمة مرور الإدارة في الوضع التجريبي فقط
-const AI_ENDPOINT = "/api/ai";         // دالة الذكاء الاصطناعي على Vercel (تعمل بعد إضافة ANTHROPIC_API_KEY)
-// =====================================================================
-
-// ---------- أدوات عامة ----------
-const $ = id => document.getElementById(id);
-function el(tag, cls, text) {
-    const e = document.createElement(tag);
-    if (cls) e.className = cls;
-    if (text !== undefined && text !== null) e.textContent = text;
-    return e;
-}
-const store = {
-    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
-    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
-    del(k) { try { localStorage.removeItem(k); } catch (e) {} }
-};
-function cleanPhone(p) { return String(p || '').replace(/[^\d+]/g, '').replace(/(?!^)\+/g, '').slice(0, 16); }
-function fmtTime(ts) { try { return new Date(ts).toLocaleString('ar', { dateStyle: 'short', timeStyle: 'short' }); } catch (e) { return ''; } }
-function openModal(id) { $(id).classList.remove('hidden'); }
-function closeModal(id) { $(id).classList.add('hidden'); }
-function normalizeAr(t) {
-    return String(t || '').toLowerCase()
-        .replace(/[\u064B-\u0652\u0640]/g, '')
-        .replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي')
-        .replace(/\s+/g, ' ').trim();
-}
-
-// =====================================================================
-// 🌍 الدول والمدن
-// idx = مستوى الأسعار مقارنة بالسعودية، rate = سعر الصرف من الريال السعودي
-// =====================================================================
-const COUNTRIES = {
-    SA: { name: 'السعودية', flag: '🇸🇦', cur: 'ر.س', code: 'SAR', rate: 1, idx: 1.0, dial: '966', dec: 0,
-          emergency: [['الطوارئ الموحد', '911'], ['الهلال الأحمر', '997'], ['نجم (حوادث المرور)', '920000560']],
-          cities: ['الرياض', 'جدة', 'مكة المكرمة', 'المدينة المنورة', 'الدمام', 'الخبر', 'الأحساء', 'الطائف', 'تبوك', 'بريدة', 'أبها', 'خميس مشيط', 'حائل', 'جازان', 'نجران', 'ينبع', 'الجبيل'] },
-    AE: { name: 'الإمارات', flag: '🇦🇪', cur: 'د.إ', code: 'AED', rate: 0.9793, idx: 1.1, dial: '971', dec: 0,
-          emergency: [['الشرطة', '999'], ['الإسعاف', '998'], ['الدفاع المدني', '997']],
-          cities: ['دبي', 'أبوظبي', 'الشارقة', 'عجمان', 'العين', 'رأس الخيمة', 'الفجيرة', 'أم القيوين'] },
-    KW: { name: 'الكويت', flag: '🇰🇼', cur: 'د.ك', code: 'KWD', rate: 0.0819, idx: 1.1, dial: '965', dec: 1,
-          emergency: [['الطوارئ', '112']],
-          cities: ['مدينة الكويت', 'حولي', 'الفروانية', 'الجهراء', 'الأحمدي', 'مبارك الكبير'] },
-    QA: { name: 'قطر', flag: '🇶🇦', cur: 'ر.ق', code: 'QAR', rate: 0.9707, idx: 1.15, dial: '974', dec: 0,
-          emergency: [['الطوارئ', '999']],
-          cities: ['الدوحة', 'الريان', 'الوكرة', 'الخور', 'أم صلال'] },
-    BH: { name: 'البحرين', flag: '🇧🇭', cur: 'د.ب', code: 'BHD', rate: 0.1003, idx: 1.0, dial: '973', dec: 1,
-          emergency: [['الطوارئ', '999']],
-          cities: ['المنامة', 'المحرق', 'الرفاع', 'مدينة حمد', 'مدينة عيسى'] },
-    OM: { name: 'عُمان', flag: '🇴🇲', cur: 'ر.ع', code: 'OMR', rate: 0.1025, idx: 0.95, dial: '968', dec: 1,
-          emergency: [['الطوارئ', '9999']],
-          cities: ['مسقط', 'صلالة', 'صحار', 'نزوى', 'صور', 'البريمي'] }
-};
-const BIG_CITIES = ['الرياض', 'جدة', 'الدمام', 'دبي', 'أبوظبي', 'الدوحة', 'مدينة الكويت', 'المنامة', 'مسقط'];
-
-let LOC = store.get('sd_loc', null);
-function C() { return COUNTRIES[(LOC && COUNTRIES[LOC.country]) ? LOC.country : 'SA']; }
-function cityName() { return (LOC && LOC.city) || C().cities[0]; }
-function cityFactor() { return BIG_CITIES.includes(cityName()) ? 1.05 : 1.0; }
-// سعر مرجعي بالريال السعودي → سعر محلي تقديري للدولة والمدينة الحالية
-function localPrice(sar) { return sar * C().idx * cityFactor() * C().rate; }
-function fmtLocal(v) {
-    const c = C();
-    return Number(v).toLocaleString('en', { maximumFractionDigits: c.dec, minimumFractionDigits: 0 }) + ' ' + c.cur;
-}
-function fmtSar(sar) { return fmtLocal(localPrice(sar)); }
-
-function fillCountrySelect(id, selected) {
-    const s = $(id); s.innerHTML = '';
-    Object.entries(COUNTRIES).forEach(([k, c]) => { const o = el('option', null, c.flag + ' ' + c.name); o.value = k; s.appendChild(o); });
-    s.value = selected || (LOC ? LOC.country : 'SA');
-}
-function fillCitySelect(id, country, selected) {
-    const s = $(id); s.innerHTML = '';
-    COUNTRIES[country].cities.forEach(ct => s.appendChild(el('option', null, ct)));
-    if (selected && COUNTRIES[country].cities.includes(selected)) s.value = selected;
-}
-function openLocationModal() {
-    fillCountrySelect('loc-country', LOC ? LOC.country : 'SA');
-    fillCitySelect('loc-city', $('loc-country').value, LOC && LOC.city);
-    openModal('location-modal');
-}
-function saveLocationFromModal() {
-    LOC = { country: $('loc-country').value, city: $('loc-city').value };
-    store.set('sd_loc', LOC);
-    closeModal('location-modal');
-    onLocationChanged();
-}
-function onLocationChanged() {
-    const c = C();
-    $('loc-chip').textContent = c.flag + ' ' + cityName();
-    document.querySelectorAll('.city-name').forEach(e => e.textContent = cityName());
-    document.querySelectorAll('.country-name').forEach(e => e.textContent = c.name);
-    const em = $('emergency-numbers'); em.innerHTML = '';
-    c.emergency.forEach(([label, num]) => {
-        const a = el('a', 'bg-red-600/90 rounded-xl p-2.5 text-center block');
-        a.href = 'tel:' + num;
-        a.appendChild(el('span', 'block text-[10px] text-red-100', label));
-        a.appendChild(el('span', 'block font-black font-mono text-lg', num));
-        em.appendChild(a);
-    });
-    renderMoney();
-    if (lastDiag) renderNegotiator();
-    if (typeof renderPriceLookup === 'function') { refreshPrices(); }
-    if (typeof Providers !== 'undefined') Providers.onLocation();
-}
-function renderMoney() {
-    document.querySelectorAll('[data-sar]').forEach(e => { e.textContent = fmtSar(parseFloat(e.dataset.sar)); });
-}
-
-// ---------- التبويبات ----------
-const TABS = ['diagnose', 'prices', 'emergency', 'mine'];
-function switchTab(t) {
-    TABS.forEach(id => {
-        $('tab-' + id).classList.toggle('hidden', id !== t);
-        $('nav-' + id).classList.toggle('active', id === t);
-    });
-    if (t === 'mine') { renderMine(); $('mine-dot').classList.add('hidden'); }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// =====================================================================
-// 🚗 بيانات السيارات وقاعدة الأعطال (أسعار مرجعية بالريال السعودي)
-// =====================================================================
-const CHIPS = {
-    when:  [['start', 'عند التشغيل', 'عند التشغيل تشغيل الصبح'], ['idle', 'والسيارة واقفة', 'واقفه وقوف اشاره'], ['accel', 'عند الدعسة', 'الدعسه تسارع'],
-            ['speed', 'على سرعة عالية', 'على السرعه مع السرعه ماشي'], ['brake', 'عند الفرملة', 'فرمله افرمل'], ['steer', 'عند لف الدركسون', 'لف الدركسون عند اللف'],
-            ['bump', 'في المطبات', 'مطبات مطب'], ['cold', 'والمحرك بارد', 'بارد'], ['hot', 'بعد ما يحمى', 'بعد ما يحمى']],
-    sym:   [['sound', 'صوت', 'صوت'], ['vib', 'رجة', 'رجه'], ['smell', 'رائحة', 'ريحه'], ['smoke', 'دخان', 'دخان'], ['leak', 'تسريب سوائل', 'تسريب'],
-            ['power', 'ضعف بالسحب', 'ضعف عزم ما تسحب'], ['heat', 'حرارة', 'حراره تسخن'], ['ac', 'المكيف', 'مكيف ما يبرد'], ['pull', 'تسحب لجهة', 'يسحب']],
-    light: [['engine', '🔧 المكينة', 'لمبه المكينه'], ['oil', '🛢️ الزيت', 'لمبه الزيت'], ['temp', '🌡️ الحرارة', 'ساعه الحراره'], ['battery', '🔋 البطارية', 'بطاريه دينمو'],
-            ['abs', '⚠️ ABS', 'فرامل'], ['brakel', '🛑 الفرامل', 'فرامل'], ['airbag', '🎈 الوسادة', ''], ['tpms', '🛞 ضغط الكفرات', 'كفرات']]
-};
-const CAR_MODELS = {
-    'تويوتا': ['كامري', 'كورولا', 'يارس', 'لاندكروزر', 'برادو', 'هايلكس', 'راف فور', 'فورتشنر', 'أفالون', 'إينوفا'],
-    'هيونداي': ['أكسنت', 'إلنترا', 'سوناتا', 'توسان', 'سنتافي', 'كريتا', 'أزيرا', 'باليسيد'],
-    'نيسان': ['صني', 'ألتيما', 'باترول', 'ماكسيما', 'إكس تريل', 'نافارا', 'كيكس', 'باثفايندر'],
-    'كيا': ['ريو', 'سيراتو', 'K5', 'سبورتاج', 'سورينتو', 'بيجاس', 'كارنفال', 'سيلتوس'],
-    'لكزس': ['ES', 'LX', 'RX', 'IS', 'GX', 'NX'],
-    'فورد': ['تورس', 'إكسبلورر', 'إكسبديشن', 'F-150', 'موستنج', 'إيدج', 'رينجر'],
-    'شيفروليه': ['تاهو', 'ماليبو', 'كابريس', 'سلفرادو', 'كابتيفا', 'سبارك', 'جروف', 'سوبربان'],
-    'جي إم سي': ['يوكن', 'سييرا', 'تيرين', 'أكاديا'],
-    'هوندا': ['أكورد', 'سيفيك', 'CR-V', 'بايلوت', 'سيتي', 'HR-V'],
-    'مازدا': ['مازدا 6', 'مازدا 3', 'CX-5', 'CX-9', 'CX-30'],
-    'ميتسوبيشي': ['لانسر', 'باجيرو', 'أتراج', 'ASX', 'L200', 'إكسباندر']
-};
-const CAR_MAKES = ['تويوتا', 'هيونداي', 'نيسان', 'كيا', 'لكزس', 'فورد', 'شيفروليه', 'جي إم سي', 'هوندا', 'مازدا', 'ميتسوبيشي', 'مرسيدس', 'بي إم دبليو', 'جيلي', 'شانجان', 'إم جي', 'شيري', 'دودج', 'جيب', 'أخرى'];
-
-const CAR_KB = [
-    { id: 'misfire', title: 'تقطيع احتراق (كويل أو بواجي)', codes: ['P0300','P0301','P0302','P0303','P0304','P0305','P0306','P0307','P0308'], sev: 'caution',
-      kw: { 'تفتف': 3, 'تفتفه': 3, 'تقطيع': 3, 'يقطع': 2, 'رجه': 1, 'رجفه': 1, 'يرج': 1, 'ترج': 1, 'وقوف': 1, 'واقف': 1, 'واقفه': 1, 'اشاره': 1, 'سكون': 1, 'ضعف': 1, 'عزم': 1, 'لمبه المكينه': 2, 'تومض': 3, 'كويل': 3, 'بواجي': 3, 'بوجي': 3, 'شمعات': 3 },
-      parts: [['كويل إشعال', 185], ['طقم بواجي (شمعات)', 120]], labor: 80,
-      advice: 'إذا كانت لمبة المحرك تومض فلا تقُد لمسافات طويلة؛ الوقود غير المحترق يتلف دبة التلوث. اطلب من الفني تبديل الكويل بين السلندرات لتأكيد التالف قبل الشراء.' },
-    { id: 'ac', title: 'ضعف تبريد المكيف (نقص فريون أو تسريب)', codes: [], sev: 'safe',
-      kw: { 'مكيف': 3, 'تكييف': 3, 'ما يبرد': 3, 'مايبرد': 3, 'حار': 2, 'هواء حار': 3, 'فريون': 3, 'كمبروسر': 2, 'ضاغط': 2 },
-      parts: [['تعبئة فريون + فحص تسريب', 125]], labor: 60,
-      advice: 'اطلب فحص تسريب بالصبغة قبل التعبئة؛ التعبئة بدون إصلاح التسريب تضيع فلوسك. إذا الكمبروسر لا يشبك فقد يكون الريليه أو الكلتش وليس الكمبروسر كاملاً.' },
-    { id: 'steer', title: 'ونين طرمبة الدركسون (نقص زيت أو تلف الطرمبة)', codes: [], sev: 'caution',
-      kw: { 'ونين': 3, 'دركسون': 2, 'سكان': 2, 'توجيه': 2, 'لف': 1, 'دركسون ثقيل': 3, 'ثقيل اللف': 3, 'طرمبه': 2 },
-      parts: [['زيت دركسون', 45], ['طرمبة دركسون (عند الحاجة)', 450]], labor: 120,
-      advice: 'ابدأ بفحص مستوى زيت الدركسون وتسريبه؛ كثير من حالات الونين تنتهي بتعبئة الزيت. لا تقبل تبديل الطرمبة قبل هذا الفحص.' },
-    { id: 'brakes', title: 'تآكل فحمات الفرامل', codes: [], sev: 'caution',
-      kw: { 'فرامل': 3, 'بريك': 3, 'فرمله': 3, 'افرمل': 3, 'صرير': 2, 'زيقه': 2, 'تزيق': 2, 'صفير': 1, 'حكه': 2, 'احتكاك': 2, 'فحمات': 3, 'هوبات': 2, 'دسكات': 2 },
-      parts: [['طقم فحمات أمامي', 240]], labor: 100,
-      advice: 'صوت الحديد على الحديد (خشخشة قوية) يعني أن الفحمات انتهت وبدأت تأكل الهوبات؛ أصلحها فوراً. الصفير الخفيف غالباً مؤشر تآكل مبكر.' },
-    { id: 'belt', title: 'سير المحرك مرتخٍ أو متآكل', codes: [], sev: 'caution',
-      kw: { 'سير': 3, 'صياح': 3, 'صفير عند التشغيل': 3, 'تشغيل الصبح': 2, 'صفاره': 2, 'زعيق': 2 },
-      parts: [['سير محرك', 120], ['شداد السير (عند الحاجة)', 180]], labor: 60,
-      advice: 'السير إذا انقطع يوقف الدينمو وطرمبة الماء في كثير من السيارات؛ لا تؤجله طويلاً.' },
-    { id: 'overheat', title: 'ارتفاع حرارة المحرك', codes: ['P0217'], sev: 'stop',
-      kw: { 'حراره': 3, 'تسخن': 3, 'يسخن': 3, 'سخونه': 3, 'يغلي': 3, 'رديتر': 3, 'بخار': 2, 'مروحه': 2, 'ثرموستات': 3, 'ساعه الحراره': 3 },
-      parts: [['ثرموستات', 150], ['ماء رديتر (كولنت)', 60]], labor: 120,
-      advice: 'أوقف السيارة فوراً إذا تجاوز المؤشر المنتصف، ولا تفتح غطاء الرديتر والمحرك حار. القيادة مع الحرارة قد تتلف رأس المكينة.' },
-    { id: 'headgasket', title: 'تهريب وجه رأس المكينة (جوان الرأس)', codes: ['P0300', 'P0217'], sev: 'stop',
-      kw: { 'وجه الراس': 4, 'وجه المكينه': 4, 'جوان راس': 4, 'جوان الراس': 4, 'كاسكيت': 4, 'ماء في الزيت': 4, 'زيت حليبي': 4, 'رغوه بيضاء': 4, 'دخان ابيض': 3, 'بخار من الشكمان': 3, 'ينقص ماء الرديتر': 3, 'زيت في الماء': 4 },
-      parts: [['طقم جوانات وجه الرأس', 450], ['تجليخ وجه الرأس (عند الحاجة)', 350], ['ماء رديتر (كولنت)', 60], ['زيت وفلتر', 180]], labor: 1400,
-      advice: 'لا تقد السيارة: استمرار الحرارة مع التهريب قد يتلف المحرك بالكامل. اطلب فحص ضغط الأسطوانات واختبار تسريب الغازات في ماء الرديتر قبل فتح المكينة.' },
-    { id: 'battery', title: 'ضعف البطارية أو السلف', codes: ['P0562'], sev: 'caution',
-      kw: { 'ما يشتغل': 3, 'مايشتغل': 3, 'ما تشتغل': 3, 'تكتكه': 2, 'طقطقه عند التشغيل': 3, 'بطاريه': 3, 'سلف': 3, 'دينمو': 2, 'ثقيل في التشغيل': 3, 'اضاءه ضعيفه': 2 },
-      parts: [['بطارية', 400]], labor: 30,
-      advice: 'افحص البطارية مجاناً عند أغلب محلات البطاريات قبل الشراء. إذا كانت البطارية سليمة والتكتكة مستمرة فالمشكلة غالباً في السلف.' },
-    { id: 'cat', title: 'ضعف دبة التلوث أو حساس الأكسجين', codes: ['P0420','P0430','P0130','P0135'], sev: 'safe',
-      kw: { 'دبه': 3, 'دبه التلوث': 3, 'ريحه بيض': 3, 'ريحه كبريت': 3, 'حساس اكسجين': 3, 'اكسجين': 2 },
-      parts: [['حساس أكسجين', 350]], labor: 100,
-      advice: 'ابدأ بحساس الأكسجين لأنه أرخص بكثير من الدبة. القيادة آمنة مؤقتاً لكن استهلاك الوقود قد يزيد.' },
-    { id: 'bearing', title: 'تلف رمان بلي العجلة', codes: [], sev: 'caution',
-      kw: { 'هدير': 3, 'طنين': 2, 'يزيد مع السرعه': 3, 'مع السرعه': 2, 'رمان بلي': 3, 'رولمان': 3, 'بيرنق': 3, 'صوت طياره': 3 },
-      parts: [['رمان بلي عجلة', 280]], labor: 150,
-      advice: 'إذا تغيّر الصوت عند الميلان يميناً أو يساراً فهذا يؤكد رمان البلي. لا تتأخر لأن تلفه الكامل قد يسبب ارتخاء العجلة.' },
-    { id: 'suspension', title: 'تلف أجزاء المقصات أو المساعدات', codes: [], sev: 'caution',
-      kw: { 'مطبات': 3, 'مطب': 3, 'حفر': 2, 'طقطقه': 2, 'خبط': 3, 'طقه تحت': 3, 'مساعدات': 3, 'مساعد': 2, 'مقصات': 3, 'جلد': 2, 'طقه وانا ماشي': 3, 'طقطقه وانا ماشي': 3 },
-      parts: [['عمود توازن (لنك)', 120], ['جلد مقص (عند الحاجة)', 150]], labor: 100,
-      advice: 'اطلب رفع السيارة وتحديد القطعة بالضبط؛ كثير من الورش تقترح تبديل المساعدات كاملة بينما المشكلة في لنك رخيص.' },
-    { id: 'knock', title: 'طقة داخلية في المحرك (نقص زيت أو تلف داخلي)', codes: [], sev: 'stop',
-      kw: { 'طقه في المكينه': 4, 'طقه من المكينه': 4, 'دق': 2, 'نوك': 3, 'دق مكينه': 4, 'لمبه الزيت': 4, 'ضغط الزيت': 3, 'طقطقه في المحرك': 4 },
-      parts: [['فحص ضغط الزيت + تغيير زيت', 180]], labor: 100,
-      advice: 'أوقف المحرك وافحص مستوى الزيت فوراً. الطقة المنتظمة التي تزيد مع الدعسة قد تعني تلفاً داخلياً؛ لا تقُد السيارة حتى يفحصها فني.' },
-    { id: 'trans', title: 'مشكلة في ناقل الحركة (القير)', codes: ['P0700','P0730','P0740'], sev: 'caution',
-      kw: { 'قير': 3, 'جير': 3, 'نتعه': 3, 'رفسه': 3, 'يرفس': 3, 'تبديل': 2, 'يتاخر في التبديل': 3, 'يعلق': 2, 'غيار': 2 },
-      parts: [['تغيير زيت القير + فلتر', 300]], labor: 150,
-      advice: 'ابدأ بفحص زيت القير ولونه ورائحته قبل أي قرار بفتح القير. الزيت المحروق يعني أن الفحص يجب أن يكون عند متخصص قيرات.' },
-    { id: 'exhaust', title: 'تسريب في الشكمان (العادم)', codes: [], sev: 'safe',
-      kw: { 'شكمان': 3, 'عادم': 3, 'صوت عالي': 2, 'طرطعه': 3, 'فرقعه': 2 },
-      parts: [['وصلة أو جوان شكمان', 150]], labor: 100,
-      advice: 'تأكد من عدم وجود رائحة عادم داخل المقصورة؛ إن وجدت فافتح النوافذ وأصلحها سريعاً.' },
-    { id: 'balance', title: 'عدم اتزان الكفرات أو الترصيص', codes: [], sev: 'safe',
-      kw: { 'رجه في الدركسون': 4, 'رجه على السرعه': 4, 'سرعه 100': 3, 'خط سريع': 2, 'ترصيص': 3, 'ميزان': 3, 'وزن': 2, 'يسحب': 3, 'يميل': 2, 'كفرات': 2, 'وانا ماشي': 2, 'اثناء السير': 2, 'على السرعه': 2, 'في الطريق': 1 },
-      parts: [['وزن وترصيص', 120]], labor: 0,
-      advice: 'افحص ضغط الكفرات أولاً. إذا السيارة تسحب لجهة واحدة مع تآكل غير متساوٍ فتحتاج ترصيص.' },
-    { id: 'oil', title: 'تسريب أو حرق زيت المحرك', codes: [], sev: 'caution',
-      kw: { 'دخان ازرق': 4, 'دخان': 2, 'يشرب زيت': 4, 'ياكل زيت': 4, 'تسريب زيت': 4, 'نقط زيت': 3, 'ريحه احتراق': 2 },
-      parts: [['جوان غطاء البلوف', 120]], labor: 150,
-      advice: 'راقب مستوى الزيت أسبوعياً. التسريب الخارجي غالباً جوان رخيص، أما الدخان الأزرق المستمر فقد يعني حرق زيت داخلي ويحتاج فحص ضغط سلندرات.' },
-    { id: 'lean', title: 'خليط وقود غير متوازن (تهريب هواء أو حساس هواء متسخ)', codes: ['P0171','P0172','P0174','P0175','P0101'], sev: 'caution',
-      kw: { 'تهريب هواء': 4, 'حساس الهواء': 3, 'ماف': 3, 'استهلاك بنزين': 2, 'يصرف بنزين': 3 },
-      parts: [['تنظيف حساس الهواء (MAF)', 60], ['فحص تهريب الهواء (خراطيم)', 80]], labor: 80,
-      advice: 'ابدأ بالأرخص: تنظيف حساس الهواء وفحص خراطيم الهواء بالدخان. لا تبدّل الحساسات قبل هذا الفحص.' }
-];
-CAR_KB.push(
-    { id: 'power', title: 'ضعف في سحب المحرك (فلاتر أو بوابة الهواء أو ضغط البنزين)', codes: ['P0171','P0101'], sev: 'caution',
-      kw: { 'ما تسحب': 4, 'ماتسحب': 4, 'ثقيله': 2, 'ثقيل في الدعسه': 4, 'بطيئه': 3, 'تمشي ببطء': 4, 'ضعف في الدعسه': 4, 'ضعف عزم': 4, 'ما تشيل': 3, 'ضعيفه': 2 },
-      parts: [['فلتر هواء', 60], ['فلتر بنزين', 120], ['تنظيف بوابة الهواء (ثروتل)', 100]], labor: 80,
-      advice: 'ابدأ بالأرخص: فلتر الهواء وتنظيف بوابة الهواء، ثم فلتر البنزين. إذا كانت لمبة المكينة مضاءة فاطلب قراءة الكمبيوتر قبل تبديل أي قطعة.' },
-    { id: 'cv', title: 'تلف جوزة العكس (CV) أو مفصل التوجيه', codes: [], sev: 'caution',
-      kw: { 'طقطقه عند اللف': 4, 'طق عند اللف': 4, 'عند اللف': 2, 'دوران': 2, 'جوزه': 4, 'عكس': 3, 'كوبلن': 3, 'لفيت': 1 },
-      parts: [['جوزة عكس (CV)', 350]], labor: 150,
-      advice: 'الطقطقة مع اللف الكامل للدركسون علامة شائعة لتلف جوزة العكس. افحص الجلد المطاطي حولها؛ إن كان مشقوقاً فقد تسرب الشحم.' }
-);
-// تعديلات حسب السياق: كلمات تجعل بعض الأعطال أقل أو أكثر احتمالاً
-const CONTEXT_ADJUST = [
-    { re: /ماشي|السير|الطريق|السرعه|سرعه عاليه/, adj: { misfire: -2, balance: 2, bearing: 1 }, unless: /تفتف|تقطيع|يقطع/ },
-    { re: /واقف|وقوف|اشاره|سكون/, adj: { balance: -2, bearing: -2, misfire: 1 } },
-    { re: /اللف|لف الدركسون/, adj: { cv: 2, steer: 1 } },
-    { re: /بارد/, adj: { belt: 1, battery: 1 } }
-];
-const SEV = {
-    safe:    ['آمن للسير 🟢', 'bg-emerald-950 border-emerald-500/50 text-emerald-300', 'آمن للسير'],
-    caution: ['أصلحه قريباً 🟡', 'bg-amber-950 border-amber-500/50 text-amber-300', 'يحتاج إصلاح قريباً'],
-    stop:    ['توقف فوراً 🛑', 'bg-red-950 border-red-500/50 text-red-300', 'توقف فوراً']
-};
-const isOptional = p => p[0].includes('عند الحاجة');
-const kbById = id => CAR_KB.find(k => k.id === id) || null;
-
-function scoreDescription(text) {
-    const raw = String(text || '').toUpperCase();
-    const norm = normalizeAr(text);
-    const scores = {};
-    CAR_KB.forEach(item => {
-        let sc = 0;
-        if (item.codes.some(c => raw.includes(c))) sc += 10;
-        for (const [k, w] of Object.entries(item.kw)) if (norm.includes(normalizeAr(k))) sc += w;
-        if (sc > 0) scores[item.id] = sc;
-    });
-    CONTEXT_ADJUST.forEach(r => {
-        if (!r.re.test(norm) || (r.unless && r.unless.test(norm))) return;
-        for (const [id, d] of Object.entries(r.adj)) if (scores[id] !== undefined || d > 0 && Object.keys(scores).length) scores[id] = (scores[id] || 0) + d;
-    });
-    // عطل شائع في موديل المستخدم (من قاعدة المعرفة) يأخذ دفعة إضافية
-    const model = normalizeAr(($('car-model') && $('car-model').value) || '');
-    if (model) CAR_KB.forEach(k => { if (scores[k.id] && (k.models || []).some(m => { const n = normalizeAr(m); return n && (model.includes(n) || n.includes(model)); })) scores[k.id] += 2; });
-    Object.keys(scores).forEach(k => { if (scores[k] <= 0) delete scores[k]; });
-    return scores;
-}
-
-// ---------- الخيارات الموجّهة (متى/الأعراض/اللمبات) ----------
-function buildChips() {
-    ['when', 'sym', 'light'].forEach(group => {
-        const box = $('chips-' + group); box.innerHTML = '';
-        CHIPS[group].forEach(([id, label]) => {
-            const b = el('button', 'chip', label);
-            b.type = 'button'; b.dataset.group = group; b.dataset.id = id;
-            b.onclick = () => b.classList.toggle('on');
-            box.appendChild(b);
-        });
-    });
-}
-function selectedChips() {
-    const out = { when: [], sym: [], light: [], kw: [] };
-    document.querySelectorAll('.chip.on').forEach(b => {
-        const c = CHIPS[b.dataset.group].find(x => x[0] === b.dataset.id);
-        if (!c) return;
-        out[b.dataset.group].push(c[1].replace(/^[^\u0600-\u06FFA-Za-z]+\s*/, ''));
-        if (c[2]) out.kw.push(c[2]);
-        if (b.dataset.group === 'light') out.lightIds = (out.lightIds || []).concat(c[0]);
-    });
-    return out;
-}
-function contextText(sel) {
-    sel = sel || selectedChips();
-    const parts = [];
-    if (sel.when.length) parts.push('متى تظهر: ' + sel.when.join('، '));
-    if (sel.sym.length) parts.push('الأعراض: ' + sel.sym.join('، '));
-    if (sel.light.length) parts.push('لمبات الطبلون: ' + sel.light.join('، '));
-    return parts.join(' | ');
-}
-function fillModelList() {
-    const dl = $('car-model-list'); dl.innerHTML = '';
-    (CAR_MODELS[$('car-make').value] || []).forEach(m => { const o = document.createElement('option'); o.value = m; dl.appendChild(o); });
-}
-
-function carLabel() { const m = ($('car-model').value || '').trim(); return $('car-make').value + (m ? ' ' + m : '') + ' ' + $('car-year').value; }
-
-let diagMode = 'desc';
-function setDiagMode(m) {
-    diagMode = m;
-    ['desc', 'voice', 'code'].forEach(x => {
-        $('mode-' + x).classList.toggle('active', x === m);
-        $('panel-' + x).classList.toggle('hidden', x !== m);
-    });
-}
-function quickDesc(t) { $('car-desc').value = t; onDescInput(); startInterview(); }
-
-// ---------- بناء نتيجة التشخيص ----------
-function buildLocalResult(scores, meta) {
-    const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-    const r = { source: meta.source, text: meta.text || '', code: meta.code || '', soundSummary: meta.soundSummary || '', codeInfo: meta.codeInfo || '',
-                kb: null, title: '', sev: null, conf: '', explanation: meta.codeInfo || '', advice: '', checks: [], question: '', alts: [], ai: false };
-    if (!ranked.length) return r;
-    const top = kbById(ranked[0][0]);
-    const topScore = ranked[0][1], second = ranked[1] ? ranked[1][1] : 0;
-    let conf = topScore >= 8 && topScore - second >= 3 ? 'عالية' : (topScore >= 4 ? 'متوسطة' : 'منخفضة');
-    if (meta.source === 'sound' && conf === 'عالية') conf = 'متوسطة';
-    Object.assign(r, { kb: top, title: top.title, sev: top.sev, conf, advice: top.advice,
-                       alts: ranked.slice(1, 3).map(([id]) => kbById(id).title) });
-    if (!r.code) r.code = top.codes.find(c => r.text.toUpperCase().includes(c)) || '';
-    applyLightSafety(r, meta);
-    return r;
-}
-function applyLightSafety(r, meta) {
-    const ids = (meta && meta.lightIds) || [];
-    if (ids.includes('oil') || ids.includes('temp')) {
-        r.sev = 'stop';
-        const warn = ids.includes('oil') ? 'لمبة الزيت الحمراء تعني ضغط زيت منخفض: أطفئ المحرك فوراً وافحص مستوى الزيت.' : 'لمبة الحرارة تعني خطر ارتفاع حرارة المحرك: أوقف السيارة ولا تفتح غطاء الرديتر وهو حار.';
-        if (!String(r.advice || '').includes(warn)) r.advice = warn + (r.advice ? ' ' + r.advice : '');
-    }
-}
-
-let lastDiag = null, diagSeq = 0;
-
-let lastMeta = null, followups = [];
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-async function runDiagnosis(scores, meta) {
-    const seq = ++diagSeq;
-    lastMeta = meta;
-    const local = buildLocalResult(scores, meta);
-    meta._scores = scores;
-    // 📚 تطابق قوي مع عطل راجعه المالك في قاعدة المعرفة ← الإجابة من الجدول مباشرة بدون ذكاء اصطناعي
-    const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-    const strongKb = local.kb && local.kb.remote && !local.kb.auto && ranked.length && ranked[0][1] >= 8 && (!ranked[1] || ranked[1][1] * 2 <= ranked[0][1]) && meta.source !== 'sound';
-    if (strongKb) { local.fromKb = true; local.conf = 'عالية'; }
-    const useAi = !strongKb && aiAvailable !== false && location.protocol !== 'file:';
-    $('car-results').classList.add('hidden');
-    $('skeleton-msg').textContent = useAi ? '🤖 جاري تحليل المشكلة بالذكاء الاصطناعي… (حتى 20 ثانية)' : '⏳ جاري التحليل…';
-    $('car-skeleton').classList.remove('hidden');
-    if (window.innerWidth < 900) $('car-skeleton').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    // ننتظر الذكاء الاصطناعي أولاً حتى لا تظهر نتيجة مبدئية ثم تتغير
-    const [ai] = await Promise.all([useAi ? aiDiagnose(meta, local) : Promise.resolve(null), sleep(450)]);
-    if (seq !== diagSeq) return;
-    $('car-skeleton').classList.add('hidden');
-    if (ai && ai.paywall) { blockService(); return; }
-    if (!useAi) onFreeUsed(diagIdFor(meta));
-    const final = ai ? mergeAi(local, ai) : local;
-    applyLightSafety(final, meta);
-    renderDiagnosis(final, false);
-    if (final.title) addHistory(final);
-    kbQueueRecord(final, meta);
-    $('car-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function renderDiagnosis(r, aiPending) {
-    $('car-results').classList.remove('hidden');
-    const badges = { desc: 'تشخيص من الوصف', sound: 'تشخيص صوتي مبدئي', both: 'تشخيص صوتي + وصف', code: 'تشخيص من كود العطل' };
-    $('res-badge').textContent = r.ai ? (r.cached ? '⚡ تشخيص ذكي (من السجلات)' : '🤖 تشخيص ذكي') : r.fromKb ? '📚 من قاعدة المعرفة' : badges[r.source] || 'تشخيص';
-    $('res-car').textContent = carLabel() + ' • ' + cityName();
-    $('res-code').textContent = r.code ? 'DTC: ' + r.code : '';
-    $('res-confidence').textContent = r.conf ? 'الثقة: ' + r.conf : '';
-
-
-    const sb = $('res-sound-box');
-    sb.textContent = r.soundSummary; sb.classList.toggle('hidden', !r.soundSummary);
-    const ex = $('res-explain');
-    ex.textContent = r.explanation; ex.classList.toggle('hidden', !r.explanation);
-
-    const ul = $('res-parts'); ul.innerHTML = '';
-    const sevPill = $('res-severity');
-    if (!r.title) {
-        lastDiag = null;
-        $('res-title').textContent = 'لم أتمكن من تحديد العطل';
-        $('res-total').textContent = '—';
-        sevPill.textContent = 'غير محدد';
-        sevPill.className = 'text-[11px] font-extrabold px-2 py-0.5 rounded-md inline-block border bg-slate-800 border-slate-600 text-slate-200';
-        $('res-advice').textContent = r.source === 'sound'
-            ? 'الصوت المسجّل لم يُظهر نمطاً واضحاً. سجّل مرة أخرى في مكان أهدأ وقرّب الجوال من مصدر الصوت، أو أضف وصفاً مكتوباً.'
-            : 'جرّب وصفاً أدق: متى يظهر العطل (وقوف، سرعة، فرملة، لف الدركسون، تشغيل)؟ وما نوع الصوت (صفير، طقطقة، ونين، هدير)؟ وهل ظهرت لمبة في الطبلون؟';
-        ['res-checks-box', 'res-followup'].forEach(id => $(id).classList.add('hidden'));
-        $('res-alt').textContent = '';
-        $('negotiator-script').textContent = '';
-        $('protect-list').innerHTML = '';
-        return;
-    }
-    $('res-title').textContent = r.title;
-    const sev = SEV[r.sev] || SEV.caution;
-    sevPill.textContent = sev[0];
-    sevPill.className = 'text-[11px] font-extrabold px-2 py-0.5 rounded-md inline-block border ' + sev[1];
-
-    if (r.kb && !r.kb.noPrice) {
-        const items = r.kb.parts.concat(r.kb.labor ? [['أجرة اليد', r.kb.labor]] : []);
-        items.forEach(([name, sar]) => {
-            const li = el('li', 'flex justify-between bg-slate-50 border border-slate-200 rounded-lg px-2 py-1' + (name.includes('عند الحاجة') ? ' text-slate-400' : ''));
-            li.appendChild(el('span', null, name));
-            const v = el('span', 'font-mono font-bold text-slate-800'); v.dataset.sar = sar; v.dir = 'ltr';
-            li.appendChild(v); ul.appendChild(li);
-        });
-        r.totalSar = r.kb.parts.filter(p => !isOptional(p)).reduce((a, p) => a + p[1], 0) + r.kb.labor;
-        $('res-total').dataset.sar = r.totalSar;
-    } else {
-        ul.appendChild(el('li', 'text-slate-500', r.costNote || 'يحدد الفني القطع المطلوبة بعد الفحص.'));
-        delete $('res-total').dataset.sar;
-        $('res-total').textContent = '—';
-        r.totalSar = 0;
-    }
-    const chk = $('res-checks'); chk.innerHTML = '';
-    (r.checks || []).forEach(c => chk.appendChild(el('li', null, c)));
-    $('res-checks-box').classList.toggle('hidden', !(r.checks && r.checks.length));
-    $('res-advice').textContent = '💡 ' + r.advice;
-    const canAsk = r.question && postAsks < 2;
-    $('res-question').textContent = canAsk ? '❓ ' + r.question : '';
-    $('followup-input').value = '';
-    $('res-followup').classList.toggle('hidden', !canAsk);
-    $('res-alt').textContent = r.alts && r.alts.length ? 'احتمالات أخرى: ' + r.alts.join('، ') : '';
-    lastDiag = r;
-    renderMoney();
-    applyLock();
-    renderNegotiator();
-}
-
-function renderNegotiator() {
-    if (!lastDiag || !lastDiag.title) return;
-    const r = lastDiag;
-    let txt;
-    if (r.kb) {
-        const parts = r.kb.parts.filter(p => !isOptional(p)).map(p => `${p[0]} بحدود ${fmtSar(p[1])}`).join('، و');
-        const labor = r.kb.labor ? `، وأجرة اليد المعتادة نحو ${fmtSar(r.kb.labor)}` : '';
-        txt = `"التشخيص المبدئي لسيارتي: ${r.title}. سعر ${parts}${labor} في ${cityName()}. أرجو اعتماد الفاتورة بحدود ${fmtSar(r.totalSar)}، وتسليمي القطع القديمة بعد التبديل."`;
-    } else {
-        txt = `"التشخيص المبدئي لسيارتي: ${r.title}. أرجو تزويدي بعرض سعر مكتوب بالقطع وأجرة اليد قبل البدء، وتسليمي القطع القديمة بعد التبديل."`;
-    }
-    $('negotiator-script').textContent = txt;
-    const ul = $('protect-list'); ul.innerHTML = '';
-    const tips = [];
-    const opt = r.kb ? r.kb.parts.filter(isOptional).map(p => p[0].replace(' (عند الحاجة)', '')) : [];
-    tips.push('🔎 ليست كل قطعة تقترحها الورشة تالفة بالضرورة' + (opt.length ? ' (مثل ' + opt.join('، ') + ')' : '') + '؛ اطلب أن يريك العطل أو القراءة قبل التبديل.');
-    if (r.kb) tips.push('💰 السعر العادل في ' + cityName() + ' تقريباً ' + fmtSar(r.totalSar) + '. اطلب عرضاً مكتوباً، واطلب القطع القديمة.');
-    else tips.push('💰 اطلب عرض سعر مكتوباً بالقطع وأجرة اليد قبل البدء، واطلب القطع القديمة.');
-    tips.forEach(t => ul.appendChild(el('li', null, t)));
-    ['pc-part-r'].forEach(id => { $(id).value = ''; }); $('pc-result-r').classList.add('hidden');
-}
-// ---------- هل القطعة لازمة لهذا العطل؟ ----------
-// قطع من نفس النظام: قد تكون لازمة لكنها ليست السبب الأول
-const RELATED_PARTS = {
-    brakes: ['هوبات', 'دسكات', 'هوب', 'كالبر', 'قماشات', 'زيت فرامل'], steer: ['علبه دركسون', 'ليات دركسون', 'ذراع', 'مقص'],
-    misfire: ['بخاخات', 'بخاخ', 'حساس', 'فلتر بنزين', 'جوان'], ac: ['كمبروسر', 'ضاغط', 'ثلاجه', 'مكثف', 'ريليه'],
-    overheat: ['رديتر', 'طرمبه ماء', 'مروحه', 'حساس حراره', 'خراطيم'], battery: ['دينمو', 'سلف', 'اقطاب'],
-    suspension: ['مساعدات', 'مقصات', 'جلد', 'كفرات'], balance: ['كفرات', 'رمان بلي', 'مقصات', 'جوزه'],
-    bearing: ['هوب', 'جوزه', 'كفرات'], trans: ['فلتر قير', 'حساس سرعه', 'كمبيوتر قير', 'بلف'],
-    power: ['بخاخات', 'طرمبه بنزين', 'دبه', 'حساس'], cv: ['عكس', 'جلد عكس', 'رمان بلي'], belt: ['شداد', 'بكرات', 'دينمو']
-};
-function localPartVerdict(part, kb) {
-    const n = normalizeAr(part);
-    if (!kb) return null;
-    const words = n.split(' ').filter(w => w.length > 2 && w !== 'ال');
-    let best = null, bestScore = 0;
-    kb.parts.forEach(p => {
-        const pn = normalizeAr(p[0].replace(' (عند الحاجة)', ''));
-        let sc = 0;
-        if (pn === n) sc = 100; else if (pn.includes(n) || n.includes(pn)) sc = 50;
-        words.forEach(w => { if (pn.includes(w.replace(/^ال/, ''))) sc += w.length; });
-        if (sc > bestScore) { bestScore = sc; best = p; }
-    });
-    if (best && bestScore >= 4) {
-        if (isOptional(best)) return { verdict: 'maybe', reason: 'قد تكون لازمة، لكنها عادة آخر خيار في هذا العطل وليست أوله.', how_to_verify: 'ابدأ بالإصلاح الأبسط، واطلب إثباتاً على تلفها قبل تبديلها.', cheaper_first: kb.parts.filter(p => !isOptional(p)).map(p => p[0]).join('، ') || null };
-        return { verdict: 'needed', reason: 'هذه القطعة من الأسباب الشائعة لعطل "' + kb.title + '".', how_to_verify: 'اطلب من الفني أن يريك الفحص أو القراءة التي تؤكد تلفها.', cheaper_first: null };
-    }
-    if ((RELATED_PARTS[kb.id] || []).some(r => n.includes(normalizeAr(r)) || normalizeAr(r).includes(n)))
-        return { verdict: 'maybe', reason: 'هذه القطعة من نفس النظام، لكنها ليست السبب الأول المعتاد لعطل "' + kb.title + '".', how_to_verify: 'اطلب من الفني أن يريك تلفها بالقياس أو بالعين قبل تبديلها.', cheaper_first: kb.parts.filter(p => !isOptional(p)).map(p => p[0]).join('، ') || null };
-    return { verdict: 'unlikely', reason: 'هذه القطعة ليست ضمن القطع المعتادة لعطل "' + kb.title + '".', how_to_verify: 'اطلب من الفني أن يوضح علاقتها بالعطل، أو يريك سبب التلف قبل التبديل.', cheaper_first: null };
-}
-async function checkPart(where) {
-    if (!isUnlocked()) return blockService('فحص القطع ضمن الوصول الكامل.');
-    const part = $('pc-part-' + where).value.trim();
-    const box = $('pc-result-' + where);
-    let fault = '', kb = null;
-    if (where === 'r') {
-        if (!lastDiag) return;
-        fault = lastDiag.title + (lastDiag.text ? ' — ' + lastDiag.text : '') + (followups.length ? ' — ' + followups.map(f => f.q + ' ' + f.a).join('، ') : '');
-        kb = lastDiag.kb;
-    } else {
-        fault = $('pc-fault-p').value.trim();
-        if (fault.length < 3) { alert('اكتب وصف العطل أولاً.'); $('pc-fault-p').focus(); return; }
-        const sc = Object.entries(scoreDescription(fault)).sort((a, b) => b[1] - a[1]);
-        if (sc.length && sc[0][1] >= 3) kb = kbById(sc[0][0]);
-    }
-    if (part.length < 2) { alert('اكتب اسم القطعة.'); $('pc-part-' + where).focus(); return; }
-    box.classList.remove('hidden'); box.className = 'rounded-lg p-2.5 text-[11px] leading-relaxed border space-y-1 bg-slate-50 border-slate-200'; box.textContent = '🤖 جاري التحقق…';
-    let r = null;
-    if (aiAvailable !== false && location.protocol !== 'file:') {
-        try {
-            const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 15000);
-            const res = await fetch(AI_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
-                body: JSON.stringify({ mode: 'partcheck', wid: walletId(), car: carLabel(), fault, part, known_parts: kb ? kb.parts.map(p => p[0]) : [] }) });
-            clearTimeout(t);
-            if (res.status === 503 || res.status === 404) aiAvailable = false;
-            else if (res.ok) r = await res.json();
-        } catch (e) {}
-    }
-    if (!r || !r.verdict) r = localPartVerdict(part, kb);
-    box.innerHTML = '';
-    if (!r) { box.textContent = 'لم أستطع الحكم على هذه القطعة لهذا الوصف. اطلب من الفني أن يوضح سبب تبديلها ويريك التلف قبل الدفع.'; return; }
-    const V = { needed: ['✅ غالباً لازمة لهذا العطل', 'bg-emerald-50 border-emerald-200 text-emerald-900'],
-                maybe: ['⚠️ قد تكون لازمة، تأكد أولاً', 'bg-amber-50 border-amber-200 text-amber-900'],
-                unlikely: ['❌ غالباً غير مرتبطة بهذا العطل', 'bg-red-50 border-red-200 text-red-900'] }[r.verdict] || ['❔ غير واضح', 'bg-slate-50 border-slate-200 text-slate-800'];
-    box.className = 'rounded-lg p-2.5 text-[11px] leading-relaxed border space-y-1 ' + V[1];
-    box.appendChild(el('p', 'font-black', V[0] + ': ' + part));
-    if (r.reason) box.appendChild(el('p', null, r.reason));
-    if (r.how_to_verify) box.appendChild(el('p', null, '🔍 ' + r.how_to_verify));
-    if (r.cheaper_first) box.appendChild(el('p', 'font-bold', '💡 جرّب أولاً: ' + r.cheaper_first));
-}
-
-function goAudit() {
-    switchTab('prices');
-    if (lastDiag && lastDiag.kb) {
-        const first = lastDiag.kb.parts[0] && matchPart(lastDiag.kb.parts[0][0]);
-        if (first) $('audit-part').value = first;
-    }
-    setTimeout(() => $('audit-part').scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
-}
-
-function copyNegotiator() {
-    const txt = $('negotiator-script').textContent;
-    const done = () => alert('تم النسخ ✓');
-    const fallback = () => {
-        const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
-        document.body.appendChild(ta); ta.select();
-        try { document.execCommand('copy'); done(); } catch (e) { alert('انسخ النص يدوياً.'); }
-        ta.remove();
-    };
-    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(done).catch(fallback); else fallback();
-}
-function exportReportPDF() {
-    if (!isUnlocked()) return blockService('حفظ التقرير ضمن الوصول الكامل.');
-    alert('ستفتح نافذة الطباعة. اختر "حفظ كـ PDF" لحفظ التقرير.');
-    window.print();
-}
-
-// ---------- الذكاء الاصطناعي (اختياري عبر Vercel) ----------
-let aiAvailable = null;   // null = غير معروف بعد
-async function aiDiagnose(meta, local) {
-    if (aiAvailable === false || location.protocol === 'file:') { aiAvailable = false; return null; }
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 25000);
-    try {
-        const res = await fetch(AI_ENDPOINT, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
-            body: JSON.stringify({
-                wid: walletId(), did: diagIdFor(meta),
-                mode: 'diagnose', car: carLabel(), country: C().name, city: cityName(), mileage: $('car-km').value || '',
-                description: meta.text || '', code: meta.code || '', sound: meta.soundSummary || '', context: meta.context || '',
-                structured: meta.structured || '', followups: followups.slice(-6),
-                localGuess: local.kb ? local.kb.id : null,
-                reference: Object.entries(meta._scores || {}).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id]) => kbById(id)).filter(k => k && k.remote)
-                    .map(k => ({ title: k.title + (k.auto ? ' (تلقائي غير معتمد بعد)' : ''), parts: k.parts.map(p => p[0]).join('، '), advice: k.advice.slice(0, 200), models: (k.models || []).join('، ') })),
-                catalog: CAR_KB.map(k => ({ id: k.id, title: k.title }))
-            })
-        });
-        if (res.status === 402) { Wallet.state = Object.assign({}, Wallet.state, { freeAvailable: false }); return { paywall: true }; }
-        if (res.status === 503 || res.status === 404) { aiAvailable = false; return null; }
-        if (!res.ok) return null;
-        aiAvailable = true;
-        onFreeUsed(diagIdFor(meta));
-        return await res.json();
-    } catch (e) { return null; }
-    finally { clearTimeout(t); }
-}
-// أعطال كبيرة: إذا ذكرها الذكاء الاصطناعي ولم تكن في العطل المرتبط فلا نعرض تكلفة قد تكون مضللة
-const MAJOR_TERMS = ['وجه الراس', 'وجه راس', 'جوان الراس', 'جوان راس', 'كاسكيت', 'head gasket', 'عمره', 'تخبيط', 'تبديل القير', 'قير كامل', 'كمبيوتر القير', 'دبه التلوث', 'بلوف', 'سبيكه'];
-function kbMatchesAi(kb, ai) {
-    if (!kb) return false;
-    const aiText = normalizeAr((ai.title || '') + ' ' + (ai.explanation || '')).toLowerCase();
-    const kbText = normalizeAr(kb.title + ' ' + Object.keys(kb.kw).join(' ') + ' ' + kb.parts.map(p => p[0]).join(' ')).toLowerCase();
-    return !MAJOR_TERMS.some(t => { const n = normalizeAr(t).toLowerCase(); return aiText.includes(n) && !kbText.includes(n); });
-}
-function mergeAi(local, ai) {
-    if (!ai || typeof ai.title !== 'string' || !ai.title.trim()) return local;
-    let kb = ai.kb_id ? kbById(ai.kb_id) : null;
-    let costNote = '';
-    if (kb && !kbMatchesAi(kb, ai)) { costNote = 'التكلفة تعتمد على نتيجة الفحص؛ هذا النوع من الأعطال قد تختلف تكلفته كثيراً.'; kb = null; }
-    const confMap = { high: 'عالية', medium: 'متوسطة', low: 'منخفضة' };
-    return Object.assign({}, local, {
-        ai: true,
-        cached: !!ai.cached,
-        kb,
-        title: String(ai.title).slice(0, 120),
-        sev: SEV[ai.severity] ? ai.severity : (kb ? kb.sev : 'caution'),
-        conf: confMap[ai.confidence] || local.conf || 'متوسطة',
-        explanation: [local.codeInfo, String(ai.explanation || '').slice(0, 600)].filter(Boolean).join('\n'),
-        advice: String(ai.advice || (kb ? kb.advice : '')).slice(0, 500),
-        checks: Array.isArray(ai.checks) ? ai.checks.slice(0, 5).map(c => String(c).slice(0, 140)) : [],
-        question: ai.question ? String(ai.question).slice(0, 200) : '',
-        alts: local.alts.filter(a => !kb || a !== kb.title),
-        costNote
-    });
-}
-
-// ---------- الفحص بالوصف ----------
-function descMeta() {
-    const text = $('car-desc').value.trim();
-    const sel = selectedChips();
-    const structured = contextText(sel);
-    return { source: 'desc', text, structured, lightIds: sel.lightIds || [], kw: sel.kw.join(' ') };
-}
-function runDescriptionDiagnosis() {
-    const meta = descMeta();
-    if (meta.text.length < 3 && !meta.structured) { alert('اكتب وصفاً للمشكلة، أو اختر من الخيارات تحت الوصف، أو اضغط 🎤 وتحدث.'); $('car-desc').focus(); return; }
-    if (!canStart(diagIdFor(meta))) return blockService();
-    clearTimeout(ivTimer); followups = []; postAsks = 0; ivSeq++; iv = null; $('interview').classList.add('hidden'); ivLastText = meta.text;
-    runDiagnosis(scoreDescription(meta.text + ' ' + meta.kw), meta);
-}
-// =====================================================================
-// 🎯 المقابلة الذكية: أسئلة متتابعة قبل التشخيص لرفع الدقة
-// =====================================================================
-const QBANK = {
-    _when: { q: 'متى تظهر المشكلة غالباً؟', type: 'choice', options: [['والسيارة واقفة', 'واقفه'], ['أثناء المشي', 'وانا ماشي'], ['عند الدعسة', 'الدعسه'], ['عند الفرملة', 'فرمله'], ['عند لف الدركسون', 'عند اللف'], ['عند التشغيل', 'عند التشغيل']] },
-    _light: { q: 'هل توجد لمبة مضاءة في الطبلون؟', type: 'choice', options: [['لا يوجد', ''], ['لمبة المكينة', 'لمبه المكينه'], ['لمبة الزيت', 'لمبه الزيت'], ['لمبة الحرارة', 'ساعه الحراره'], ['لمبة البطارية', 'بطاريه']] },
-    misfire: { q: 'هل لمبة المكينة تومض (تطفي وتشتغل)؟', type: 'yesno', kw: 'تومض' },
-    balance: { q: 'وين تحس الرجة أكثر؟', type: 'choice', options: [['في الدركسون', 'رجه في الدركسون'], ['في جسم السيارة كامل', 'رجه'], ['في دواسة الفرامل', 'فرامل']] },
-    bearing: { q: 'هل الصوت يتغير لما تميل يمين أو يسار؟', type: 'yesno', kw: 'رمان بلي' },
-    brakes: { q: 'وش نوع صوت الفرامل؟', type: 'choice', options: [['صفير خفيف', 'صفير'], ['خشخشة حديد قوية', 'حكه احتكاك'], ['طقة', 'طقه']] },
-    ac: { q: 'هل الهواء يطلع بارد شوي ثم يحمى؟', type: 'yesno', kw: 'فريون' },
-    overheat: { q: 'هل ينقص ماء الرديتر أو تشوف بخار؟', type: 'yesno', kw: 'رديتر بخار' },
-    battery: { q: 'هل الأنوار والطبلون تضعف عند التشغيل؟', type: 'yesno', kw: 'بطاريه' },
-    trans: { q: 'متى تحس النتعة؟', type: 'choice', options: [['عند الانطلاق من الوقوف', 'نتعه'], ['عند التبديل أثناء المشي', 'يتاخر في التبديل'], ['عند الرجوع للخلف', 'قير']] },
-    suspension: { q: 'هل الصوت يظهر فقط في المطبات؟', type: 'yesno', kw: 'مطبات' },
-    steer: { q: 'هل الصوت يزيد كل ما لفيت الدركسون أكثر؟', type: 'yesno', kw: 'ونين' },
-    cv: { q: 'هل الطقطقة تظهر عند اللف الكامل وأنت ماشي؟', type: 'yesno', kw: 'جوزه عكس' },
-    power: { q: 'هل لمبة المكينة مضاءة مع الضعف؟', type: 'yesno', kw: 'لمبه المكينه' },
-    knock: { q: 'هل الطقة تزيد مع الدعسة؟', type: 'yesno', kw: 'نوك دق' },
-    oil: { q: 'وش لون الدخان؟', type: 'choice', options: [['أزرق', 'دخان ازرق'], ['أبيض كثيف', 'بخار رديتر'], ['أسود', 'بنزين'], ['ما فيه دخان', '']] },
-    exhaust: { q: 'هل الصوت أعلى عند التشغيل البارد؟', type: 'yesno', kw: 'شكمان' },
-    belt: { q: 'هل الصياح يخف بعد ما يحمى المحرك؟', type: 'yesno', kw: 'سير' },
-    cat: { q: 'هل تشم ريحة بيض أو كبريت؟', type: 'yesno', kw: 'ريحه بيض' },
-    lean: { q: 'هل استهلاك البنزين زاد؟', type: 'yesno', kw: 'يصرف بنزين' }
-};
-function localQuestions(scores, meta) {
-    const qs = [];
-    const toQ = b => ({ q: b.q, type: b.type, options: b.type === 'choice' ? b.options.map(o => o[0]) : null, kws: b.type === 'choice' ? b.options.map(o => o[1]) : null, kw: b.kw || '' });
-    if (!/متى/.test(meta.structured || '')) qs.push(toQ(QBANK._when));
-    if (!/لمبات/.test(meta.structured || '')) qs.push(toQ(QBANK._light));
-    Object.entries(scores).sort((a, b) => b[1] - a[1]).slice(0, 3).forEach(([id]) => {
-        const k = kbById(id);
-        if (k && k.remote && k.questions && k.questions.length) {
-            k.questions.slice(0, 2).forEach(q => { if (qs.length < 4) qs.push(q.type === 'yesno' ? { q: q.q, type: 'yesno', kw: q.kw || '' } : { q: q.q, type: 'choice', options: q.options.map(o => o.l), kws: q.options.map(o => o.kw || o.l) }); });
-        } else if (QBANK[id] && qs.length < 4) qs.push(toQ(QBANK[id]));
-    });
-    return qs;
-}
-async function aiQuestions(meta) {
-    if (aiAvailable === false || location.protocol === 'file:') return null;
-    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 12000);
-    try {
-        const res = await fetch(AI_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
-            body: JSON.stringify({ mode: 'questions', wid: walletId(), did: diagIdFor(meta), car: carLabel(), mileage: $('car-km').value || '', description: meta.text, structured: meta.structured || '' }) });
-        if (res.status === 402) return { paywall: true };
-        if (res.status === 503 || res.status === 404) { aiAvailable = false; return null; }
-        if (!res.ok) return null;
-        const j = await res.json();
-        const qs = (j.questions || []).filter(q => q && q.q && (q.type === 'yesno' || (Array.isArray(q.options) && q.options.length >= 2))).slice(0, 4)
-            .map(q => ({ q: String(q.q).slice(0, 140), type: q.type === 'yesno' ? 'yesno' : 'choice', options: q.type === 'yesno' ? null : q.options.slice(0, 5).map(o => String(o).slice(0, 40)), ai: true }));
-        return qs.length ? qs : null;
-    } catch (e) { return null; }
-    finally { clearTimeout(t); }
-}
-
-let iv = null, ivSeq = 0, ivTimer = null, ivLastText = null, postAsks = 0;
-// زر التأكيد ✓ داخل خانة الوصف: يتفعّل عند كتابة وصف، والفحص يبدأ فقط عند الضغط عليه
-function onDescInput() {
-    const ready = $('car-desc').value.trim().length >= 3;
-    const b = $('desc-confirm');
-    b.disabled = !ready;
-    b.className = 'absolute left-2 bottom-3 w-8 h-8 rounded-lg text-sm font-black transition-all ' + (ready ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-200 text-slate-400');
-}
-async function startInterview(auto) {
-    const meta = descMeta();
-    if (meta.text.length < 3 && !meta.structured) { if (!auto) { alert('اكتب وصفاً للمشكلة، أو اختر من الخيارات، أو اضغط 🎤 وتحدث.'); $('car-desc').focus(); } return; }
-    if (!canStart(diagIdFor(meta))) return blockService();
-    clearTimeout(ivTimer);
-    ivLastText = meta.text; followups = []; postAsks = 0;
-    const seq = ++ivSeq;
-    iv = null;
-    $('car-results').classList.add('hidden');
-    $('interview').classList.remove('hidden');
-    $('iv-title').textContent = '🤖 جاري التحليل…'; $('iv-step').textContent = ''; $('iv-q').textContent = 'أجهّز لك أسئلة سريعة ترفع دقة التشخيص…';
-    $('iv-opts').innerHTML = ''; $('iv-nav').classList.add('hidden'); $('iv-bar').style.width = '8%';
-    if (!auto) $('interview').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    const scores = scoreDescription(meta.text + ' ' + meta.kw);
-    let qs = await aiQuestions(meta);
-    if (seq !== ivSeq) return;
-    if (qs && qs.paywall) { $('interview').classList.add('hidden'); blockService(); return; }
-    if (!qs) qs = localQuestions(scores, meta);
-    if (!qs.length) { ivFinishWith(meta, []); return; }
-    iv = { meta, qs, i: 0, answers: [] };
-    renderIvQ();
-}
-function renderIvQ() {
-    const { qs, i } = iv, q = qs[i];
-    $('iv-title').textContent = '🎯 أسئلة سريعة لدقة أعلى';
-    $('iv-step').textContent = 'سؤال ' + (i + 1) + ' من ' + qs.length;
-    $('iv-bar').style.width = Math.round((i + 1) / (qs.length + 1) * 100) + '%';
-    $('iv-q').textContent = q.q;
-    const box = $('iv-opts'); box.innerHTML = '';
-    const opts = q.type === 'yesno' ? ['نعم', 'لا'] : q.options.slice();
-    opts.push('لا أعرف');
-    const long = opts.some(o => o.length > 16);
-    box.className = 'grid gap-1.5 ' + (long ? 'grid-cols-1' : 'grid-cols-2');
-    opts.forEach((o, k) => {
-        const b = el('button', 'bg-white border border-indigo-200 rounded-lg py-2 px-2 text-[11px] font-bold text-slate-800 active:bg-indigo-600 active:text-white', o);
-        b.onclick = () => {
-            let kw = '';
-            if (o !== 'لا أعرف') {
-                if (q.type === 'yesno') kw = o === 'نعم' ? (q.kw || (q.ai ? q.q : '')) : '';
-                else kw = q.kws ? (q.kws[k] || '') : o;
-            }
-            iv.answers[iv.i] = { q: q.q, a: o, kw };
-            iv.i++;
-            if (iv.i < iv.qs.length) renderIvQ(); else ivFinish();
-        };
-        box.appendChild(b);
-    });
-    $('iv-nav').classList.remove('hidden');
-    $('iv-back').classList.toggle('invisible', i === 0);
-}
-function ivBack() { if (!iv || iv.i === 0) return; iv.i--; iv.answers.length = iv.i; renderIvQ(); }
-function ivFinish() {
-    if (!iv) { runDescriptionDiagnosis(); return; }
-    ivFinishWith(iv.meta, iv.answers.filter(Boolean));
-}
-function ivFinishWith(meta, answers) {
-    $('interview').classList.add('hidden');
-    followups = answers.filter(x => x.a !== 'لا أعرف').map(x => ({ q: x.q, a: x.a }));
-    const extra = answers.map(x => x.kw).filter(Boolean).join(' ');
-    iv = null;
-    runDiagnosis(scoreDescription([meta.text, meta.kw, extra].filter(Boolean).join(' ')), meta);
-}
-
-function answerFollowup() {
-    if (lastMeta && !canStart(diagIdFor(lastMeta))) return blockService();
-    const a = $('followup-input').value.trim();
-    if (!a) { alert('اكتب إجابتك أولاً، أو اضغط 🎤.'); $('followup-input').focus(); return; }
-    if (!lastDiag || !lastMeta) return;
-    followups.push({ q: lastDiag.question, a: a.slice(0, 200) }); postAsks++;
-    const meta = Object.assign({}, lastMeta);
-    const extra = followups.map(f => f.a).join(' ');
-    runDiagnosis(scoreDescription([meta.text, meta.kw, extra].filter(Boolean).join(' ')), meta);
-}
-
-// ---------- تحويل الكلام إلى نص ----------
-let recognizer = null;
-function startDictation(targetId) {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { alert('متصفحك لا يدعم تحويل الكلام لنص. استخدم زر الميكروفون في لوحة مفاتيح الجوال.'); $(targetId).focus(); return; }
-    if (recognizer) { recognizer.stop(); return; }
-    const target = $(targetId), status = $('dictate-status');
-    const base = target.value ? target.value.trim() + ' ' : '';
-    recognizer = new SR();
-    recognizer.lang = 'ar-SA'; recognizer.interimResults = true; recognizer.continuous = false;
-    recognizer.onresult = e => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript; target.value = base + t; if (targetId === 'car-desc') onDescInput(); };
-    recognizer.onerror = e => {
-        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') alert('لم يُسمح باستخدام المايكروفون. فعّل الإذن من إعدادات المتصفح.');
-        else if (e.error === 'no-speech') alert('لم أسمع شيئاً، حاول مرة أخرى.');
-    };
-    recognizer.onend = () => { recognizer = null; status.classList.add('hidden'); };
-    status.classList.remove('hidden');
-    recognizer.start();
-}
-
-// =====================================================================
-// 🎙️ الفحص الصوتي
-// =====================================================================
-let soundBusy = false;
-async function startSoundDiagnosis() {
-    if (soundBusy) return;
-    if (!isUnlocked() && Wallet.state && !Wallet.state.freeAvailable) return blockService();
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { alert('المتصفح لا يدعم المايكروفون. افتح الموقع عبر https في Chrome أو Safari.'); return; }
-    let stream;
-    try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); }
-    catch (e) { alert('لم يُسمح بالمايكروفون. فعّل الإذن من إعدادات المتصفح ثم أعد المحاولة.'); return; }
-    soundBusy = true;
-    const btn = $('rec-btn'); btn.disabled = true; btn.classList.add('opacity-60');
-    $('rec-box').classList.remove('hidden'); $('rec-label').textContent = '🔴 جاري التسجيل…';
-    const AC = window.AudioContext || window.webkitAudioContext;
-    const ctx = new AC();
-    if (ctx.state === 'suspended') await ctx.resume().catch(() => {});
-    const an = ctx.createAnalyser(); an.fftSize = 4096; an.smoothingTimeConstant = 0;
-    ctx.createMediaStreamSource(stream).connect(an);
-    const freqDb = new Float32Array(an.frequencyBinCount), timeBuf = new Float32Array(an.fftSize);
-    const power = new Float64Array(an.frequencyBinCount), binHz = ctx.sampleRate / an.fftSize;
-    const env = []; let frames = 0;
-    const DURATION = 8000, t0 = performance.now();
-    await new Promise(resolve => {
-        const tick = () => {
-            const elp = performance.now() - t0;
-            an.getFloatTimeDomainData(timeBuf);
-            let sq = 0; for (let i = 0; i < timeBuf.length; i++) sq += timeBuf[i] * timeBuf[i];
-            const rms = Math.sqrt(sq / timeBuf.length); env.push(rms);
-            an.getFloatFrequencyData(freqDb);
-            for (let i = 0; i < freqDb.length; i++) power[i] += Math.pow(10, freqDb[i] / 10);
-            frames++;
-            $('rec-level').style.width = Math.min(100, rms * 400) + '%';
-            $('rec-timer').textContent = Math.max(0, Math.ceil((DURATION - elp) / 1000));
-            if (elp < DURATION) requestAnimationFrame(tick); else resolve();
-        };
-        tick();
-    });
-    const elapsed = (performance.now() - t0) / 1000;
-    stream.getTracks().forEach(t => t.stop()); ctx.close().catch(() => {});
-    $('rec-box').classList.add('hidden'); btn.disabled = false; btn.classList.remove('opacity-60'); soundBusy = false;
-
-    const f = analyzeSound(power, frames, binHz, env, frames / elapsed);
-    const context = $('sound-context').value;
-    const scores = scoreSound(f, context);
-    const descText = $('car-desc').value.trim();
-    if (descText) for (const [k, v] of Object.entries(scoreDescription(descText))) scores[k] = (scores[k] || 0) + v;
-    const ctxLabel = $('sound-context').selectedOptions[0].textContent;
-    runDiagnosis(scores, {
-        source: descText ? 'both' : 'sound', text: descText, context: ctxLabel, structured: contextText(), lightIds: selectedChips().lightIds || [],
-        soundSummary: f.quiet ? '🔈 الصوت المسجّل ضعيف جداً — قرّب الجوال من مصدر الصوت.' : describeSound(f) + ' • ' + ctxLabel
-    });
-}
-
-function analyzeSound(power, frames, binHz, env, fps) {
-    const n = power.length;
-    const avg = Array.from(power, p => p / Math.max(1, frames));
-    const band = (lo, hi) => { let s = 0; for (let i = Math.floor(lo / binHz); i < Math.min(n, Math.ceil(hi / binHz)); i++) s += avg[i]; return s; };
-    const low = band(40, 300), mid = band(300, 1500), high = band(1500, 6000), vhigh = band(6000, 12000);
-    const tot = low + mid + high + vhigh || 1e-12;
-    const start = Math.ceil(60 / binHz), stop = Math.min(n, Math.floor(10000 / binHz));
-    let peakI = start; for (let i = start; i < stop; i++) if (avg[i] > avg[peakI]) peakI = i;
-    const slice = avg.slice(start, stop).sort((a, b) => a - b);
-    const median = slice[Math.floor(slice.length / 2)] || 1e-12;
-    const tonality = 10 * Math.log10(avg[peakI] / median);
-    const mean = env.reduce((a, b) => a + b, 0) / env.length;
-    const sd = Math.sqrt(env.reduce((a, b) => a + (b - mean) ** 2, 0) / env.length);
-    const cv = mean > 0 ? sd / mean : 0;
-    const e = env.map(v => v - mean);
-    const e0 = e.reduce((a, b) => a + b * b, 0) || 1e-12;
-    const ac = [], maxLag = Math.min(Math.floor(fps * 1.2), Math.floor(e.length / 2));
-    for (let lag = 0; lag <= maxLag; lag++) { let s = 0; for (let i = 0; i + lag < e.length; i++) s += e[i] * e[i + lag]; ac.push(s / e0); }
-    let bestR = 0, bestLag = 0, dipped = false;
-    const minLag = Math.max(2, Math.floor(fps / 10));
-    for (let lag = 1; lag < ac.length - 1; lag++) {
-        if (ac[lag] < 0.1) dipped = true;
-        if (lag >= minLag && dipped && ac[lag] > ac[lag - 1] && ac[lag] >= ac[lag + 1] && ac[lag] > bestR) { bestR = ac[lag]; bestLag = lag; }
-    }
-    return { quiet: mean < 0.004, lowR: low / tot, midR: mid / tot, highR: (high + vhigh) / tot,
-             peakHz: Math.round(peakI * binHz), tonality, cv, rhythm: bestR, rhythmHz: bestLag ? fps / bestLag : 0 };
-}
-function scoreSound(f, ctx) {
-    const s = {}; const add = (id, v) => { s[id] = (s[id] || 0) + v; };
-    if (f.quiet) return s;
-    const tonal = f.tonality > 18;
-    const rhythmic = f.rhythm > 0.35 && f.cv > 0.15;
-    const irregular = f.cv > 0.35 && !rhythmic;
-    const squeal = tonal && f.peakHz >= 1800;
-    const whine = tonal && f.peakHz >= 250 && f.peakHz < 1800;
-    const rumble = f.lowR > 0.6 && !tonal;
-    const harsh = f.highR > 0.35 && !tonal;
-    if (ctx === 'brake') add('brakes', squeal || harsh ? 7 : 3);
-    if (ctx === 'steer') { if (whine) add('steer', 7); else if (rhythmic) add('suspension', 3); else add('steer', 3); }
-    if (ctx === 'bump') add('suspension', rhythmic || f.cv > 0.3 ? 7 : 4);
-    if (ctx === 'speed') { if (rumble || whine) add('bearing', 6); if (harsh) add('exhaust', 3); add('balance', 1); }
-    if (ctx === 'start') { if (squeal) add('belt', 7); else if (rhythmic && f.rhythmHz > 5) add('battery', 6); else add('battery', 2); }
-    if (ctx === 'idle' || ctx === 'accel') {
-        if (squeal) add('belt', 6);
-        if (rhythmic && f.lowR > 0.4) add('knock', ctx === 'accel' ? 6 : 4); else if (rhythmic) add('knock', 2);
-        if (irregular) add('misfire', 6);
-        if (harsh && ctx === 'accel') add('exhaust', 4);
-        if (rumble && !rhythmic && !irregular) add('exhaust', 2);
-    }
-    return s;
-}
-function describeSound(f) {
-    const p = ['🎧 أقوى تردد: ' + f.peakHz.toLocaleString('en') + ' Hz'];
-    const tonal = f.tonality > 18;
-    if (tonal && f.peakHz >= 1800) p.push('صوت حاد بنغمة واحدة (صفير/زيقة)');
-    else if (tonal && f.peakHz >= 250) p.push('صوت نغمي متصل (ونين)');
-    if (f.rhythm > 0.35 && f.cv > 0.15) p.push('طقطقة منتظمة بمعدل ~' + f.rhythmHz.toFixed(1) + ' مرة/ثانية');
-    else if (f.cv > 0.35) p.push('صوت غير منتظم (تقطّع)');
-    if (f.lowR > 0.6) p.push('هدير منخفض التردد');
-    else if (f.highR > 0.35 && !tonal) p.push('ترددات عالية قوية (خشخشة/احتكاك)');
-    return p.join(' • ');
-}
-
-// =====================================================================
-// 🔌 أكواد الأعطال (بدون إنترنت) + قارئ OBD
-// =====================================================================
-const DTC_INFO = {
-    P0171: ['خليط الوقود فقير (هواء زائد) - البنك 1', 'caution', 'غالباً تهريب هواء أو حساس هواء (MAF) متسخ أو ضعف طرمبة البنزين.'],
-    P0172: ['خليط الوقود غني (بنزين زائد) - البنك 1', 'caution', 'قد يكون بخاخ يسرّب أو حساس هواء أو ضغط وقود مرتفع.'],
-    P0174: ['خليط الوقود فقير - البنك 2', 'caution', 'غالباً تهريب هواء أو حساس هواء متسخ.'],
-    P0101: ['قراءة حساس كمية الهواء (MAF) غير منطقية', 'caution', 'نظّف الحساس بمنظف مخصص وافحص فلتر الهواء والخراطيم.'],
-    P0117: ['دائرة حساس حرارة الماء - إشارة منخفضة', 'caution', 'عطل في الحساس أو أسلاكه غالباً. راقب ساعة الحرارة؛ إن كانت طبيعية فالمشكلة في الحساس.'],
-    P0118: ['دائرة حساس حرارة الماء - إشارة مرتفعة', 'caution', 'عطل في الحساس أو أسلاكه غالباً. راقب ساعة الحرارة.'],
-    P0128: ['المحرك لا يصل لحرارة التشغيل (الثرموستات)', 'safe', 'غالباً ثرموستات عالق مفتوح. القيادة ممكنة لكن الاستهلاك يزيد والتدفئة تضعف.'],
-    P0217: ['ارتفاع حرارة المحرك', 'stop', 'أوقف المحرك فوراً ولا تفتح غطاء الرديتر وهو حار.'],
-    P0300: ['تقطيع احتراق عشوائي في عدة سلندرات', 'caution', 'إذا كانت لمبة المحرك تومض فلا تقُد لمسافات طويلة.'],
-    P0335: ['دائرة حساس عمود الكرنك', 'stop', 'قد ينطفئ المحرك فجأة أو لا يشتغل. افحصه قريباً.'],
-    P0340: ['دائرة حساس عمود الكامات', 'caution', 'قد يسبب صعوبة تشغيل أو ضعف أداء.'],
-    P0420: ['كفاءة دبة التلوث منخفضة - البنك 1', 'safe', 'ابدأ بفحص حساس الأكسجين الخلفي قبل تبديل الدبة.'],
-    P0430: ['كفاءة دبة التلوث منخفضة - البنك 2', 'safe', 'ابدأ بفحص حساس الأكسجين قبل تبديل الدبة.'],
-    P0442: ['تسريب صغير في نظام أبخرة الوقود (EVAP)', 'safe', 'تأكد أولاً أن غطاء البنزين مغلق جيداً وسليم.'],
-    P0455: ['تسريب كبير في نظام أبخرة الوقود (EVAP)', 'safe', 'غالباً غطاء البنزين مفتوح أو تالف، أو خرطوم مفصول.'],
-    P0500: ['عطل حساس سرعة السيارة', 'caution', 'قد يؤثر على عداد السرعة وتبديل القير.'],
-    P0562: ['جهد كهرباء السيارة منخفض', 'caution', 'افحص البطارية والدينمو.'],
-    P0700: ['يوجد عطل في نظام القير', 'caution', 'اطلب قراءة كمبيوتر القير لمعرفة الكود التفصيلي.'],
-    P0730: ['نسبة تعشيق القير غير صحيحة', 'caution', 'افحص مستوى زيت القير وحالته.']
-};
-function decodeDTC(code) {
-    const m = /^([PCBU])([0-3])([0-9A-F])([0-9A-F]{2})$/.exec(code);
-    if (!m) return null;
-    const sys = { P: 'المحرك وناقل الحركة', C: 'الشاصي (فرامل، تعليق، توجيه)', B: 'الهيكل والمقصورة (وسائد، تكييف، كهرباء)', U: 'شبكة اتصال كمبيوترات السيارة' }[m[1]];
-    const type = (m[2] === '0' || m[2] === '2') ? 'كود عام موحد' : 'كود خاص بالشركة المصنعة';
-    let sub = '';
-    if (m[1] === 'P') sub = { '0': 'الوقود والهواء والانبعاثات', '1': 'قياس الوقود والهواء', '2': 'قياس الوقود والهواء (البخاخات)', '3': 'الإشعال أو تقطيع الاحتراق', '4': 'أنظمة التحكم بالانبعاثات', '5': 'سرعة السيارة والتحكم بالسكون', '6': 'كمبيوتر السيارة ودوائره', '7': 'ناقل الحركة', '8': 'ناقل الحركة', '9': 'ناقل الحركة', 'A': 'نظام الدفع الهجين', 'B': 'نظام الدفع الهجين', 'C': 'نظام الدفع الهجين' }[m[3]] || '';
-    return { sys, type, sub };
-}
-function dtcInfo(code) {
-    if (DTC_INFO[code]) return DTC_INFO[code];
-    const cyl = /^P030([1-8])$/.exec(code);
-    if (cyl) return ['تقطيع احتراق في السلندر رقم ' + cyl[1], 'caution', 'غالباً كويل أو بوجي هذا السلندر. بدّل الكويل مع سلندر آخر لتأكيد العطل.'];
-    return null;
-}
-function codeSummary(code) {
-    const info = dtcInfo(code), dec = decodeDTC(code);
-    const lines = [];
-    if (info) lines.push(code + ': ' + info[0] + '. ' + info[2]);
-    if (dec) lines.push('النظام: ' + dec.sys + (dec.sub ? ' — ' + dec.sub : '') + ' (' + dec.type + ')');
-    return lines.join('\n');
-}
-function runCodeDiagnosis(codeArg) {
-    const code = String(codeArg || $('code-input').value).trim().toUpperCase();
-    $('code-input').value = code;
-    if (!decodeDTC(code)) { alert('اكتب كوداً صحيحاً مثل P0300 (حرف ثم 4 خانات).'); return; }
-    const scores = {};
-    CAR_KB.forEach(k => { if (k.codes.includes(code)) scores[k.id] = 10; });
-    const info = dtcInfo(code);
-    const meta = { source: 'code', code, text: code, codeInfo: codeSummary(code), structured: contextText(), lightIds: selectedChips().lightIds || [] };
-    if (!canStart(diagIdFor(meta))) return blockService();
-    followups = [];
-    runDiagnosis(scores, meta).then(() => {
-        if (!lastDiag && info) {
-            // كود معروف بلا قطع مرتبطة: نعرض معناه كنتيجة
-            renderDiagnosis(Object.assign(buildLocalResult({}, meta), { title: info[0], sev: info[1], conf: 'عالية', advice: info[2] }), false);
-            addHistory(lastDiag);
-        }
-    });
-}
-function checkOfflineCode() {
-    const v = $('offline-code-input').value.trim().toUpperCase();
-    const box = $('offline-result');
-    if (v.length < 5) { box.classList.add('hidden'); return; }
-    box.innerHTML = '';
-    const dec = decodeDTC(v);
-    if (!dec) { box.className = 'rounded-xl p-3 text-[11px] border bg-slate-50 border-slate-200'; box.textContent = 'صيغة الكود غير صحيحة. مثال: P0300'; return; }
-    const info = dtcInfo(v);
-    const sev = info ? SEV[info[1]] : null;
-    box.className = 'rounded-xl p-3 text-[11px] leading-relaxed border space-y-1 ' + (info && info[1] === 'stop' ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200');
-    box.appendChild(el('p', 'font-black', v + (info ? ' — ' + info[0] : '')));
-    if (sev) box.appendChild(el('p', 'font-bold', sev[0]));
-    if (info) box.appendChild(el('p', null, info[2]));
-    box.appendChild(el('p', 'text-slate-500', 'النظام: ' + dec.sys + (dec.sub ? ' — ' + dec.sub : '') + ' (' + dec.type + ')'));
-    const b = el('button', 'mt-1 bg-blue-700 text-white font-bold px-3 py-1.5 rounded-lg text-[11px]', 'تشخيص كامل وتكلفة');
-    b.onclick = () => { switchTab('diagnose'); setDiagMode('code'); runCodeDiagnosis(v); };
-    box.appendChild(b);
-}
-
-// --- OBD2 عبر Bluetooth (ELM327 BLE) ---
-async function connectOBD() {
-    const status = $('obd-status'), codesBox = $('obd-codes');
-    if (!navigator.bluetooth) { status.textContent = 'هذا المتصفح لا يدعم البلوتوث. استخدم Chrome على أندرويد أو كمبيوتر، أو اكتب الكود يدوياً.'; return; }
-    const SERVICES = [0xfff0, 0xffe0, 0x18f0, 'e7810a71-73ae-499d-8c15-faa9aef0c3f2'];
-    let device;
-    try { device = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: SERVICES }); }
-    catch (e) { status.textContent = 'لم يتم اختيار جهاز.'; return; }
-    const btn = $('obd-btn'); btn.disabled = true;
-    try {
-        status.textContent = '⏳ جاري الاتصال بـ ' + (device.name || 'القارئ') + '…';
-        const server = await device.gatt.connect();
-        let writeC = null, notifyC = null;
-        for (const sv of await server.getPrimaryServices()) {
-            let chars = []; try { chars = await sv.getCharacteristics(); } catch (e) {}
-            for (const ch of chars) {
-                if (!writeC && (ch.properties.write || ch.properties.writeWithoutResponse)) writeC = ch;
-                if (!notifyC && (ch.properties.notify || ch.properties.indicate)) notifyC = ch;
-            }
-            if (writeC && notifyC) break;
-        }
-        if (!writeC || !notifyC) throw new Error('القارئ غير مدعوم');
-        let buf = '', waiter = null;
-        await notifyC.startNotifications();
-        notifyC.addEventListener('characteristicvaluechanged', ev => {
-            buf += new TextDecoder().decode(ev.target.value);
-            if (buf.includes('>') && waiter) { const w = waiter; waiter = null; w(buf); }
-        });
-        const send = (cmd, ms = 4000) => new Promise(async res => {
-            buf = '';
-            const to = setTimeout(() => { waiter = null; res(buf); }, ms);
-            waiter = out => { clearTimeout(to); res(out); };
-            const data = new TextEncoder().encode(cmd + '\r');
-            if (writeC.properties.writeWithoutResponse && writeC.writeValueWithoutResponse) await writeC.writeValueWithoutResponse(data);
-            else await writeC.writeValue(data);
-        });
-        status.textContent = '⏳ تهيئة القارئ…';
-        await send('ATZ', 3000);
-        for (const c of ['ATE0', 'ATL0', 'ATS0', 'ATH0', 'ATSP0']) await send(c, 2000);
-        status.textContent = '⏳ قراءة أكواد الأعطال…';
-        const raw = await send('03', 8000);
-        const codes = parseDTCResponse(raw);
-        codesBox.innerHTML = '';
-        if (/UNABLE|NO DATA|ERROR/i.test(raw) && !codes.length) status.textContent = 'لم يستجب كمبيوتر السيارة. تأكد أن المفتاح على وضع التشغيل ثم أعد المحاولة.';
-        else if (!codes.length) status.textContent = '✅ لا توجد أكواد أعطال مخزنة في كمبيوتر المحرك.';
-        else {
-            status.textContent = 'تم العثور على ' + codes.length + ' كود. اضغط على الكود لتشخيصه:';
-            codes.forEach(c => {
-                const b = el('button', 'bg-amber-400 text-slate-950 font-mono font-black px-2.5 py-1 rounded-lg text-xs', c);
-                b.onclick = () => runCodeDiagnosis(c);
-                codesBox.appendChild(b);
-            });
-            runCodeDiagnosis(codes[0]);
-        }
-        try { device.gatt.disconnect(); } catch (e) {}
-    } catch (e) {
-        status.textContent = 'تعذر القراءة: ' + (e.message || 'خطأ في الاتصال') + '. جرّب إعادة تشغيل القارئ.';
-    }
-    btn.disabled = false;
-}
-function parseDTCResponse(raw) {
-    const out = new Set();
-    String(raw).replace(/SEARCHING\.\.\./gi, '').split(/[\r\n>]+/).forEach(line => {
-        let h = line.replace(/[^0-9A-Fa-f]/g, '').toUpperCase();
-        const i = h.indexOf('43');
-        if (i < 0 || i > 5) return;                                       // قد تسبقها ترويسة CAN وبايت الطول
-        let p = h.slice(i + 2);
-        if (p.length % 4 === 2) p = p.slice(2);                          // بايت العدد في بروتوكول CAN
-        for (let k = 0; k + 4 <= p.length; k += 4) {
-            const c = p.slice(k, k + 4);
-            if (c === '0000') continue;
-            const n = parseInt(c[0], 16);
-            out.add('PCBU'[n >> 2] + (n & 3) + c.slice(1));
-        }
-    });
-    return [...out];
-}
-
-// =====================================================================
-// 📋 السجل
-// =====================================================================
-function addHistory(r) {
-    if (!r || !r.title) return;
-    const h = store.get('sd_history', []);
-    h.unshift({ t: Date.now(), title: r.title, car: carLabel(), city: cityName(), sev: r.sev, totalSar: isUnlocked() ? (r.totalSar || 0) : 0, code: r.code || '', ai: !!r.ai });
-    store.set('sd_history', h.slice(0, 30));
-}
-function clearHistory() { if (confirm('مسح كل الفحوصات السابقة؟')) { store.del('sd_history'); renderMine(); } }
-function renderMine() {
-    const box = $('my-history'); box.innerHTML = '';
-    const h = store.get('sd_history', []);
-    if (!h.length) box.appendChild(el('p', 'text-[11px] text-slate-400', 'لا توجد فحوصات بعد.'));
-    h.forEach(x => {
-        const row = el('div', 'flex justify-between items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg p-2 text-[11px]');
-        const l = el('div', 'min-w-0');
-        l.appendChild(el('span', 'font-bold block truncate', (SEV[x.sev] ? SEV[x.sev][0].slice(-2) + ' ' : '') + x.title));
-        l.appendChild(el('span', 'text-[10px] text-slate-400', x.car + ' • ' + fmtTime(x.t)));
-        row.appendChild(l);
-        if (x.totalSar) { const v = el('span', 'font-mono font-bold shrink-0'); v.dataset.sar = x.totalSar; v.dir = 'ltr'; row.appendChild(v); }
-        box.appendChild(row);
-    });
-    if (typeof Providers !== 'undefined') Providers.renderMyRequests();
-    renderMoney();
-}
-
-// =====================================================================
-// 💰 الأسعار (مرجعية + مساهمات المستخدمين في نفس الدولة والمدينة)
-// =====================================================================
-const PRICE_PARTS = (() => {
-    const m = new Map();
-    CAR_KB.forEach(k => k.parts.forEach(([n, s]) => { const name = n.replace(' (عند الحاجة)', ''); if (!m.has(name)) m.set(name, s); }));
-    [['تغيير زيت وفلتر', 150], ['فحص كمبيوتر', 100], ['كمبروسر مكيف', 1300], ['رديتر', 450], ['طرمبة ماء', 380], ['مساعدات أمامية (زوج)', 900], ['هوبات أمامية (زوج)', 500], ['دينمو', 900], ['سلف', 650], ['كفر واحد', 400]].forEach(([n, s]) => { if (!m.has(n)) m.set(n, s); });
-    return [...m.entries()].map(([name, sar]) => ({ name, sar }));
-})();
-const PART_ALIASES = { 'كويل': 'كويل إشعال', 'بواجي': 'طقم بواجي (شمعات)', 'بوجي': 'طقم بواجي (شمعات)', 'شمعات': 'طقم بواجي (شمعات)', 'فحمات': 'طقم فحمات أمامي', 'فريون': 'تعبئة فريون + فحص تسريب', 'كمبروسر': 'كمبروسر مكيف', 'بطاريه': 'بطارية', 'ثرموستات': 'ثرموستات', 'سير': 'سير محرك', 'زيت': 'تغيير زيت وفلتر', 'رديتر': 'رديتر', 'دينمو': 'دينمو', 'سلف': 'سلف', 'اكسجين': 'حساس أكسجين', 'مساعدات': 'مساعدات أمامية (زوج)', 'هوبات': 'هوبات أمامية (زوج)' };
-function matchPart(name) {
-    const n = normalizeAr(name);
-    const exact = PRICE_PARTS.find(p => normalizeAr(p.name) === n);
-    if (exact) return exact.name;
-    const k = Object.keys(PART_ALIASES).find(a => n.includes(normalizeAr(a)));
-    return k ? PART_ALIASES[k] : null;
-}
-
-let cityPrices = [];   // مساهمات المستخدمين للمدينة الحالية [{part, price}]
-function partStats(partName) {
-    const p = PRICE_PARTS.find(x => x.name === partName);
-    const ref = p ? localPrice(p.sar) : 0;
-    const user = cityPrices.filter(x => x.part === partName).map(x => x.price).sort((a, b) => a - b);
-    let avg = ref;
-    if (user.length) {
-        // المرجع يعادل 10 فواتير حتى لا يغيّر سعر واحد المتوسط بشكل كبير
-        const W = Math.max(2, 10 - user.length);
-        avg = (ref * W + user.reduce((a, b) => a + b, 0)) / (W + user.length);
-    }
-    return { ref, avg, min: Math.min(avg * 0.8, user[0] || Infinity), max: avg * 1.6, count: user.length };
-}
-function fillPartSelects() {
-    ['price-part', 'audit-part', 'contrib-part'].forEach(id => {
-        const s = $(id); const cur = s.value; s.innerHTML = '';
-        PRICE_PARTS.forEach(p => s.appendChild(el('option', null, p.name)));
-        if (cur) s.value = cur;
-    });
-}
-async function refreshPrices() {
-    try { cityPrices = await Prices.list(LOC ? LOC.country : 'SA', cityName()); } catch (e) { cityPrices = []; }
-    renderPriceLookup();
-}
-function renderPriceLookup() {
-    applyLock();
-    const st = partStats($('price-part').value);
-    $('pl-min').textContent = fmtLocal(st.min);
-    $('pl-avg').textContent = fmtLocal(st.avg);
-    $('pl-max').textContent = fmtLocal(st.max);
-    $('pl-source').textContent = st.count ? `محسوب من السعر المرجعي + ${st.count} فاتورة من مستخدمين في ${cityName()}` : `سعر مرجعي تقديري لـ ${cityName()} — ساهم بسعرك لتحسينه`;
-}
-function runAudit() {
-    if (!isUnlocked()) return blockService('تدقيق الفاتورة ضمن الوصول الكامل.');
-    const part = $('audit-part').value;
-    const price = parseFloat($('audit-part-price').value), labor = parseFloat($('audit-labor-price').value) || 0;
-    const box = $('audit-result');
-    const show = (cls, txt) => { box.className = 'rounded-xl p-3 text-[11px] leading-relaxed border whitespace-pre-line ' + cls; box.textContent = txt; box.classList.remove('hidden'); };
-    if (!(price > 0)) { show('bg-amber-50 border-amber-200 text-amber-800', 'اكتب سعر القطعة في الفاتورة أولاً.'); return; }
-    const st = partStats(part);
-    const diff = Math.round((price - st.avg) / st.avg * 100);
-    let v, cls;
-    if (price <= st.avg * 1.15) { v = '✅ السعر عادل'; cls = 'bg-emerald-50 border-emerald-200 text-emerald-800'; }
-    else if (price <= st.max) { v = '⚠️ السعر أعلى من المتوسط'; cls = 'bg-amber-50 border-amber-200 text-amber-800'; }
-    else { v = '🛑 السعر مبالغ فيه'; cls = 'bg-rose-50 border-rose-200 text-rose-800'; }
-    let t = `${v}\n${part} في ${cityName()}: العادل نحو ${fmtLocal(st.avg)} (المعتاد من ${fmtLocal(st.min)} إلى ${fmtLocal(st.max)}).\nفاتورتك ${diff >= 0 ? 'أعلى' : 'أقل'} من العادل بنسبة ${Math.abs(diff)}%.`;
-    const fairLabor = localPrice(150);
-    if (labor > 0) t += `\nأجرة اليد: ${labor > fairLabor * 1.5 ? 'مرتفعة' : 'ضمن المعتاد'} (المعتاد نحو ${fmtLocal(fairLabor)}).`;
-    show(cls, t);
-}
-async function contributePrice() {
-    const part = $('contrib-part').value, price = parseFloat($('contrib-price').value);
-    if (!(price > 0) || price > 1e6) { alert('اكتب المبلغ الذي دفعته.'); return; }
-    const st = partStats(part);
-    if (price > st.ref * 6 || price < st.ref / 6) { if (!confirm('المبلغ بعيد جداً عن المعتاد. هل أنت متأكد؟')) return; }
-    try {
-        await Prices.add({ country: LOC ? LOC.country : 'SA', city: cityName(), part, price });
-        $('contrib-price').value = '';
-        await refreshPrices();
-        alert('شكراً! تمت إضافة سعرك ✓');
-    } catch (e) { alert('تعذر الحفظ، حاول مرة أخرى.'); }
-}
-
-// --- قراءة الفاتورة بالصورة (تحتاج الذكاء الاصطناعي) ---
-function compressImage(file, maxSide = 1400, quality = 0.8) {
-    return new Promise((res, rej) => {
-        const img = new Image();
-        img.onload = () => {
-            const s = Math.min(1, maxSide / Math.max(img.width, img.height));
-            const cv = document.createElement('canvas'); cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
-            cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-            URL.revokeObjectURL(img.src);
-            res(cv.toDataURL('image/jpeg', quality).split(',')[1]);
-        };
-        img.onerror = rej;
-        img.src = URL.createObjectURL(file);
-    });
-}
-async function readInvoicePhoto(input) {
-    if (!isUnlocked()) { input.value = ''; return blockService('قراءة الفاتورة ضمن الوصول الكامل.'); }
-    const file = input.files && input.files[0]; input.value = '';
-    if (!file) return;
-    const st = $('invoice-status'), list = $('invoice-items');
-    st.classList.remove('hidden'); st.textContent = '⏳ جاري قراءة الفاتورة…'; list.classList.add('hidden');
-    if (location.protocol === 'file:' || aiAvailable === false) { st.textContent = 'قراءة الفاتورة تحتاج تفعيل الذكاء الاصطناعي (راجع README). أدخل الأرقام يدوياً.'; return; }
-    try {
-        const image = await compressImage(file);
-        const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 30000);
-        const res = await fetch(AI_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
-            body: JSON.stringify({ mode: 'invoice', wid: walletId(), image, currency: C().code }) });
-        clearTimeout(to);
-        if (res.status === 503 || res.status === 404) { aiAvailable = false; st.textContent = 'قراءة الفاتورة غير مفعّلة حالياً. أدخل الأرقام يدوياً.'; return; }
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        const items = Array.isArray(data.items) ? data.items.slice(0, 15) : [];
-        if (!items.length) { st.textContent = 'لم أستطع قراءة بنود واضحة. جرّب صورة أوضح.'; return; }
-        st.textContent = '✅ تمت القراءة. اضغط على أي بند لتدقيقه:';
-        list.innerHTML = ''; list.classList.remove('hidden');
-        items.forEach(it => {
-            const name = String(it.name || '').slice(0, 60), price = Number(it.price) || 0;
-            const b = el('button', 'w-full flex justify-between bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[11px]');
-            b.appendChild(el('span', 'truncate', name));
-            b.appendChild(el('span', 'font-mono font-bold', fmtLocal(price)));
-            b.onclick = () => {
-                const m = matchPart(name);
-                if (m) $('audit-part').value = m;
-                $('audit-part-price').value = price;
-                if (data.labor) $('audit-labor-price').value = Number(data.labor) || '';
-                if (!m) alert('لم أتعرف على هذه القطعة تلقائياً. اختر نوعها من القائمة ثم اضغط "قارن".'); else runAudit();
-            };
-            list.appendChild(b);
-        });
-    } catch (e) { st.textContent = 'تعذر قراءة الفاتورة. أدخل الأرقام يدوياً.'; }
-}
-
-// =====================================================================
-// 🔧🧩 الورش والوكلاء: تسجيل → موافقة الإدارة → طلبات المستخدمين → عرض سعر → قبول → تقييم
-// =====================================================================
-const PV = { mode: 'demo', uid: null, db: null, pApp: null, oApp: null, isOwner: false,
-             list: [], reviews: [], myReqs: [], me: null, meReqs: [], meReviews: [], ownerAll: [],
-             unsubCity: [], unsubUser: null, unsubMe: [], unsubOwner: null };
-let readyResolve; const PVReady = new Promise(r => readyResolve = r);
-
-const TYPE = {
-    workshop: { label: 'ورشة', send: '📤 أرسل التقرير', sendTitle: 'إرسال التقرير', listId: 'ws-list', countId: 'ws-count', section: 'workshops-section' },
-    agent:    { label: 'وكيل/قطع غيار', send: '📤 اطلب تسعير', sendTitle: 'طلب تسعير القطع', listId: 'ag-list', countId: 'ag-count', section: 'agents-section' }
-};
-const KIND = { parts: 'محل قطع غيار', dealer: 'وكيل معتمد' };
-const AVAIL = ['متوفر أصلي', 'متوفر تجاري', 'متوفر أصلي وتجاري', 'غير متوفر حالياً — يُطلب خلال أيام'];
-
-function localDigits(country, phone) {
-    let d = cleanPhone(phone).replace('+', '');
-    const dial = COUNTRIES[country] ? COUNTRIES[country].dial : '';
-    if (d.startsWith('00')) d = d.slice(2);
-    if (dial && d.startsWith(dial)) d = d.slice(dial.length);
-    return d.replace(/^0+/, '');
-}
-function loginKey(country, phone) { return country.toLowerCase() + '-' + localDigits(country, phone); }
-function loginEmail(country, phone) { return loginKey(country, phone) + '@providers.smartdiag.app'; }
-function waLink(country, phone, text) {
-    const dial = COUNTRIES[country] ? COUNTRIES[country].dial : '';
-    return 'https://wa.me/' + dial + localDigits(country, phone) + (text ? '?text=' + encodeURIComponent(text) : '');
-}
-
-// ---------- الوضع التجريبي ----------
-const Demo = {
-    get: k => store.get('pv_demo_' + k, []),
-    set: (k, v) => store.set('pv_demo_' + k, v),
-    id: () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-    refresh() {
-        const all = Demo.get('providers'), reqs = Demo.get('requests'), revs = Demo.get('reviews');
-        const country = LOC ? LOC.country : 'SA', city = cityName();
-        PV.ownerAll = all;
-        PV.list = all.filter(p => p.status === 'approved' && p.country === country && p.city === city);
-        PV.reviews = revs.filter(r => r.country === country && r.city === city);
-        PV.myReqs = reqs.filter(r => r.userUid === PV.uid);
-        const sess = store.get('pv_demo_session', null);
-        PV.me = sess ? all.find(p => p.id === sess) || null : null;
-        PV.meReqs = PV.me ? reqs.filter(r => r.providerOwnerUid === PV.me.ownerUid) : [];
-        PV.meReviews = PV.me ? revs.filter(r => r.providerId === PV.me.id) : [];
-        renderProviders();
-    }
-};
-
-// ---------- عمليات البيانات ----------
-const Store = {
-    async apply(d, pass) {
-        const doc = { type: d.type, name: d.name, phone: d.phone, country: d.country, city: d.city, spec: d.spec, kind: d.kind || '',
-                      status: 'pending', featured: false, createdAt: Date.now() };
-        if (PV.mode === 'demo') {
-            const all = Demo.get('providers');
-            if (all.some(p => loginKey(p.country, p.phone) === loginKey(d.country, d.phone))) throw new Error('exists');
-            const id = Demo.id();
-            all.push(Object.assign({ id, ownerUid: 'pv_' + id, passHash: await hashPass(pass) }, doc));
-            Demo.set('providers', all); store.set('pv_demo_session', id); Demo.refresh(); return;
-        }
-        let cred;
-        try { cred = await PV.pApp.auth().createUserWithEmailAndPassword(loginEmail(d.country, d.phone), pass); }
-        catch (e) { if (e.code === 'auth/email-already-in-use') throw new Error('exists'); throw e; }
-        await PV.pApp.firestore().collection('providers').add(Object.assign({ ownerUid: cred.user.uid }, doc));
-    },
-    async login(country, phone, pass) {
-        if (PV.mode === 'demo') {
-            const h = await hashPass(pass);
-            const p = Demo.get('providers').find(x => loginKey(x.country, x.phone) === loginKey(country, phone) && x.passHash === h);
-            if (!p) throw new Error('bad');
-            store.set('pv_demo_session', p.id); Demo.refresh(); return;
-        }
-        try { await PV.pApp.auth().signInWithEmailAndPassword(loginEmail(country, phone), pass); } catch (e) { throw new Error('bad'); }
-    },
-    async logout() {
-        if (PV.mode === 'demo') { store.del('pv_demo_session'); Demo.refresh(); return; }
-        await PV.pApp.auth().signOut();
-    },
-    async ownerUpdate(id, fields) {
-        if (PV.mode === 'demo') { const a = Demo.get('providers'); const p = a.find(x => x.id === id); if (p) Object.assign(p, fields); Demo.set('providers', a); Demo.refresh(); return; }
-        await PV.oApp.firestore().collection('providers').doc(id).update(fields);
-    },
-    async ownerRemove(id) {
-        if (PV.mode === 'demo') { Demo.set('providers', Demo.get('providers').filter(x => x.id !== id)); Demo.refresh(); return; }
-        await PV.oApp.firestore().collection('providers').doc(id).delete();
-    },
-    async sendRequest(prov, d) {
-        await PVReady;
-        const doc = Object.assign({ providerId: prov.id, providerOwnerUid: prov.ownerUid, providerType: prov.type, providerName: prov.name,
-                                    userUid: PV.uid, country: prov.country, city: prov.city, cur: C().cur,
-                                    status: 'sent', reply: '', quote: 0, availability: '', repliedAt: 0, statusAt: 0, createdAt: Date.now() }, d);
-        if (PV.mode === 'demo') { const a = Demo.get('requests'); a.push(Object.assign({ id: Demo.id() }, doc)); Demo.set('requests', a); Demo.refresh(); return; }
-        await PV.db.collection('requests').add(doc);
-    },
-    async reply(reqId, f) {
-        const fields = { reply: f.reply, quote: f.quote, availability: f.availability, repliedAt: Date.now(), status: 'replied' };
-        if (PV.mode === 'demo') { const a = Demo.get('requests'); const r = a.find(x => x.id === reqId); if (r) Object.assign(r, fields); Demo.set('requests', a); Demo.refresh(); return; }
-        await PV.pApp.firestore().collection('requests').doc(reqId).update(fields);
-    },
-    async setUserStatus(reqId, status) {
-        const fields = { status, statusAt: Date.now() };
-        if (PV.mode === 'demo') { const a = Demo.get('requests'); const r = a.find(x => x.id === reqId); if (r) Object.assign(r, fields); Demo.set('requests', a); Demo.refresh(); return; }
-        await PV.db.collection('requests').doc(reqId).update(fields);
-    },
-    async addReview(req, stars, text) {
-        const doc = { providerId: req.providerId, reqId: req.id, country: req.country, city: req.city, stars, text, userUid: PV.uid, createdAt: Date.now() };
-        if (PV.mode === 'demo') { const a = Demo.get('reviews').filter(x => x.id !== req.id); a.push(Object.assign({ id: req.id }, doc)); Demo.set('reviews', a); Demo.refresh(); return; }
-        await PV.db.collection('reviews').doc(req.id).set(doc);
-    }
-};
-const Prices = {
-    async list(country, city) {
-        if (PV.mode === 'demo' || !PV.db) return Demo.get('prices').filter(p => p.country === country && p.city === city);
-        const s = await PV.db.collection('prices').where('country', '==', country).where('city', '==', city).limit(1000).get();
-        return s.docs.map(d => d.data());
-    },
-    async add(d) {
-        await PVReady;
-        const doc = Object.assign({ uid: PV.uid, createdAt: Date.now() }, d);
-        if (PV.mode === 'demo') { const a = Demo.get('prices'); a.push(doc); Demo.set('prices', a.slice(-2000)); return; }
-        await PV.db.collection('prices').add(doc);
-    }
-};
-async function hashPass(p) {
-    try {
-        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('sd:' + p));
-        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-    } catch (e) { let h = 0; for (const c of 'sd:' + p) h = (h * 31 + c.charCodeAt(0)) | 0; return 'h' + h; }
-}
-function loadScript(src) { return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
-
-// ---------- التهيئة ----------
-const Providers = {
-    async init() {
-        if (!FIREBASE_CONFIG) {
-            PV.mode = 'demo';
-            $('demo-banner').classList.remove('hidden');
-            PV.uid = store.get('pv_demo_uid', null) || Demo.id(); store.set('pv_demo_uid', PV.uid);
-            readyResolve(); kbLoad();
-            Demo.refresh();
-            return;
-        }
-        PV.mode = 'firebase';
-        try {
-            const base = 'https://www.gstatic.com/firebasejs/10.12.2/';
-            await loadScript(base + 'firebase-app-compat.js');
-            await loadScript(base + 'firebase-auth-compat.js');
-            await loadScript(base + 'firebase-firestore-compat.js');
-            firebase.initializeApp(FIREBASE_CONFIG);
-            PV.db = firebase.firestore();
-            kbLoad();
-            PV.pApp = firebase.initializeApp(FIREBASE_CONFIG, 'provider');
-            Providers.subscribeCity();
-            refreshPrices();
-            firebase.auth().onAuthStateChanged(u => {
-                if (!u) { firebase.auth().signInAnonymously().catch(showProvidersError); return; }
-                PV.uid = u.uid; readyResolve();
-                if (PV.unsubUser) PV.unsubUser();
-                PV.unsubUser = PV.db.collection('requests').where('userUid', '==', u.uid)
-                    .onSnapshot(s => { PV.myReqs = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderProviders(); }, e => console.error(e));
-            });
-            PV.pApp.auth().onAuthStateChanged(u => {
-                PV.unsubMe.forEach(f => f()); PV.unsubMe = [];
-                PV.me = null; PV.meReqs = []; PV.meReviews = [];
-                if (u && !u.isAnonymous) {
-                    const db2 = PV.pApp.firestore(); let reviewsFor = null;
-                    PV.unsubMe.push(db2.collection('providers').where('ownerUid', '==', u.uid).onSnapshot(s => {
-                        PV.me = s.docs.length ? Object.assign({ id: s.docs[0].id }, s.docs[0].data()) : null;
-                        if (PV.me && reviewsFor !== PV.me.id) {
-                            reviewsFor = PV.me.id;
-                            PV.unsubMe.push(db2.collection('reviews').where('providerId', '==', PV.me.id).onSnapshot(r => { PV.meReviews = r.docs.map(d => d.data()); renderProviders(); }));
-                        }
-                        renderProviders();
-                    }, e => console.error(e)));
-                    PV.unsubMe.push(db2.collection('requests').where('providerOwnerUid', '==', u.uid)
-                        .onSnapshot(s => { PV.meReqs = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderProviders(); }, e => console.error(e)));
-                }
-                renderProviders();
-            });
-        } catch (e) { showProvidersError(e); readyResolve(); }
-    },
-    subscribeCity() {
-        PV.unsubCity.forEach(f => f()); PV.unsubCity = [];
-        const country = LOC ? LOC.country : 'SA', city = cityName();
-        PV.list = []; PV.reviews = [];
-        PV.unsubCity.push(PV.db.collection('providers').where('status', '==', 'approved').where('country', '==', country).where('city', '==', city)
-            .onSnapshot(s => { PV.list = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderProviders(); }, showProvidersError));
-        PV.unsubCity.push(PV.db.collection('reviews').where('country', '==', country).where('city', '==', city)
-            .onSnapshot(s => { PV.reviews = s.docs.map(d => d.data()); renderProviders(); }, e => console.error(e)));
-    },
-    onLocation() { if (PV.mode === 'demo') Demo.refresh(); else if (PV.db) Providers.subscribeCity(); },
-    renderMyRequests() { renderMyRequestsList(); }
-};
-function showProvidersError(e) {
-    console.error(e);
-    ['ws-list', 'ag-list'].forEach(id => { const b = $(id); b.innerHTML = ''; b.appendChild(el('p', 'text-[11px] text-rose-300 text-center py-2', 'تعذر الاتصال. تحقق من الإنترنت.')); });
-}
-
-// ---------- العرض ----------
-function ratingOf(pid) {
-    const r = PV.reviews.filter(x => x.providerId === pid);
-    if (!r.length) return null;
-    return { avg: r.reduce((a, b) => a + (b.stars || 0), 0) / r.length, count: r.length };
-}
-function renderProviders() {
-    ['workshop', 'agent'].forEach(type => {
-        const T = TYPE[type], box = $(T.listId);
-        box.innerHTML = '';
-        const items = PV.list.filter(p => p.type === type).map(p => Object.assign({ _r: ratingOf(p.id) }, p))
-            .sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0) || ((b._r ? b._r.avg : 0) - (a._r ? a._r.avg : 0)) || (a.createdAt - b.createdAt));
-        $(T.countId).textContent = items.length;
-        if (!items.length) box.appendChild(el('p', 'text-[11px] opacity-60 text-center py-3', type === 'workshop' ? 'لا توجد ورش معتمدة في مدينتك بعد.' : 'لا يوجد وكلاء أو محلات معتمدة في مدينتك بعد.'));
-        items.forEach(p => box.appendChild(providerCard(p)));
-    });
-    renderProviderPanel();
-    renderMyRequestsList();
-    if (PV.isOwner) renderOwnerPanel();
-}
-function providerCard(p) {
-    const agent = p.type === 'agent';
-    const card = el('div', 'rounded-xl p-3 space-y-2 border ' + (agent ? 'bg-emerald-900/40 border-emerald-800' : 'bg-slate-900 border-slate-800') + (p.featured ? ' ring-1 ring-amber-400' : ''));
-    const head = el('div', 'flex justify-between items-start gap-2');
-    const info = el('div', 'min-w-0');
-    const nameRow = el('div', 'flex items-center gap-1.5 flex-wrap');
-    nameRow.appendChild(el('span', 'font-extrabold text-xs ' + (agent ? 'text-emerald-200' : 'text-amber-300'), p.name));
-    if (p.featured) nameRow.appendChild(el('span', 'text-[9px] bg-amber-400 text-slate-950 font-black px-1.5 rounded', '⭐ مميز'));
-    if (agent && p.kind) nameRow.appendChild(el('span', 'text-[9px] bg-white/10 px-1.5 rounded', KIND[p.kind] || ''));
-    info.appendChild(nameRow);
-    if (p.spec) info.appendChild(el('span', 'text-[10px] opacity-70 block', p.spec));
-    const ph = el('span', 'text-[11px] font-mono block mt-0.5', '📱 ' + p.phone); ph.dir = 'ltr'; ph.style.textAlign = 'right';
-    info.appendChild(ph);
-    head.appendChild(info);
-    head.appendChild(el('span', 'text-[10px] font-bold shrink-0 ' + (p._r ? 'text-amber-300' : 'opacity-60'), p._r ? '★ ' + p._r.avg.toFixed(1) + ' (' + p._r.count + ')' : 'جديد'));
-    card.appendChild(head);
-
-    const actions = el('div', 'grid grid-cols-2 gap-1.5');
-    const sendBtn = el('button', 'bg-blue-600 text-white font-bold py-2 rounded-lg text-[11px]', TYPE[p.type].send);
-    sendBtn.onclick = () => openSend(p);
-    const contactBtn = el('button', 'bg-white/10 font-bold py-2 rounded-lg text-[11px]', '📞 تواصل');
-    actions.append(sendBtn, contactBtn);
-    card.appendChild(actions);
-
-    const contact = el('div', 'hidden bg-black/30 rounded-lg p-2 space-y-1.5');
-    const num = el('div', 'font-mono font-black text-base text-center', p.phone); num.dir = 'ltr';
-    const row = el('div', 'grid grid-cols-2 gap-1.5');
-    const tel = el('a', 'bg-emerald-500 text-slate-950 font-black py-1.5 rounded-lg text-[11px] text-center', '📞 اتصال'); tel.href = 'tel:' + cleanPhone(p.phone);
-    const wa = el('a', 'bg-green-600 text-white font-black py-1.5 rounded-lg text-[11px] text-center', '💬 واتساب');
-    wa.href = waLink(p.country, p.phone, 'السلام عليكم، تواصلت معكم عن طريق تطبيق الفاحص الذكي.'); wa.target = '_blank'; wa.rel = 'noopener';
-    row.append(tel, wa); contact.append(num, row);
-    contactBtn.onclick = () => contact.classList.toggle('hidden');
-    card.appendChild(contact);
-
-    const reply = el('div', 'bg-black/30 rounded-lg p-2 text-[11px] leading-relaxed');
-    reply.appendChild(el('span', 'font-bold opacity-80 block mb-0.5', '💬 الرد:'));
-    const mine = PV.myReqs.filter(r => r.providerId === p.id).sort((a, b) => b.createdAt - a.createdAt)[0];
-    if (!mine) reply.appendChild(el('span', 'opacity-50', agent ? 'لم تطلب تسعيراً من هنا بعد.' : 'لم ترسل تقريراً لهذه الورشة بعد.'));
-    else reply.appendChild(requestStatusBlock(mine, true));
-    card.appendChild(reply);
-    return card;
-}
-function quoteText(r) { return r.quote > 0 ? Number(r.quote).toLocaleString('en') + ' ' + (r.cur || '') : ''; }
-function requestStatusBlock(r, dark) {
-    const box = el('div', 'space-y-1');
-    const muted = dark ? 'opacity-60' : 'text-slate-400';
-    if (r.status === 'sent') { box.appendChild(el('span', dark ? 'text-amber-200' : 'text-amber-700', '⏳ أُرسل ' + fmtTime(r.createdAt) + ' — بانتظار الرد')); return box; }
-    if (r.reply) box.appendChild(el('p', 'whitespace-pre-wrap', r.reply));
-    if (r.quote > 0) box.appendChild(el('p', 'font-black ' + (dark ? 'text-amber-300' : 'text-blue-800'), '💰 عرض السعر: ' + quoteText(r)));
-    if (r.availability) box.appendChild(el('p', 'font-bold', '📦 ' + r.availability));
-    box.appendChild(el('span', 'text-[10px] ' + muted, fmtTime(r.repliedAt)));
-    if (r.status === 'replied') {
-        const b = el('button', 'w-full mt-1 bg-amber-500 text-slate-950 font-black py-1.5 rounded-lg text-[11px]', '✅ قبول العرض');
-        b.onclick = async () => { b.disabled = true; try { await Store.setUserStatus(r.id, 'accepted'); alert('تم قبول العرض ✓ تواصل معهم لتحديد الموعد.'); } catch (e) { alert('تعذر التنفيذ.'); b.disabled = false; } };
-        box.appendChild(b);
-    } else if (r.status === 'accepted') {
-        box.appendChild(el('p', 'font-bold ' + (dark ? 'text-emerald-300' : 'text-emerald-700'), '👍 قبلت العرض'));
-        const b = el('button', 'w-full mt-1 bg-emerald-500 text-slate-950 font-black py-1.5 rounded-lg text-[11px]', r.providerType === 'agent' ? '🏁 استلمت القطع — قيّم' : '🏁 تم الإصلاح — قيّم');
-        b.onclick = () => openRate(r);
-        box.appendChild(b);
-    } else if (r.status === 'done') {
-        box.appendChild(el('p', 'font-bold ' + (dark ? 'text-emerald-300' : 'text-emerald-700'), '✔️ مكتمل — شكراً لتقييمك'));
-    }
-    return box;
-}
-function renderMyRequestsList() {
-    const box = $('my-requests'); if (!box) return;
-    box.innerHTML = '';
-    const reqs = PV.myReqs.slice().sort((a, b) => b.createdAt - a.createdAt);
-    if (!reqs.length) box.appendChild(el('p', 'text-[11px] text-slate-400', 'لم ترسل أي طلب بعد. افحص سيارتك ثم أرسل التقرير لورشة أو اطلب تسعير القطع من وكيل.'));
-    reqs.forEach(r => {
-        const c = el('div', 'bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-[11px] space-y-1');
-        c.appendChild(el('div', 'font-black', (r.providerType === 'agent' ? '🧩 ' : '🔧 ') + (r.providerName || '') + ' • ' + (r.city || '')));
-        c.appendChild(el('div', 'text-[10px] text-slate-500 truncate', ((r.report || '').split('\n').find(l => l.startsWith('🔧')) || '').replace('🔧 ', '')));
-        c.appendChild(requestStatusBlock(r, false));
-        box.appendChild(c);
-    });
-    const seen = new Set(store.get('sd_seen', []));
-    const unseen = reqs.filter(r => r.status === 'replied' && !seen.has(r.id + r.repliedAt));
-    const onMine = !$('tab-mine').classList.contains('hidden');
-    if (onMine) { store.set('sd_seen', reqs.map(r => r.id + r.repliedAt).slice(0, 200)); $('mine-dot').classList.add('hidden'); }
-    else $('mine-dot').classList.toggle('hidden', !unseen.length);
-}
-
-// ---------- لوحة الورشة/الوكيل ----------
-function renderProviderPanel() {
-    const box = $('provider-panel'); box.innerHTML = '';
-    const p = PV.me;
-    $('provider-login-btn').classList.toggle('hidden', !!p);
-    if (!p) { box.classList.add('hidden'); return; }
-    box.classList.remove('hidden');
-    const agent = p.type === 'agent';
-    const hdr = el('div', 'flex justify-between items-center gap-2');
-    hdr.appendChild(el('span', 'font-black text-sm', (agent ? '🧩 لوحة ' : '🔧 لوحة ') + p.name));
-    const out = el('button', 'text-[10px] opacity-60 underline shrink-0', 'تسجيل خروج');
-    out.onclick = () => Store.logout().catch(() => {});
-    hdr.appendChild(out); box.appendChild(hdr);
-    box.appendChild(el('p', 'text-[10px] opacity-60', COUNTRIES[p.country].name + ' • ' + p.city + ' • ' + p.phone));
-    if (p.status === 'pending') { box.appendChild(el('p', 'text-[11px] text-amber-300', '⏳ طلبك قيد المراجعة من إدارة التطبيق.')); return; }
-    if (p.status === 'rejected') { box.appendChild(el('p', 'text-[11px] text-rose-300', '❌ لم تتم الموافقة على طلبك. تواصل مع الإدارة.')); return; }
-    const revs = PV.meReviews;
-    const avg = revs.length ? (revs.reduce((a, b) => a + b.stars, 0) / revs.length).toFixed(1) : '—';
-    const reqs = PV.meReqs.slice().sort((a, b) => b.createdAt - a.createdAt);
-    const stats = el('div', 'grid grid-cols-3 gap-2 text-center text-[10px]');
-    [['الطلبات', reqs.length], ['مقبولة', reqs.filter(r => r.status === 'accepted' || r.status === 'done').length], ['التقييم', avg + (revs.length ? ' ★' : '')]].forEach(([l, v]) => {
-        const s = el('div', 'bg-black/30 rounded-lg py-1.5'); s.appendChild(el('span', 'block font-black text-sm', String(v))); s.appendChild(el('span', 'opacity-60', l)); stats.appendChild(s);
-    });
-    box.appendChild(stats);
-    box.appendChild(el('p', 'text-[11px] font-bold opacity-80 pt-1', '📥 الطلبات الواردة'));
-    if (!reqs.length) box.appendChild(el('p', 'text-[11px] opacity-50', 'لا توجد طلبات بعد. ستظهر هنا فور وصولها.'));
-    reqs.forEach(r => {
-        const c = el('div', 'bg-black/30 border border-white/10 rounded-xl p-2.5 space-y-1.5 text-[11px]');
-        const top = el('div', 'flex justify-between gap-2');
-        top.appendChild(el('span', 'font-bold text-amber-300', '👤 ' + (r.userName || 'مستخدم')));
-        top.appendChild(el('span', 'text-[10px] opacity-50', fmtTime(r.createdAt)));
-        c.appendChild(top);
-        if (r.userPhone) {
-            const row = el('div', 'flex gap-3 text-[11px]');
-            const a = el('a', 'font-mono text-emerald-300 underline', '📞 ' + r.userPhone); a.href = 'tel:' + cleanPhone(r.userPhone); a.dir = 'ltr';
-            const w = el('a', 'text-green-400 underline', '💬 واتساب'); w.href = waLink(r.country, r.userPhone, 'مرحباً ' + (r.userName || '') + '، بخصوص طلبك في تطبيق الفاحص الذكي.'); w.target = '_blank'; w.rel = 'noopener';
-            row.append(a, w); c.appendChild(row);
-        }
-        const pre = el('pre', 'whitespace-pre-wrap leading-relaxed opacity-90', r.report); pre.style.fontFamily = 'inherit';
-        c.appendChild(pre);
-        if (r.note) c.appendChild(el('p', 'text-amber-100', '📝 ' + r.note));
-        if (r.status === 'sent' || r.status === 'replied') {
-            const q = el('input', 'w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-[11px] font-mono');
-            q.type = 'number'; q.inputMode = 'decimal'; q.placeholder = 'السعر الإجمالي (' + (r.cur || '') + ')'; if (r.quote) q.value = r.quote;
-            c.appendChild(q);
-            let av = null;
-            if (agent) { av = el('select', 'w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-[11px]'); AVAIL.forEach(a => av.appendChild(el('option', null, a))); if (r.availability) av.value = r.availability; c.appendChild(av); }
-            const ta = el('textarea', 'w-full bg-slate-800 border border-slate-600 rounded-lg p-2 text-[11px] resize-none');
-            ta.rows = 2; ta.maxLength = 500; ta.placeholder = agent ? 'تفاصيل (الماركة، الضمان، مدة التوفير…)' : 'الموعد المقترح وتفاصيل الإصلاح والضمان'; ta.value = r.reply || '';
-            c.appendChild(ta);
-            const b = el('button', 'w-full bg-amber-500 text-slate-950 font-black py-2 rounded-lg', r.status === 'replied' ? 'تحديث العرض' : 'إرسال العرض');
-            b.onclick = async () => {
-                const quote = parseFloat(q.value) || 0, text = ta.value.trim();
-                if (!text && !quote) { alert('اكتب السعر أو رسالة للعميل.'); return; }
-                b.disabled = true;
-                try { await Store.reply(r.id, { reply: text.slice(0, 500), quote: Math.max(0, Math.min(quote, 1e6)), availability: av ? av.value : '' }); alert('تم إرسال العرض للعميل ✓'); }
-                catch (e) { alert('تعذر الإرسال.'); b.disabled = false; }
-            };
-            c.appendChild(b);
-        } else {
-            if (r.quote) c.appendChild(el('p', 'font-bold', '💰 عرضك: ' + quoteText(r)));
-            c.appendChild(el('p', 'font-black text-emerald-300', r.status === 'accepted' ? '✅ العميل قبل عرضك — تواصل معه لتحديد الموعد' : '🏁 مكتمل'));
-            const rv = PV.meReviews.find(x => x.reqId === r.id);
-            if (rv) c.appendChild(el('p', 'text-amber-300', '★'.repeat(rv.stars) + (rv.text ? ' — ' + rv.text : '')));
-        }
-        box.appendChild(c);
-    });
-}
-
-// ---------- الإرسال ----------
-let sendTarget = null;
-function buildReport(type) {
-    const r = lastDiag; if (!r || !r.title) return null;
-    const lines = ['🚗 السيارة: ' + carLabel() + ($('car-km').value ? ' • ' + $('car-km').value : ''), '📍 ' + C().name + ' - ' + cityName(), '🔧 التشخيص: ' + r.title, '⚠️ الحالة: ' + (SEV[r.sev] ? SEV[r.sev][2] : '')];
-    if (r.code) lines.push('📟 الكود: ' + r.code);
-    if (r.kb) {
-        const parts = r.kb.parts.map(p => p[0]).join('، ');
-        lines.push((type === 'agent' ? '🧩 القطع المطلوب تسعيرها: ' : '🧩 القطع المتوقعة: ') + parts);
-        if (type !== 'agent') lines.push('💰 التكلفة العادلة المتوقعة: ' + fmtSar(r.totalSar));
-    }
-    if (r.text && r.text !== r.code) lines.push('📝 وصف العميل: ' + r.text);
-    if (lastMeta && lastMeta.structured) lines.push('📋 ' + lastMeta.structured);
-    followups.forEach(f => lines.push('❓ ' + f.q + ' ← ' + f.a));
-    if (r.soundSummary) lines.push(r.soundSummary);
-    return lines.join('\n').slice(0, 2000);
-}
-function openSend(p) {
-    if (lastDiag && lastDiag.title && !isUnlocked()) { requirePaid(() => openSend(p)); return; }
-    const report = buildReport(p.type);
-    if (!report) { alert('افحص سيارتك أولاً (بالوصف أو الصوت أو الكود)، ثم أرسل التقرير.'); switchTab('diagnose'); return; }
-    sendTarget = p;
-    $('send-title').textContent = TYPE[p.type].sendTitle;
-    $('send-to').textContent = p.name;
-    $('send-preview').textContent = report;
-    $('send-name').value = store.get('sd_user_name', '');
-    $('send-phone').value = store.get('sd_user_phone', '');
-    openModal('send-modal');
-}
-async function submitRequest() {
-    if (!sendTarget) return;
-    const name = $('send-name').value.trim(), phone = cleanPhone($('send-phone').value), note = $('send-note').value.trim();
-    if (name.length < 2) { alert('اكتب اسمك.'); return; }
-    store.set('sd_user_name', name); store.set('sd_user_phone', phone);
-    const b = $('send-submit'); b.disabled = true;
-    try {
-        await Store.sendRequest(sendTarget, { userName: name.slice(0, 40), userPhone: phone, note: note.slice(0, 300), report: buildReport(sendTarget.type) });
-        closeModal('send-modal'); $('send-note').value = '';
-        alert('تم الإرسال إلى ' + sendTarget.name + ' ✓ سيظهر الرد في بطاقتهم وفي "سجلي".');
-    } catch (e) { alert('تعذر الإرسال، حاول مرة أخرى.'); }
-    b.disabled = false;
-}
-function scrollToProviders(type) {
-    if (!lastDiag) { alert('افحص سيارتك أولاً.'); return; }
-    $(TYPE[type].section).scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// ---------- التقييم ----------
-let rateReq = null, rateStars = 5;
-function openRate(r) {
-    rateReq = r; rateStars = 5;
-    $('rate-to').textContent = r.providerName || '';
-    $('rate-text').value = '';
-    drawStars(); openModal('rate-modal');
-}
-function drawStars() {
-    const box = $('rate-stars'); box.innerHTML = '';
-    for (let i = 1; i <= 5; i++) {
-        const s = el('button', i <= rateStars ? 'text-amber-400' : 'text-slate-300', '★');
-        s.onclick = () => { rateStars = i; drawStars(); };
-        box.appendChild(s);
-    }
-}
-async function submitRating() {
-    if (!rateReq) return;
-    const b = $('rate-submit'); b.disabled = true;
-    try {
-        await Store.setUserStatus(rateReq.id, 'done');
-        await Store.addReview(rateReq, rateStars, $('rate-text').value.trim().slice(0, 300));
-        closeModal('rate-modal'); alert('شكراً لتقييمك ✓');
-    } catch (e) { alert('تعذر إرسال التقييم.'); }
-    b.disabled = false;
-}
-
-// ---------- التسجيل والدخول ----------
-function openJoinModal(type) {
-    if (PV.me) { alert('أنت مسجّل الدخول بالفعل. تجد لوحتك أعلى قسم الورش.'); $('provider-panel').scrollIntoView({ behavior: 'smooth' }); return; }
-    $('join-type').value = type;
-    $('join-title').textContent = type === 'agent' ? '🏪 تسجيل وكيل أو محل قطع غيار' : '🏢 تسجيل ورشة';
-    $('join-agent-kind-box').classList.toggle('hidden', type !== 'agent');
-    $('join-spec').placeholder = type === 'agent' ? 'الماركات التي تخدمها (تويوتا، هيونداي…)' : 'التخصص (ميكانيكا، كهرباء، مكيفات…)';
-    fillCountrySelect('join-country', LOC ? LOC.country : 'SA');
-    fillCitySelect('join-city', $('join-country').value, cityName());
-    openModal('join-modal');
-}
-async function submitJoin() {
-    const d = { type: $('join-type').value, name: $('join-name').value.trim(), country: $('join-country').value, city: $('join-city').value,
-                phone: cleanPhone($('join-phone').value), spec: $('join-spec').value.trim().slice(0, 80), kind: $('join-type').value === 'agent' ? $('join-kind').value : '' };
-    const pass = $('join-pass').value, pass2 = $('join-pass2').value;
-    if (d.name.length < 2) { alert('اكتب الاسم التجاري.'); return; }
-    if (localDigits(d.country, d.phone).length < 7) { alert('اكتب رقم جوال صحيح.'); return; }
-    if (pass.length < 6) { alert('كلمة المرور يجب أن تكون 6 أحرف أو أكثر.'); return; }
-    if (pass !== pass2) { alert('كلمتا المرور غير متطابقتين.'); return; }
-    if (!$('join-terms').checked) { alert('يجب الموافقة على شروط الاستخدام.'); return; }
-    d.name = d.name.slice(0, 60);
-    const b = $('join-submit'); b.disabled = true;
-    try {
-        await Store.apply(d, pass);
-        closeModal('join-modal'); $('join-pass').value = ''; $('join-pass2').value = '';
-        alert('تم إرسال طلبك ✓ ستظهر للمستخدمين في ' + d.city + ' بعد موافقة الإدارة.\nللدخول من أي جهاز: رقم الجوال + كلمة المرور.');
-    } catch (e) {
-        alert(e.message === 'exists' ? 'هذا الرقم مسجّل بالفعل. استخدم "دخول الورش والوكلاء".' : 'تعذر إرسال الطلب، تحقق من الإنترنت.');
-    }
-    b.disabled = false;
-}
-async function providerLogin() {
-    const country = $('login-country').value, phone = $('login-phone').value, pass = $('login-pass').value;
-    if (localDigits(country, phone).length < 7 || !pass) { alert('اكتب رقم الجوال وكلمة المرور.'); return; }
-    const b = $('login-submit'); b.disabled = true;
-    try {
-        await Store.login(country, phone, pass);
-        closeModal('login-modal'); $('login-pass').value = '';
-        setTimeout(() => $('provider-panel').scrollIntoView({ behavior: 'smooth' }), 300);
-    } catch (e) { alert('رقم الجوال أو كلمة المرور غير صحيحة.'); }
-    b.disabled = false;
-}
-
-
-// =====================================================================
-// 💳 الدفع: النتيجة الأساسية مجانية، والتقرير الكامل مدفوع (أول تقرير مجاني)
-// =====================================================================
-const PAYWALL_ON = true;
-// خدمة واحدة مجانية (أول فحص)، ثم وصول كامل لكل الخدمات بالمدة
-const PRODUCTS = {
-    day:    { sar: 9.99,  title: 'يوم كامل', desc: 'كل الخدمات لمدة 24 ساعة' },
-    day3:   { sar: 19.99, title: '3 أيام', desc: 'كل الخدمات لمدة 72 ساعة • وفّر 10 ر.س', badge: 'الأكثر طلباً' },
-    annual: { sar: 79.99, title: 'سنة كاملة', desc: 'كل الخدمات لمدة 365 يوماً' }
-};
-// روابط الدفع تُضاف بعد اختيار بوابة الدفع؛ {WID} يُستبدل برقم محفظة المستخدم
-const PAY_LINKS = { day: '', day3: '', annual: '' };   // تأتي تلقائياً من الخادم (متغيرات LEMON_CHECKOUT_*)
-const Wallet = { state: null };
-function walletId() {
-    let w = store.get('sd_wallet', null);
-    if (!w || !/^w_[a-z0-9]{12,24}$/.test(w)) {
-        const a = new Uint8Array(12); crypto.getRandomValues(a);
-        w = 'w_' + Array.from(a, b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('') + Date.now().toString(36).slice(-4);
-        store.set('sd_wallet', w);
-    }
-    return w;
-}
-const priceText = sar => { const c = C(); const v = sar * c.rate; return v.toLocaleString('en', { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: Math.max(2, c.dec ?? 0) }) + ' ' + c.cur; };
-async function payApi(body) {
-    if (location.protocol === 'file:') return { status: 0, json: null };
-    try {
-        const res = await fetch(AI_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ wid: walletId() }, body)) });
-        return { status: res.status, json: await res.json().catch(() => null) };
-    } catch (e) { return { status: 0, json: null }; }
-}
-async function walletRefresh() {
-    const r = await payApi({ mode: 'wallet' });
-    if (r.status === 200 && r.json) Wallet.state = r.json;
-    else if (r.status === 503 || r.status === 0) Wallet.state = { offline: true };
-    applyLock();
-    return Wallet.state;
-}
-function diagIdFor(m) {
-    m = m || {};
-    const key = [carLabel(), m.source, m.text, m.structured, m.code, m.soundSummary ? 'snd' : ''].join('|');
-    let h = 5381; for (let i = 0; i < key.length; i++) h = ((h << 5) + h + key.charCodeAt(i)) >>> 0;
-    return 'd' + h.toString(36) + key.length.toString(36);
-}
-const diagId = () => diagIdFor(lastMeta);
-const passActive = () => !!(Wallet.state && Wallet.state.passUntil > Date.now());
-function isUnlocked() { return !PAYWALL_ON || passActive() || !!(Wallet.state && Wallet.state.offline); }
-// هل يحق للمستخدم بدء هذه الخدمة؟ (أول خدمة مجانية، أو نفس الخدمة المجانية، أو وصول مدفوع)
-function canStart(did) {
-    if (isUnlocked() || !Wallet.state) return true;          // قبل تحميل المحفظة نترك الخادم يقرر
-    if (Wallet.state.freeAvailable) return true;
-    return Wallet.state.freeDid === did;
-}
-function blockService(msg) {
-    openPayModal(msg || 'استخدمت خدمتك المجانية. لإكمال هذه الخدمة وكل خدمات التطبيق افتح الوصول الكامل.');
-    return false;
-}
-function onFreeUsed(did) { if (Wallet.state && !passActive() && Wallet.state.freeAvailable) { Wallet.state.freeAvailable = false; Wallet.state.freeDid = did; } }
-function passText() {
-    if (!passActive()) return '';
-    const d = new Date(Wallet.state.passUntil);
-    return '✅ وصول كامل حتى ' + d.toLocaleString('ar', { weekday: 'long', hour: 'numeric', minute: '2-digit' });
-}
-function applyLock() {
-    const unlocked = isUnlocked();
-    const hasResult = !!(lastDiag && lastDiag.title);
-    $('car-results').classList.toggle('locked', hasResult && !unlocked);
-    $('paywall').classList.toggle('hidden', !hasResult || unlocked);
-    $('tab-prices').classList.toggle('locked', !unlocked);
-    $('prices-paywall').classList.toggle('hidden', unlocked);
-    $('pw-btn').textContent = '🔓 افتح كل الخدمات بـ ' + priceText(PRODUCTS.day.sar) + ' (يوم كامل)';
-    $('pw-sub').textContent = 'أو 3 أيام بـ ' + priceText(PRODUCTS.day3.sar) + ' • سنة كاملة ' + priceText(PRODUCTS.annual.sar);
-    const pb = $('pass-banner'); if (pb) { pb.textContent = passText(); pb.classList.toggle('hidden', !passActive()); }
-}
-async function unlockCurrent() { if (isUnlocked()) return true; openPayModal(); return false; }
-function openPayModal(msg) {
-    $('pm-msg').textContent = msg || ''; $('pm-msg').classList.toggle('hidden', !msg);
-    $('pm-wallet').textContent = passActive() ? passText() : '💼 لا يوجد وصول فعّال حالياً';
-    $('pm-wid').textContent = walletId();
-    const box = $('pm-products'); box.innerHTML = '';
-    ['day', 'day3', 'annual'].forEach(k => {
-        const p = PRODUCTS[k];
-        const c = el('button', 'w-full text-right border-2 rounded-xl p-2.5 flex items-center justify-between gap-2 ' + (p.badge ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white'));
-        const t = el('span', 'min-w-0'); t.appendChild(el('span', 'block font-black text-[12px]', p.title + (p.badge ? ' ⭐' : ''))); t.appendChild(el('span', 'block text-[10px] text-slate-500', p.desc + (p.badge ? ' • ' + p.badge : '')));
-        c.appendChild(t); c.appendChild(el('span', 'shrink-0 font-black text-[13px] font-mono', priceText(p.sar)));
-        c.onclick = () => buyProduct(k);
-        box.appendChild(c);
-    });
-    openModal('pay-modal');
-}
-function buyProduct(k) {
-    const links = Object.assign({}, PAY_LINKS, (Wallet.state && Wallet.state.links) || {});
-    const link = links[k];
-    if (!link) { alert('الدفع الإلكتروني سيتوفر قريباً.\nإذا لديك كود تفعيل، أدخله في الأسفل.'); $('pm-code').focus(); return; }
-    // رقم المحفظة يُرسل مع الطلب، فيُفعَّل الوصول تلقائياً فور الدفع
-    const url = link.replace('{WID}', encodeURIComponent(walletId()))
-        + (link.includes('{WID}') ? '' : (link.includes('?') ? '&' : '?') + 'checkout[custom][wid]=' + encodeURIComponent(walletId()));
-    store.set('sd_pay_pending', { k, at: Date.now() });
-    location.href = url;
-}
-// بعد الرجوع من صفحة الدفع: ننتظر إشعار البوابة ونفعّل تلقائياً
-async function watchPayment() {
-    const pend = store.get('sd_pay_pending', null);
-    const params = new URLSearchParams(location.search);
-    if (params.get('pay') === '1') setTimeout(() => openPayModal(), 600);
-    if (!pend || Date.now() - pend.at > 30 * 60 * 1000) { store.del('sd_pay_pending'); return; }
-    const pb = $('pass-banner');
-    pb.textContent = '⏳ جاري تأكيد الدفع وتفعيل وصولك…'; pb.classList.remove('hidden');
-    for (let i = 0; i < 24; i++) {
-        await walletRefresh();
-        if (passActive()) {
-            store.del('sd_pay_pending');
-            alert('✅ تم الدفع وتفعيل الوصول الكامل!\n' + passText() + '\nشكراً لثقتك 🌟');
-            return;
-        }
-        await sleep(5000);
-    }
-    pb.textContent = '⏳ لم يصل تأكيد الدفع بعد. إذا دفعت فعلاً سيُفعّل خلال دقائق، أعد فتح التطبيق.';
-}
-async function redeemCode() {
-    const code = $('pm-code').value.trim().toUpperCase();
-    if (!/^SD-[A-Z0-9]{8}$/.test(code)) { alert('الكود غير صحيح. الشكل: SD-XXXXXXXX'); return; }
-    const r = await payApi({ mode: 'redeem', code });
-    if (r.status === 200 && r.json && r.json.ok) {
-        Wallet.state = r.json; $('pm-code').value = '';
-        applyLock(); closeModal('pay-modal');
-        alert('✅ تم التفعيل: ' + PRODUCTS[r.json.product].title + '\n' + passText());
-    } else alert(r.status === 409 ? 'هذا الكود مستخدم من قبل.' : r.status === 404 ? 'الكود غير موجود.' : 'تعذر التفعيل، حاول لاحقاً.');
-}
-function copyWid() { const t = walletId(); if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(() => alert('تم النسخ ✓')); else alert(t); }
-async function restoreWallet() {
-    const w = $('pm-restore').value.trim();
-    if (!/^w_[a-z0-9]{12,24}$/.test(w)) { alert('رقم المحفظة غير صحيح.'); return; }
-    if (!confirm('استبدال محفظة هذا الجهاز بالمحفظة المدخلة؟')) return;
-    store.set('sd_wallet', w); await walletRefresh(); openPayModal(); alert('تمت الاستعادة ✓');
-}
-// الخدمات المدفوعة تمر من هنا
-async function requirePaid(fn) { if (isUnlocked()) return fn(); blockService('هذه الخدمة ضمن الوصول الكامل.'); }
-
-// ---------- أكواد التفعيل للمالك ----------
-async function ownerCreateCodes() {
-    const token = await ownerToken(); if (!token) { alert('سجّل دخول الإدارة على الموقع المنشور.'); return; }
-    const product = $('oc-product').value, count = parseInt($('oc-count').value) || 1;
-    const r = await payApi({ mode: 'codes_create', token, product, count, note: $('oc-note').value.trim() });
-    if (r.status !== 200 || !r.json) { alert('تعذر إنشاء الأكواد.'); return; }
-    $('oc-out').value = r.json.codes.join('\n'); $('oc-out').classList.remove('hidden');
-    ownerPayStats();
-}
-async function ownerPayStats() {
-    const token = await ownerToken(); if (!token) return;
-    const r = await payApi({ mode: 'pay_stats', token }); if (r.status !== 200 || !r.json) return;
-    const s = r.json;
-    $('oc-stats').textContent = 'خدمات مجانية: ' + s['free'] + ' • محاولات بعد المجاني: ' + s['blocked']
-        + ' | مدفوعات: ' + ['day', 'day3', 'annual'].map(t => PRODUCTS[t].title + ' ' + s['paid:' + t] + (s['refund:' + t] ? ' (مسترجع ' + s['refund:' + t] + ')' : '')).join('، ')
-        + ' | أكواد مستخدمة: ' + ['day', 'day3', 'annual'].reduce((a, t) => a + s['redeem:' + t], 0);
-}
-// =====================================================================
-// 📚 قاعدة المعرفة: جدول الأعطال (kb_faults) + جدول التحديثات (kb_updates)
-// المالك يضيف ويعدّل من لوحة الإدارة، والتطبيق يدمجها مع الأعطال المدمجة
-// =====================================================================
-const BUILTIN_KB = JSON.parse(JSON.stringify(CAR_KB));
-const KB = { rows: [], updates: [], editing: null, draftSources: [], queue: [], fromQueue: null, auto: [], fromAuto: null };
-
-// تحويل صف الجدول إلى صيغة الأعطال الداخلية
-function kbPriceFor(name) { const m = matchPart(name); const p = m ? PRICE_PARTS.find(x => x.name === m) : null; return p ? p.sar : 0; }
-function kbFromRow(id, d) {
-    if (d.auto) {
-        const priced = (d.parts || []).map(p => ({ n: p.n, p: Number(p.p) || kbPriceFor(p.n), opt: p.opt })).filter(p => p.p > 0);
-        d = Object.assign({}, d, { parts: priced, labor: Number(d.labor) || (priced.length ? 100 : 0) });
-    }
-    return {
-        auto: !!d.auto, noPrice: !!d.auto && !(d.parts || []).length,
-        id, remote: true, title: String(d.title || '').slice(0, 90), sev: SEV[d.sev] ? d.sev : 'caution',
-        codes: Array.isArray(d.codes) ? d.codes.map(c => String(c).toUpperCase()) : [],
-        kw: (d.kw && typeof d.kw === 'object') ? d.kw : {},
-        parts: Array.isArray(d.parts) ? d.parts.map(p => [String(p.n || '') + (p.opt && !String(p.n).includes('عند الحاجة') ? ' (عند الحاجة)' : ''), Number(p.p) || 0]) : [],
-        labor: Number(d.labor) || 0, advice: String(d.advice || ''),
-        models: Array.isArray(d.models) ? d.models : [], questions: Array.isArray(d.questions) ? d.questions : [],
-        active: d.active !== false
-    };
-}
-function kbApply(rows) {
-    CAR_KB.length = 0;
-    BUILTIN_KB.forEach(k => CAR_KB.push(JSON.parse(JSON.stringify(k))));
-    rows.forEach(r => {
-        const k = kbFromRow(r.id, r);
-        const i = CAR_KB.findIndex(x => x.id === k.id);
-        if (!k.active) { if (i >= 0) CAR_KB.splice(i, 1); return; }
-        if (i >= 0) CAR_KB[i] = k; else CAR_KB.push(k);
-    });
-    KB.rows = rows;
-    // الصفوف التلقائية: لا تتجاوز صفاً معتمداً أو مدمجاً بنفس الاسم
-    (KB.auto || []).forEach(r => {
-        if (CAR_KB.some(x => x.id === r.id || normalizeAr(x.title) === normalizeAr(r.title || ''))) return;
-        CAR_KB.push(kbFromRow(r.id, r));
-    });
-}
-async function kbLoadAuto() {
-    if (location.protocol === 'file:') return;
-    try {
-        const res = await fetch(AI_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'kb_auto' }) });
-        if (!res.ok) return;
-        const j = await res.json();
-        KB.auto = Array.isArray(j.rows) ? j.rows : [];
-        store.set('sd_kb_auto_cache', KB.auto);
-        kbApply(KB.rows);
-        if (PV.isOwner) renderKbAuto();
-    } catch (e) {}
-}
-function kbApplyCache() { KB.auto = store.get('sd_kb_auto_cache', []); const c = store.get('sd_kb_cache', null); kbApply(c && Array.isArray(c.rows) ? c.rows : []); }
-async function kbLoad() {
-    try {
-        let rows;
-        if (PV.mode === 'firebase') {
-            const s = await PV.db.collection('kb_faults').get();
-            rows = s.docs.map(d => Object.assign({ id: d.id }, d.data()));
-        } else rows = store.get('sd_kb_demo', []);
-        kbApply(rows);
-        store.set('sd_kb_cache', { t: Date.now(), rows: rows.map(r => { const o = Object.assign({}, r); delete o.updatedAt; return o; }) });
-        if (PV.isOwner) renderKbAdmin();
-    } catch (e) { console.warn('kb load', e); }
-}
-
-// ---------- قراءة وكتابة الحقول النصية في نموذج التحرير ----------
-function kbKwToText(kw) { return Object.entries(kw || {}).map(([k, w]) => w && w !== 2 ? k + '*' + w : k).join('، '); }
-function kbTextToKw(t) {
-    const kw = {};
-    String(t || '').split(/[,،\n]/).map(x => x.trim()).filter(Boolean).slice(0, 40).forEach(x => {
-        const m = x.match(/^(.*?)\*(\d+)$/); const k = (m ? m[1] : x).trim().slice(0, 40); const w = m ? Math.min(6, Math.max(1, parseInt(m[2]))) : 2;
-        if (k) kw[k] = w;
-    });
-    return kw;
-}
-function kbPartsToText(parts) { return (parts || []).map(p => p[0] + ' = ' + p[1]).join('\n'); }
-function kbTextToParts(t) {
-    return String(t || '').split('\n').map(l => l.trim()).filter(Boolean).slice(0, 10).map(l => {
-        const m = l.split('='); const n = (m[0] || '').trim().slice(0, 60); const p = parseFloat(String(m[1] || '').replace(/[^\d.]/g, '')) || 0;
-        return { n: n.replace(' (عند الحاجة)', '').replace('(عند الحاجة)', '').trim(), p, opt: n.includes('عند الحاجة') };
-    }).filter(x => x.n);
-}
-function kbQToText(qs) {
-    return (qs || []).map(q => q.type === 'yesno' ? q.q + ' | نعم/لا' + (q.kw ? ' | ' + q.kw : '')
-        : q.q + ' | ' + (q.options || []).map(o => o.kw ? o.l + '=' + o.kw : o.l).join('، ')).join('\n');
-}
-function kbTextToQ(t) {
-    return String(t || '').split('\n').map(l => l.trim()).filter(Boolean).slice(0, 4).map(l => {
-        const parts = l.split('|').map(x => x.trim());
-        const q = (parts[0] || '').slice(0, 140); if (!q) return null;
-        if (!parts[1] || /^نعم\s*\/\s*لا$/.test(parts[1])) return { q, type: 'yesno', kw: (parts[2] || '').slice(0, 40) };
-        const options = parts[1].split(/[,،]/).map(x => x.trim()).filter(Boolean).slice(0, 5).map(o => { const [l2, kw] = o.split('='); return { l: l2.trim().slice(0, 40), kw: (kw || '').trim().slice(0, 40) }; });
-        return options.length >= 2 ? { q, type: 'choice', options } : { q, type: 'yesno', kw: '' };
-    }).filter(Boolean);
-}
-
-// ---------- لوحة الإدارة: القائمة والتحديثات ----------
-function renderKbAdmin() {
-    const box = $('kb-list'); if (!box) return;
-    const q = normalizeAr($('kb-search').value || '');
-    const remoteIds = new Set(KB.rows.map(r => r.id));
-    const disabled = KB.rows.filter(r => r.active === false);
-    $('kb-count').textContent = '(' + CAR_KB.length + ' عطل مفعّل • ' + KB.rows.length + ' في الجدول)';
-    box.innerHTML = '';
-    const items = CAR_KB.map(k => ({ k, off: false })).concat(disabled.map(r => ({ k: kbFromRow(r.id, r), off: true })))
-        .filter(({ k }) => !q || normalizeAr(k.title + ' ' + Object.keys(k.kw).join(' ')).includes(q));
-    items.forEach(({ k, off }) => {
-        const row = el('button', 'w-full text-right bg-slate-50 border border-slate-200 rounded-lg p-2 flex items-center justify-between gap-2' + (off ? ' opacity-50' : ''));
-        row.appendChild(el('span', 'font-bold truncate', ({ safe: '🟢', caution: '🟡', stop: '🛑' }[k.sev] || '') + ' ' + k.title));
-        row.appendChild(el('span', 'shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded ' + (off ? 'bg-slate-200 text-slate-600' : remoteIds.has(k.id) ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-200 text-slate-600'), off ? 'معطّل' : remoteIds.has(k.id) ? '📚 الجدول' : 'مدمج'));
-        row.onclick = () => kbEdit(k.id);
-        box.appendChild(row);
-    });
-    if (!items.length) box.appendChild(el('p', 'text-[10px] text-slate-400', 'لا توجد نتائج.'));
-    kbLoadUpdates();
-}
-async function kbLoadUpdates() {
-    const box = $('kb-updates'); if (!box) return;
-    try {
-        if (PV.mode === 'firebase' && PV.oApp) {
-            const s = await PV.oApp.firestore().collection('kb_updates').orderBy('at', 'desc').limit(15).get();
-            KB.updates = s.docs.map(d => d.data());
-        } else KB.updates = store.get('sd_kb_updates_demo', []).slice(-15).reverse();
-    } catch (e) { KB.updates = []; }
-    box.innerHTML = '';
-    if (!KB.updates.length) { box.appendChild(el('p', 'text-slate-400', 'لا توجد تحديثات بعد.')); return; }
-    const A = { create: '➕ إضافة', edit: '✏️ تعديل', disable: '🚫 تعطيل', ai: '🤖 من البحث', import: '📥 استعادة', review: '🔍 مراجعة' };
-    KB.updates.forEach(u => box.appendChild(el('p', 'bg-slate-50 rounded px-2 py-1', (A[u.action] || u.action) + ' • ' + (u.title || '') + (u.note ? ' — ' + u.note : '') + ' • ' + fmtTime(u.at))));
-}
-
-// ---------- نموذج التحرير ----------
-function kbEdit(id, draft) {
-    if (!draft) { KB.fromQueue = null; KB.fromAuto = null; }
-    const k = draft ? null : (id ? (kbById(id) || (KB.rows.find(r => r.id === id) ? kbFromRow(id, KB.rows.find(r => r.id === id)) : null)) : null);
-    const src = draft || k || { title: '', sev: 'caution', kw: {}, parts: [], labor: 0, advice: '', codes: [], models: [], questions: [] };
-    KB.editing = draft ? null : (k ? k.id : null);
-    KB.draftSources = draft ? (draft.sources || []) : [];
-    $('kbm-title').textContent = draft ? '🤖 مسودة من البحث (راجعها قبل الحفظ)' : (k ? '✏️ تعديل عطل' : '➕ عطل جديد');
-    $('kbm-name').value = src.title || '';
-    $('kbm-sev').value = SEV[src.sev] ? src.sev : 'caution';
-    $('kbm-kw').value = kbKwToText(src.kw);
-    $('kbm-parts').value = draft ? (src.parts || []).map(p => p.n + (p.opt ? ' (عند الحاجة)' : '') + ' = ' + (p.p || 0)).join('\n') : kbPartsToText(src.parts);
-    $('kbm-labor').value = src.labor || '';
-    $('kbm-codes').value = (src.codes || []).join(', ');
-    $('kbm-models').value = (src.models || []).join('، ');
-    $('kbm-advice').value = src.advice || '';
-    $('kbm-q').value = kbQToText(src.questions);
-    $('kbm-active').checked = src.active !== false;
-    $('kbm-note').value = '';
-    const srcBox = $('kbm-src');
-    if (KB.draftSources.length) {
-        srcBox.innerHTML = ''; srcBox.appendChild(el('b', null, '⚠️ معلومات من الإنترنت قد لا تكون دقيقة. تأكد من الأسعار والكلمات قبل الحفظ. المصادر:'));
-        KB.draftSources.slice(0, 5).forEach(s => { const a = el('a', 'block underline truncate', s.title || s.uri); a.href = s.uri; a.target = '_blank'; a.rel = 'noopener'; srcBox.appendChild(a); });
-        srcBox.classList.remove('hidden');
-    } else srcBox.classList.add('hidden');
-    $('kbm-del').classList.toggle('hidden', !k);
-    openModal('kb-modal');
-}
-function kbSlug(t) { return 'f_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
-async function kbWrite(id, data, action, note) {
-    const log = { faultId: id, title: data.title || id, action, note: note || '', by: OWNER_EMAIL || 'owner' };
-    if (PV.mode === 'firebase') {
-        const db = PV.oApp.firestore();
-        await db.collection('kb_faults').doc(id).set(Object.assign({}, data, { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }));
-        await db.collection('kb_updates').add(Object.assign(log, { at: firebase.firestore.FieldValue.serverTimestamp() }));
-    } else {
-        const rows = store.get('sd_kb_demo', []).filter(r => r.id !== id); rows.push(Object.assign({ id }, data)); store.set('sd_kb_demo', rows);
-        const ups = store.get('sd_kb_updates_demo', []); ups.push(Object.assign(log, { at: Date.now() })); store.set('sd_kb_updates_demo', ups.slice(-100));
-    }
-}
-async function kbSave() {
-    const title = $('kbm-name').value.trim();
-    const kw = kbTextToKw($('kbm-kw').value), parts = kbTextToParts($('kbm-parts').value);
-    if (title.length < 3) { alert('اكتب اسم العطل.'); return; }
-    if (!Object.keys(kw).length) { alert('أضف كلمة واحدة على الأقل يصف بها الناس العطل.'); return; }
-    const data = {
-        title: title.slice(0, 90), sev: $('kbm-sev').value, kw, parts, labor: Math.max(0, parseFloat($('kbm-labor').value) || 0),
-        codes: $('kbm-codes').value.split(/[,،\s]+/).map(c => c.trim().toUpperCase()).filter(c => /^[PBCU]\d{4}$/.test(c)).slice(0, 10),
-        models: $('kbm-models').value.split(/[,،]/).map(x => x.trim()).filter(Boolean).slice(0, 15),
-        advice: $('kbm-advice').value.trim().slice(0, 500), questions: kbTextToQ($('kbm-q').value),
-        active: $('kbm-active').checked, source: KB.draftSources.length ? 'ai' : 'manual',
-        sources: KB.draftSources.slice(0, 5).map(s => ({ uri: String(s.uri || '').slice(0, 300), title: String(s.title || '').slice(0, 120) }))
-    };
-    const id = KB.editing || kbSlug(title);
-    const action = KB.draftSources.length ? 'ai' : (KB.editing ? 'edit' : 'create');
-    const b = $('kbm-save'); b.disabled = true;
-    try {
-        await kbWrite(id, data, action, $('kbm-note').value.trim()); closeModal('kb-modal');
-        if (KB.fromQueue) { await kbqSet(KB.fromQueue, { status: 'approved', faultId: id }).catch(() => {}); KB.fromQueue = null; kbqLoad(); }
-        if (KB.fromAuto) { await kbAutoDel(KB.fromAuto, false).catch(() => {}); KB.fromAuto = null; renderKbAuto(); }
-        await kbLoad(); alert('تم الحفظ ✓ وسيستخدمه التشخيص فوراً.');
-    }
-    catch (e) { console.error(e); alert('تعذر الحفظ. تأكد من نشر قواعد Firestore الجديدة لقاعدة المعرفة.'); }
-    b.disabled = false;
-}
-async function kbDelete() {
-    if (!KB.editing) return;
-    const k = kbById(KB.editing); if (!k) return;
-    if (!confirm('تعطيل "' + k.title + '" من التشخيص؟ يمكنك إعادة تفعيله لاحقاً.')) return;
-    const data = { title: k.title, sev: k.sev, kw: k.kw, parts: k.parts.map(p => ({ n: p[0].replace(' (عند الحاجة)', ''), p: p[1], opt: isOptional(p) })),
-                   labor: k.labor, codes: k.codes, models: k.models || [], advice: k.advice, questions: k.questions || [], active: false, source: 'manual', sources: [] };
-    try { await kbWrite(k.id, data, 'disable', $('kbm-note').value.trim()); closeModal('kb-modal'); await kbLoad(); }
-    catch (e) { alert('تعذر التعطيل.'); }
-}
-
-// ---------- البحث بالذكاء الاصطناعي ----------
-async function kbResearch() {
-    const topic = $('kb-research-q').value.trim();
-    if (topic.length < 4) { alert('اكتب موضوع البحث، مثل: تكتكة محرك هيونداي أكسنت.'); return; }
-    if (PV.mode !== 'firebase' || !PV.oApp || !PV.oApp.auth().currentUser) { alert('البحث يحتاج تسجيل دخول الإدارة على الموقع المنشور.'); return; }
-    const b = $('kb-research-btn'); b.disabled = true; b.textContent = '⏳';
-    try {
-        const token = await PV.oApp.auth().currentUser.getIdToken();
-        const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 30000);
-        const res = await fetch(AI_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
-            body: JSON.stringify({ mode: 'research', topic, token, existing: CAR_KB.map(k => k.title).slice(0, 60) }) });
-        clearTimeout(t);
-        const j = await res.json().catch(() => ({}));
-        if (!res.ok || !j.draft) { alert(res.status === 403 ? 'غير مصرح: سجّل دخول الإدارة من جديد.' : 'تعذر البحث الآن، حاول بعد قليل.'); }
-        else { const d = j.draft; d.kw = {}; (d.keywords || []).forEach(x => { if (x && x.k) d.kw[x.k] = x.w || 2; }); d.sources = j.sources || []; kbEdit(null, d); }
-    } catch (e) { alert('تعذر البحث الآن، حاول بعد قليل.'); }
-    b.disabled = false; b.textContent = '🔎 ابحث';
-}
-
-// ---------- التصدير والاستعادة ----------
-function kbDownload(name, text, type) {
-    const blob = new Blob([text], { type });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
-    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-}
-function kbExportCsv() {
-    const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-    const head = ['المعرف', 'العطل', 'الخطورة', 'الكلمات', 'الأكواد', 'القطع والأسعار', 'أجرة اليد', 'النصيحة', 'الموديلات', 'الأسئلة', 'المصدر', 'مفعّل'];
-    const sevName = { safe: 'آمن', caution: 'أصلحه قريباً', stop: 'توقف فوراً' };
-    const remoteIds = new Set(KB.rows.map(r => r.id));
-    const rows = CAR_KB.map(k => [k.id, k.title, sevName[k.sev], kbKwToText(k.kw), (k.codes || []).join(' '), kbPartsToText(k.parts).replace(/\n/g, ' ؛ '), k.labor, k.advice, (k.models || []).join('، '), kbQToText(k.questions).replace(/\n/g, ' ؛ '), remoteIds.has(k.id) ? 'الجدول' : 'مدمج', 'نعم']);
-    const csv = '\ufeff' + [head].concat(rows).map(r => r.map(esc).join(',')).join('\r\n');
-    kbDownload('قاعدة-المعرفة-' + new Date().toISOString().slice(0, 10) + '.csv', csv, 'text/csv;charset=utf-8');
-    const ups = '\ufeff' + [['التاريخ', 'العملية', 'العطل', 'الملاحظة']].concat(KB.updates.map(u => [fmtTime(u.at), u.action, u.title, u.note])).map(r => r.map(esc).join(',')).join('\r\n');
-    setTimeout(() => kbDownload('تحديثات-المعرفة-' + new Date().toISOString().slice(0, 10) + '.csv', ups, 'text/csv;charset=utf-8'), 600);
-}
-function kbExportJson() {
-    const rows = KB.rows.map(r => { const o = Object.assign({}, r); delete o.updatedAt; return o; });
-    kbDownload('نسخة-المعرفة-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify({ app: 'smart-diag', v: 1, at: new Date().toISOString(), kb_faults: rows }, null, 1), 'application/json');
-}
-async function kbImportJson(input) {
-    const f = input.files[0]; input.value = ''; if (!f) return;
-    try {
-        const j = JSON.parse(await f.text());
-        const rows = Array.isArray(j.kb_faults) ? j.kb_faults : [];
-        if (!rows.length) { alert('الملف لا يحتوي أعطالاً.'); return; }
-        if (!confirm('استعادة ' + rows.length + ' عطل من النسخة؟ ستُستبدل الأعطال التي لها نفس المعرف.')) return;
-        for (const r of rows.slice(0, 300)) { const id = String(r.id || kbSlug(r.title)); const d = Object.assign({}, r); delete d.id; await kbWrite(id, d, 'import', f.name); }
-        await kbLoad(); alert('تمت الاستعادة ✓');
-    } catch (e) { alert('ملف غير صالح.'); }
-}
-
-// =====================================================================
-// 📥 طابور التعلّم: حالات المستخدمين غير الموجودة في الجداول ← مراجعة المالك ← إضافة بضغطة
-// =====================================================================
-const KBQ_STOP = new Set(['و', 'في', 'من', 'على', 'الى', 'عن', 'مع', 'انا', 'وانا', 'هي', 'وهي', 'هو', 'السياره', 'سيارتي', 'سياره', 'فيها', 'فيه', 'لما', 'اذا', 'كذا', 'شوي', 'جدا', 'مره', 'يا', 'ان', 'ما', 'لي', 'عندي', 'صار', 'يصير', 'تصير', 'كل', 'بعد', 'قبل']);
-function kbqTokens(t) { return normalizeAr(t).split(/\s+/).map(w => w.replace(/^و(?=..)/, '')).filter(w => w.length > 2 && !KBQ_STOP.has(w)).filter((w, i, a) => a.indexOf(w) === i); }
-function kbqId(text, make) {
-    const key = [normalizeAr(make || '')].concat(kbqTokens(text).sort()).join('|');
-    let h = 5381; for (let i = 0; i < key.length; i++) h = ((h << 5) + h + key.charCodeAt(i)) >>> 0;
-    return 'q_' + h.toString(36);
-}
-const kbqClean = t => String(t || '').replace(/\S+@\S+/g, '').replace(/\+?\d[\d\s-]{6,}\d/g, '').trim().slice(0, 300);
-async function kbQueueRecord(final, meta) {
-    try {
-        if (!final || !final.ai || final.fromKb || (final.kb && final.kb.remote)) return;
-        if (!['desc', 'both', 'code'].includes(meta.source)) return;
-        const text = kbqClean(meta.text || meta.code || ''); if (text.length < 3) return;
-        const id = kbqId(text + ' ' + (meta.structured || ''), $('car-make').value);
-        const row = { text, structured: String(meta.structured || '').slice(0, 300), car: carLabel().slice(0, 80), aiTitle: String(final.title || '').slice(0, 120),
-                      aiSev: final.sev || 'caution', aiKb: final.kb ? final.kb.id : '', aiAdvice: String(final.advice || '').slice(0, 300),
-                      answers: followups.slice(0, 6).map(f => String(f.q).slice(0, 80) + ' ← ' + String(f.a).slice(0, 60)).join(' | ').slice(0, 600), status: 'new', count: 1 };
-        if (PV.mode === 'firebase' && PV.db) {
-            const ref = PV.db.collection('kb_queue').doc(id), FV = firebase.firestore.FieldValue;
-            try { await ref.update({ count: FV.increment(1), lastAt: FV.serverTimestamp() }); }
-            catch (e) { await ref.set(Object.assign(row, { lastAt: FV.serverTimestamp() })); }
-        } else {
-            const q = store.get('sd_kbq_demo', {}); if (q[id]) { q[id].count++; q[id].lastAt = Date.now(); } else q[id] = Object.assign(row, { lastAt: Date.now() });
-            store.set('sd_kbq_demo', q);
-        }
-    } catch (e) { /* التعلم اختياري: لا نوقف التطبيق بسببه */ }
-}
-async function kbqLoad() {
-    try {
-        if (PV.mode === 'firebase' && PV.oApp) {
-            const s = await PV.oApp.firestore().collection('kb_queue').where('status', '==', 'new').limit(100).get();
-            KB.queue = s.docs.map(d => Object.assign({ id: d.id }, d.data()));
-        } else KB.queue = Object.entries(store.get('sd_kbq_demo', {})).map(([id, v]) => Object.assign({ id }, v)).filter(x => x.status === 'new');
-    } catch (e) { KB.queue = []; }
-    KB.queue.sort((a, b) => (b.count || 0) - (a.count || 0));
-    renderKbQueue();
-}
-async function kbqSet(id, patch) {
-    if (PV.mode === 'firebase') await PV.oApp.firestore().collection('kb_queue').doc(id).update(patch);
-    else { const q = store.get('sd_kbq_demo', {}); if (q[id]) Object.assign(q[id], patch); store.set('sd_kbq_demo', q); }
-}
-function kbqKeywords(item) {
-    const n = normalizeAr(item.text); const toks = kbqTokens(item.text).filter(w => !['صوت', 'المحرك', 'محرك', 'شي', 'شيء'].includes(w)).slice(0, 6);
-    const out = []; if (n.split(/\s+/).length <= 5 && n.length <= 40) out.push(n + '*4');
-    return out.concat(toks).join('، ');
-}
-function renderKbQueue() {
-    const box = $('kb-queue'); if (!box) return;
-    box.innerHTML = '';
-    $('kbq-count').textContent = KB.queue.length ? '(' + KB.queue.length + ')' : '';
-    if (!KB.queue.length) { box.appendChild(el('p', 'text-[10px] text-amber-700', 'لا توجد حالات جديدة حالياً 👍')); return; }
-    KB.queue.slice(0, 40).forEach(item => {
-        const c = el('div', 'bg-white border border-amber-200 rounded-lg p-2 text-[10px] space-y-1');
-        const top = el('div', 'flex justify-between gap-2');
-        top.appendChild(el('span', 'font-black text-slate-900', '“' + item.text + '”'));
-        top.appendChild(el('span', 'shrink-0 bg-amber-100 text-amber-900 font-black rounded px-1.5', '×' + (item.count || 1)));
-        c.appendChild(top);
-        c.appendChild(el('p', 'text-slate-500', item.car + (item.structured ? ' • ' + item.structured : '')));
-        if (item.answers) c.appendChild(el('p', 'text-slate-500', '❓ ' + item.answers));
-        c.appendChild(el('p', 'text-indigo-800 font-bold', '🤖 ' + item.aiTitle));
-        const bar = el('div', 'grid grid-cols-3 gap-1');
-        const mk = (label, cls, fn) => { const b = el('button', cls + ' font-bold py-1.5 rounded', label); b.onclick = fn; bar.appendChild(b); };
-        mk('➕ عطل جديد', 'bg-emerald-600 text-white', () => kbqApproveNew(item));
-        mk('🔗 أضف لعطل', 'bg-indigo-700 text-white', () => kbqMerge(item));
-        mk('❌ تجاهل', 'bg-slate-200 text-slate-700', async () => { await kbqSet(item.id, { status: 'ignored' }); kbqLoad(); });
-        c.appendChild(bar);
-        box.appendChild(c);
-    });
-}
-function kbqApproveNew(item) {
-    const base = item.aiKb ? kbById(item.aiKb) : null;
-    const draft = { title: item.aiTitle, sev: item.aiSev, advice: item.aiAdvice || (base ? base.advice : ''),
-                    parts: base ? base.parts.map(p => ({ n: p[0].replace(' (عند الحاجة)', ''), p: p[1], opt: isOptional(p) })) : [],
-                    labor: base ? base.labor : 0, codes: base ? base.codes : [], models: [], questions: [], kw: kbTextToKw(kbqKeywords(item)) };
-    KB.fromQueue = item.id;
-    kbEdit(null, draft);
-    $('kbm-title').textContent = '📥 اعتماد حالة مستخدم (راجع الأسعار قبل الحفظ)';
-    $('kbm-note').value = 'معتمد من حالة مستخدم ×' + (item.count || 1);
-}
-async function kbqMerge(item) {
-    const opts = CAR_KB.map((k, i) => (i + 1) + '. ' + k.title).join('\n');
-    const pick = prompt('اختر رقم العطل الذي تُضاف له كلمات هذه الحالة:\n\n' + opts);
-    const k = CAR_KB[parseInt(pick) - 1]; if (!k) return;
-    const words = prompt('الكلمات التي ستُضاف إلى "' + k.title + '" (عدّلها إن أردت):', kbqKeywords(item));
-    if (words === null) return;
-    const kw = Object.assign({}, k.kw, kbTextToKw(words));
-    const data = { title: k.title, sev: k.sev, kw, parts: k.parts.map(p => ({ n: p[0].replace(' (عند الحاجة)', ''), p: p[1], opt: isOptional(p) })),
-                   labor: k.labor, codes: k.codes || [], models: k.models || [], advice: k.advice, questions: k.questions || [], active: true, source: 'manual', sources: [] };
-    try { await kbWrite(k.id, data, 'edit', 'دمج من حالة مستخدم: ' + item.text.slice(0, 60)); await kbqSet(item.id, { status: 'approved', faultId: k.id }); await kbLoad(); kbqLoad(); alert('تمت الإضافة ✓'); }
-    catch (e) { alert('تعذر الحفظ. تأكد من نشر قواعد Firestore الجديدة.'); }
-}
-
-// =====================================================================
-// 🤖 الصفوف التلقائية: اعتماد بضغطة أو مراجعة أو حذف
-// =====================================================================
-async function ownerToken() { return PV.mode === 'firebase' && PV.oApp && PV.oApp.auth().currentUser ? PV.oApp.auth().currentUser.getIdToken() : null; }
-async function kbAutoDel(id, block) {
-    const token = await ownerToken();
-    if (token) await fetch(AI_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'kb_auto_del', id, token, block: !!block }) });
-    KB.auto = KB.auto.filter(r => r.id !== id); store.set('sd_kb_auto_cache', KB.auto);
-}
-function kbAutoToData(r) {
-    const k = kbFromRow(r.id, r);
-    return { title: k.title, sev: k.sev, kw: k.kw, parts: k.parts.map(p => ({ n: p[0].replace(' (عند الحاجة)', ''), p: p[1], opt: isOptional(p) })),
-             labor: k.labor, codes: k.codes, models: k.models, advice: k.advice, questions: k.questions, active: true, source: 'auto', sources: [] };
-}
-function renderKbAuto() {
-    const box = $('kb-auto'); if (!box) return;
-    box.innerHTML = '';
-    $('kba-count').textContent = KB.auto.length ? '(' + KB.auto.length + ')' : '';
-    if (!KB.auto.length) { box.appendChild(el('p', 'text-[10px] text-sky-700', 'لا توجد صفوف تلقائية بانتظار الاعتماد.')); return; }
-    KB.auto.slice().sort((a, b) => (b.users || 0) - (a.users || 0)).forEach(r => {
-        const k = kbFromRow(r.id, r);
-        const c = el('div', 'bg-white border border-sky-200 rounded-lg p-2 text-[10px] space-y-1');
-        const top = el('div', 'flex justify-between gap-2');
-        top.appendChild(el('span', 'font-black text-slate-900', ({ safe: '🟢', caution: '🟡', stop: '🛑' }[k.sev] || '') + ' ' + k.title));
-        top.appendChild(el('span', 'shrink-0 bg-sky-100 text-sky-900 font-black rounded px-1.5', '👥 ' + (r.users || 0)));
-        c.appendChild(top);
-        if (r.example) c.appendChild(el('p', 'text-slate-500', '“' + r.example + '” • ' + (r.car || '')));
-        c.appendChild(el('p', 'text-slate-600', '🔑 ' + Object.keys(k.kw).slice(0, 8).join('، ')));
-        c.appendChild(el('p', 'text-slate-600', '🔧 ' + (k.parts.length ? k.parts.map(p => p[0] + ' ' + p[1]).join('، ') + ' • يد ' + k.labor : 'لا توجد أسعار، أضفها عند المراجعة')));
-        const bar = el('div', 'grid grid-cols-3 gap-1');
-        const mk = (label, cls, fn) => { const b = el('button', cls + ' font-bold py-1.5 rounded', label); b.onclick = async () => { b.disabled = true; try { await fn(); } catch (e) { alert('تعذر التنفيذ.'); } b.disabled = false; }; bar.appendChild(b); };
-        mk('✅ اعتماد', 'bg-emerald-600 text-white', async () => { await kbWrite(r.id, kbAutoToData(r), 'create', 'اعتماد صف تلقائي (👥 ' + (r.users || 0) + ')'); await kbAutoDel(r.id, false); await kbLoad(); renderKbAuto(); });
-        mk('✏️ مراجعة', 'bg-indigo-700 text-white', async () => { KB.fromAuto = r.id; kbEdit(null, Object.assign(kbAutoToData(r), { kw: k.kw })); $('kbm-title').textContent = '🤖 مراجعة صف تلقائي'; KB.editing = r.id; });
-        mk('🗑️ حذف', 'bg-slate-200 text-slate-700', async () => { if (confirm('حذف هذا الصف؟ لن يُعاد إنشاؤه تلقائياً.')) { await kbAutoDel(r.id, true); kbApply(KB.rows); renderKbAuto(); } });
-        c.appendChild(bar);
-        box.appendChild(c);
-    });
-}
-
-// =====================================================================
-// 🔍 المراجعة الذكية الأسبوعية (أقوى نموذج متاح): تصحيح وحذف ودمج تلقائي مع سجل كامل
-// =====================================================================
-function kbReviewInfo() {
-    const last = store.get('sd_kb_last_review', 0);
-    const days = last ? Math.floor((Date.now() - last) / 864e5) : null;
-    $('kbr-last').textContent = last ? 'آخر مراجعة: قبل ' + days + ' يوم' + (days >= 7 ? ' ⚠️ حان وقت المراجعة' : ' ✅') : 'لم تتم أي مراجعة بعد.';
-    return days;
-}
-function kbRowForReview(k) {
-    return { id: k.id, title: k.title, sev: k.sev, kw: k.kw, parts: k.parts.map(p => ({ n: p[0].replace(' (عند الحاجة)', ''), p: p[1], opt: isOptional(p) })),
-             labor: k.labor, advice: k.advice, models: k.models || [], questions: k.questions || [], codes: k.codes || [] };
-}
-function kbSanitizeFix(base, fix) {
-    const d = Object.assign({}, base);
-    if (typeof fix.title === 'string' && fix.title.trim().length >= 3) d.title = fix.title.trim().slice(0, 90);
-    // السلامة: لا نخفض الفرامل والحرارة والزيت والتوجيه والبنزين إلى "آمن"، ولا ننزل من "توقف" إلى "آمن"
-    const critical = /فرامل|فرمل|حراره|حرارة|زيت|دركسون|توجيه|بنزين|وقود|اطار|كفر/.test(base.title + ' ' + Object.keys(base.kw || {}).join(' '));
-    if (['safe', 'caution', 'stop'].includes(fix.sev) && !(fix.sev === 'safe' && (critical || base.sev === 'stop'))) d.sev = fix.sev;
-    if (fix.kw && typeof fix.kw === 'object' && !Array.isArray(fix.kw)) {
-        const kw = {}; Object.entries(fix.kw).slice(0, 40).forEach(([k, w]) => { k = String(k).trim().slice(0, 40); if (k) kw[k] = Math.min(6, Math.max(1, parseInt(w) || 2)); });
-        if (Object.keys(kw).length) d.kw = kw;
-    }
-    if (Array.isArray(fix.parts)) {
-        const parts = fix.parts.slice(0, 10).map(p => ({ n: String(p && p.n || '').trim().slice(0, 60), p: Math.max(0, Math.round(Number(p && p.p) || 0)), opt: !!(p && p.opt) })).filter(p => p.n && p.p > 0 && p.p < 100000);
-        if (parts.length) d.parts = parts;
-    }
-    if (Number(fix.labor) >= 0 && Number(fix.labor) < 50000 && fix.labor !== undefined) d.labor = Math.round(Number(fix.labor));
-    if (typeof fix.advice === 'string' && fix.advice.trim().length > 10) d.advice = fix.advice.trim().slice(0, 500);
-    if (Array.isArray(fix.questions)) d.questions = fix.questions.slice(0, 4).filter(q => q && q.q).map(q => q.type === 'choice'
-        ? { q: String(q.q).slice(0, 140), type: 'choice', options: (q.options || []).slice(0, 5).map(o => ({ l: String(o && o.l || o).slice(0, 40), kw: String(o && o.kw || '').slice(0, 40) })) }
-        : { q: String(q.q).slice(0, 140), type: 'yesno', kw: String(q.kw || '').slice(0, 40) });
-    return d;
-}
-async function kbReviewRun(auto) {
-    const token = await ownerToken();
-    if (!token) { alert('المراجعة تعمل بعد تسجيل دخول الإدارة على الموقع المنشور.'); return; }
-    const rows = CAR_KB.filter(k => !k.auto).map(kbRowForReview);
-    if (!auto && !confirm('ستُراجع ' + rows.length + ' عطلاً بالذكاء الاصطناعي، ويُصحَّح الخطأ ويُعطَّل المضلل تلقائياً مع تسجيل كل تغيير. متابعة؟')) return;
-    const btn = $('kbr-btn'), pr = $('kbr-progress'); btn.disabled = true; pr.classList.remove('hidden');
-    const all = CAR_KB.map(k => ({ id: k.id, title: k.title }));
-    const stats = { keep: 0, fix: 0, delete: 0, merge: 0, failed: 0 };
-    for (let i = 0; i < rows.length; i += 8) {
-        const batch = rows.slice(i, i + 8);
-        pr.textContent = '⏳ جاري المراجعة… ' + Math.min(i + 8, rows.length) + ' من ' + rows.length;
-        let j = null;
-        try {
-            const res = await fetch(AI_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mode: 'review', token: await ownerToken(), rows: batch, all, country: C().name }) });
-            if (res.ok) j = await res.json();
-        } catch (e) {}
-        if (!j || !Array.isArray(j.reviews)) { stats.failed += batch.length; continue; }
-        for (const rv of j.reviews) {
-            const base = batch.find(b => b.id === rv.id); if (!base) continue;
-            const data = Object.assign(kbRowForReview(kbById(base.id) || base), { active: true, source: 'review', sources: [] });
-            delete data.id;
-            const note = (rv.reason || '') + ' [' + (j.model || 'AI') + ']';
-            try {
-                if (rv.action === 'fix' && rv.fix) { await kbWrite(base.id, kbSanitizeFix(data, rv.fix), 'review', '✏️ ' + note); stats.fix++; }
-                else if (rv.action === 'delete') { await kbWrite(base.id, Object.assign(data, { active: false }), 'review', '🚫 ' + note); stats.delete++; }
-                else if (rv.action === 'merge' && rv.merge_into && kbById(rv.merge_into) && rv.merge_into !== base.id) {
-                    const t = kbRowForReview(kbById(rv.merge_into)); const tid = t.id; delete t.id;
-                    await kbWrite(tid, Object.assign(t, { kw: Object.assign({}, data.kw, t.kw), active: true, source: 'review', sources: [] }), 'review', '🔗 دمج "' + base.title + '" ' + note);
-                    await kbWrite(base.id, Object.assign(data, { active: false }), 'review', '🔗 مدموج في ' + tid);
-                    stats.merge++;
-                } else stats.keep++;
-            } catch (e) { stats.failed++; }
-        }
-    }
-    store.set('sd_kb_last_review', Date.now());
-    pr.textContent = '✅ انتهت المراجعة: ' + stats.fix + ' تصحيح، ' + stats.delete + ' تعطيل، ' + stats.merge + ' دمج، ' + stats.keep + ' سليم' + (stats.failed ? '، ' + stats.failed + ' تعذر' : '') + '. كل التغييرات في "آخر التحديثات" ويمكن التراجع عنها بالتعديل.';
-    btn.disabled = false; kbReviewInfo();
-    await kbLoad();
-}
-
-// ---------- لوحة الإدارة ----------
-function openOwnerModal() {
-    openModal('owner-modal');
-    if (PV.mode === 'demo') { $('owner-hint').textContent = 'الوضع التجريبي: كلمة المرور ' + DEMO_OWNER_PASSWORD; $('owner-hint').classList.remove('hidden'); $('owner-email').classList.add('hidden'); }
-    if (PV.isOwner) { $('owner-login').classList.add('hidden'); $('owner-panel').classList.remove('hidden'); renderOwnerPanel(); }
-}
-async function ownerLogin() {
-    const pass = $('owner-pass').value;
-    if (PV.mode === 'demo') { if (pass !== DEMO_OWNER_PASSWORD) { alert('كلمة المرور غير صحيحة.'); return; } PV.isOwner = true; }
-    else {
-        const email = $('owner-email').value.trim();
-        if (!OWNER_EMAIL || email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) { alert('هذا البريد ليس بريد الإدارة.'); return; }
-        try {
-            if (!PV.oApp) PV.oApp = firebase.initializeApp(FIREBASE_CONFIG, 'owner');
-            await PV.oApp.auth().signInWithEmailAndPassword(email, pass);
-            PV.isOwner = true;
-            if (PV.unsubOwner) PV.unsubOwner();
-            PV.unsubOwner = PV.oApp.firestore().collection('providers').onSnapshot(s => { PV.ownerAll = s.docs.map(d => Object.assign({ id: d.id }, d.data())); renderOwnerPanel(); },
-                () => alert('لا تملك صلاحية الإدارة. تأكد من قواعد Firestore.'));
-        } catch (e) { alert('فشل الدخول: تأكد من البريد وكلمة المرور.'); return; }
-    }
-    $('owner-pass').value = '';
-    $('owner-login').classList.add('hidden'); $('owner-panel').classList.remove('hidden');
-    renderOwnerPanel();
-}
-function ownerLogout() {
-    PV.isOwner = false;
-    if (PV.unsubOwner) { PV.unsubOwner(); PV.unsubOwner = null; }
-    if (PV.oApp) PV.oApp.auth().signOut().catch(() => {});
-    $('owner-login').classList.remove('hidden'); $('owner-panel').classList.add('hidden');
-}
-function renderOwnerPanel() {
-    const all = PV.ownerAll;
-    const pend = all.filter(p => p.status === 'pending'), appr = all.filter(p => p.status === 'approved');
-    const st = $('owner-stats'); st.innerHTML = '';
-    [['بانتظار', pend.length], ['ورش', appr.filter(p => p.type === 'workshop').length], ['وكلاء', appr.filter(p => p.type === 'agent').length]].forEach(([l, v]) => {
-        const s = el('div', 'bg-slate-100 rounded-lg py-1.5'); s.appendChild(el('span', 'block font-black', String(v))); s.appendChild(el('span', 'text-[10px] text-slate-500', l)); st.appendChild(s);
-    });
-    const row = (p, buttons) => {
-        const c = el('div', 'bg-slate-50 border border-slate-200 rounded-lg p-2 text-[11px] space-y-1');
-        c.appendChild(el('span', 'font-black block', (p.type === 'agent' ? '🧩 ' : '🔧 ') + p.name + (p.featured ? ' ⭐' : '')));
-        const ph = el('span', 'font-mono text-slate-600 block', p.phone); ph.dir = 'ltr'; ph.style.textAlign = 'right'; c.appendChild(ph);
-        c.appendChild(el('span', 'text-slate-500 block', [COUNTRIES[p.country] ? COUNTRIES[p.country].name : p.country, p.city, p.type === 'agent' ? KIND[p.kind] : '', p.spec].filter(Boolean).join(' • ')));
-        c.appendChild(el('span', 'text-[10px] text-slate-400 block', 'تاريخ الطلب: ' + fmtTime(p.createdAt)));
-        const bar = el('div', buttons.length === 1 ? 'grid grid-cols-1 gap-1.5' : 'grid grid-cols-2 gap-1.5');
-        buttons.forEach(([label, cls, fn]) => {
-            const b = el('button', cls + ' font-bold py-1.5 rounded-lg', label);
-            b.onclick = async () => { b.disabled = true; try { await fn(); } catch (e) { alert('تعذر التنفيذ.'); b.disabled = false; } };
-            bar.appendChild(b);
-        });
-        c.appendChild(bar);
-        return c;
-    };
-    const pb = $('owner-pending'), ab = $('owner-approved'); pb.innerHTML = ''; ab.innerHTML = '';
-    if (!pend.length) pb.appendChild(el('p', 'text-[11px] text-slate-400', 'لا توجد طلبات جديدة.'));
-    pend.forEach(p => pb.appendChild(row(p, [
-        ['✅ موافقة', 'bg-emerald-600 text-white', () => Store.ownerUpdate(p.id, { status: 'approved' })],
-        ['❌ رفض', 'bg-rose-600 text-white', () => Store.ownerUpdate(p.id, { status: 'rejected' })]
-    ])));
-    if (!appr.length) ab.appendChild(el('p', 'text-[11px] text-slate-400', 'لا يوجد معتمدون بعد.'));
-    renderKbAdmin(); kbqLoad(); renderKbAuto(); ownerPayStats();
-    if (!PV._reviewAsked && PV.isOwner && PV.mode === 'firebase') { PV._reviewAsked = true; const d = kbReviewInfo(); if (d === null || d >= 7) setTimeout(() => { if (confirm('🔍 حان وقت المراجعة الأسبوعية لقاعدة المعرفة. تشغيلها الآن؟')) kbReviewRun(true); }, 800); }
-    else kbReviewInfo();
-    appr.forEach(p => ab.appendChild(row(p, [
-        [p.featured ? 'إلغاء التمييز' : '⭐ تمييز', 'bg-amber-400 text-slate-950', () => Store.ownerUpdate(p.id, { featured: !p.featured })],
-        ['🗑️ إزالة', 'bg-slate-800 text-white', async () => { if (confirm('إزالة ' + p.name + '؟')) await Store.ownerRemove(p.id); }]
-    ])));
-}
-
-// =====================================================================
-// 🚀 التشغيل
-// =====================================================================
-window.addEventListener('DOMContentLoaded', () => {
-    kbApplyCache(); kbLoadAuto(); walletRefresh().then(watchPayment);
-    const mk = $('car-make'); CAR_MAKES.forEach(m => mk.appendChild(el('option', null, m)));
-    const yr = $('car-year'), nowY = new Date().getFullYear(); for (let y = nowY + 1; y >= 2005; y--) yr.appendChild(el('option', null, String(y))); yr.appendChild(el('option', null, 'أقدم من 2005')); yr.value = String(nowY - 3);
-    ['car-make', 'car-year', 'car-model', 'car-km'].forEach(id => {
-        const v = store.get('sd_' + id, null); if (v) $(id).value = v;
-        $(id).addEventListener('change', () => store.set('sd_' + id, $(id).value));
-    });
-    $('car-make').addEventListener('change', () => { $('car-model').value = ''; store.set('sd_car-model', ''); fillModelList(); });
-    fillModelList();
-    buildChips();
-    $('followup-input').addEventListener('keydown', e => { if (e.key === 'Enter') answerFollowup(); });
-    $('pc-part-r').addEventListener('keydown', e => { if (e.key === 'Enter') checkPart('r'); });
-    $('car-desc').addEventListener('input', onDescInput);
-    fillPartSelects();
-    fillCountrySelect('login-country');
-    $('code-input').addEventListener('keydown', e => { if (e.key === 'Enter') runCodeDiagnosis(); });
-    onLocationChanged();
-    Providers.init();
-    if (!LOC) openLocationModal();
-});
-</script>
+<script src="js/00-i18n.js?v=3.1.0"></script>
+<script src="js/00-core.js?v=3.1.0"></script>
+<script src="js/01-countries.js?v=3.1.0"></script>
+<script src="js/02-diagnosis.js?v=3.1.0"></script>
+<script src="js/03-interview.js?v=3.1.0"></script>
+<script src="js/04-sound.js?v=3.1.0"></script>
+<script src="js/05-codes.js?v=3.1.0"></script>
+<script src="js/06-history.js?v=3.1.0"></script>
+<script src="js/07-prices.js?v=3.1.0"></script>
+<script src="js/08-providers.js?v=3.1.0"></script>
+<script src="js/09-payments.js?v=3.1.0"></script>
+<script src="js/10-kb-admin.js?v=3.1.0"></script>
+<script src="js/11-learning.js?v=3.1.0"></script>
+<script src="js/99-main.js?v=3.1.0"></script>
 </body>
 </html>

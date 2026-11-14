@@ -23,6 +23,8 @@ const RANK = { low: 0, medium: 1, high: 2 };
 // المراجعة الأسبوعية بأقوى نموذج متاح، والتنظيم التلقائي بنموذج ذي حد يومي كبير
 let REVIEW_MODELS; // يُضبط في initEnv
 let CURATE_MIN_USERS; // يُضبط في initEnv
+// النموذج أحياناً يكتب "null" كنص بدل القيمة الفارغة
+const realQuestion = q => typeof q === 'string' && q.trim().length > 3 && !/^(null|none|n\/a|undefined|لا يوجد|لا شيء)$/i.test(q.trim());
 // ---------- Web Crypto بدل وحدة crypto في Node ----------
 const _enc = new TextEncoder();
 async function sha256hex(s) { const b = await crypto.subtle.digest('SHA-256', _enc.encode(String(s))); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); }
@@ -32,15 +34,16 @@ let KV_URL; // يُضبط في initEnv
 let KV_TOKEN; // يُضبط في initEnv
 const CACHE_TTL = 30 * 24 * 3600;   // 30 يوماً
 
+let KV_ERR = false;
 async function kv(cmd) {
   if (!KV_URL || !KV_TOKEN) return null;
   try {
     const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 1500);
     const r = await fetch(KV_URL, { method: 'POST', headers: { Authorization: 'Bearer ' + KV_TOKEN, 'content-type': 'application/json' }, body: JSON.stringify(cmd), signal: ctrl.signal });
     clearTimeout(t);
-    if (!r.ok) return null;
+    if (!r.ok) { KV_ERR = true; return null; }
     return (await r.json()).result;
-  } catch (e) { return null; }
+  } catch (e) { KV_ERR = true; return null; }
 }
 
 // توحيد النص العربي حتى تتطابق الأوصاف المتشابهة: "السيارة تفتف وترجّ" = "السياره ترج وتفتف"
@@ -78,6 +81,8 @@ function rateLimited(ip) {
 }
 
 const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
+// إزالة أرقام الهوية والجوال السعودية من أي نص يعود للمستخدم أو يُخزَّن
+const noPii = t => String(t || '').replace(/\b[12]\d{9}\b/g, '••••').replace(/\b(?:\+?966|0)5\d{8}\b/g, '••••');
 
 function extractJson(text) {
   const a = text.indexOf('{'), b = text.lastIndexOf('}');
@@ -182,6 +187,46 @@ const DIAG_SYSTEM = `أنت فني سيارات خبير في دول الخلي�
  "explanation": "شرح مبسط في جملتين لسبب ترجيح هذا العطل", "advice": "نصيحة عملية للمالك في جملة أو جملتين",
  "checks": ["فحص محدد يطلبه من الفني", "..."], "question": "سؤال واحد للمالك إذا كانت الثقة منخفضة، وإلا null"}`;
 
+
+// =====================================================================
+// 📷 الفحص بالكاميرا + 📳 تفسير القياسات + 🧾 تقرير الفحص الكامل قبل الشراء
+// =====================================================================
+const VISION_BASE = `أنت فاحص سيارات محترف في السعودية والخليج، تحلل صوراً التقطها مالك أو مشترٍ بجواله.
+قواعد صارمة:
+- اذكر فقط ما تراه فعلاً في الصور. إذا كانت الصورة غير واضحة أو لا تُظهر الجزء فقل ذلك وأضف رقمها إلى retake، ولا تخمّن.
+- كل ملاحظة: عنوان قصير، ومكانها على السيارة، والخطورة (ok سليم / attention يحتاج انتباه / problem مشكلة)، والثقة (high / medium / low)، ونصيحة عملية للتأكد أو الإصلاح، ورقم الصورة frame (يبدأ من 0).
+- لا تصف الوجوه، ولا تقرأ لوحات السيارات، ولا تذكر أي اسم شخص أو رقم هوية أو جوال إن ظهر في الصورة.
+- الكاميرا لا تقيس سماكة الدهان ولا ترى الشاصيه من الداخل؛ لا تدّعِ ذلك.
+- التاريخ الحالي 2026.
+أجب بكائن JSON فقط:
+{"verdict":"good|attention|problem","summary":"جملتان","findings":[{"title":"","location":"","severity":"ok|attention|problem","confidence":"high|medium|low","advice":"","frame":0}],"ok":["عناصر سليمة ظاهرة"],"extracted":{"vin":"","dot":[""],"odometer":"","lights":[""],"battery":"","dates":["القطعة: السنة"],"oil":""},"retake":[]}`;
+const VISION_KINDS = {
+  exterior: `المطلوب: الهيكل الخارجي. افحص: فروق اللون واللمعان بين الألواح المتجاورة (علامة رش)، والفراغات غير المتساوية بين الأبواب والكبوت والرفارف (علامة فك أو حادث)، والطعجات والخدوش، والصدأ خاصة أسفل الأبواب وحول العجلات، وآثار رش على المطاط والزجاج، وتشققات الزجاج، واصفرار أو رطوبة المصابيح، واختلاف علامة أو سنة زجاج عن البقية.`,
+  tires: `المطلوب: الكفرات. اقرأ رمز DOT (آخر 4 أرقام: الأسبوع ثم السنة، مثل 2319 = الأسبوع 23 من 2019) واحسب العمر؛ الكفر الأقدم من 5-6 سنوات يحتاج تبديلاً ولو كانت نقشته جيدة. قدّر عمق النقشة. حلّل نمط التآكل: الحافتان معاً = هواء ناقص، الوسط = هواء زائد، حافة واحدة = ميزانية، بقع متقطعة = مساعدات أو اتزان. ابحث عن تشققات جانبية أو انتفاخ، واختلاف الماركات بين الكفرات.`,
+  engine: `المطلوب: حجرة المحرك. ابحث عن: تسريبات زيت أو ماء (رطوبة، تراكمات سوداء، بقع)، ولون ومستوى ماء الرديتر إن ظهر، وتشقق السيور والخراطيم، وصدأ أقطاب البطارية، وآثار لحام أو إصلاح في الهيكل الأمامي، وأسلاك معدّلة، ونظافة مفرطة غير طبيعية قد تخفي تسريباً.`,
+  interior: `المطلوب: المقصورة. قارن تآكل الدركسون والمقعد والدواسات وعصا القير بالممشى المعلن (تآكل كبير مع ممشى قليل = احتمال تلاعب بالعداد)، واقرأ العداد إن ظهر، وابحث عن رطوبة أو عفن أو صدأ تحت المقاعد (علامة غرق)، وحالة الأزرار والشاشة.`,
+  lights: `المطلوب: لمبات الطبلون. حدد كل لمبة مضيئة واسمها ومعناها وخطورتها (أحمر = توقف غالباً، كهرماني = افحص قريباً). إذا كانت الصورة عند تشغيل المفتاح قبل تشغيل المحرك، فالطبيعي أن تضيء معظم اللمبات؛ إن لم تضئ لمبة المحرك أو الوسادة الهوائية فاذكر احتمال فصلها لإخفاء عطل.`,
+  vin: `المطلوب: رقم الهيكل من السيارة نفسها (أسفل الزجاج الأمامي أو إطار الباب). اقرأ VIN كاملاً (17 خانة) وضعه في extracted.vin. نبّه لآثار كشط أو لصق أو اختلاف بين الموضعين إن صُوّرا معاً. إن ظهرت ورقة أو بطاقة فيها أسماء فتجاهلها تماماً.`,
+  battery: `المطلوب: البطارية. اقرأ تاريخ الصنع من الملصق أو الختم (شهر/سنة أو رمز) وضعه في extracted.battery، واحسب العمر. في حرارة الخليج تعيش البطارية غالباً سنتين إلى ثلاث. افحص صدأ الأقطاب وانتفاخ جسم البطارية وتسرب الحمض.`,
+  glass: `المطلوب: تواريخ الزجاج وأحزمة الأمان لكشف القطع المستبدلة. اقرأ سنة الصنع من رمز كل زجاج (رقم السنة أو آخر رقم منها مع نقاط تشير للشهر) ومن ملصق كل حزام أمان، وضعها في extracted.dates بصيغة "القطعة: السنة". قارن بسنة السيارة المعلنة: قطعة أحدث من السيارة بسنة أو أكثر تعني غالباً أنها استُبدلت، وهذا مؤشر حادث محتمل (attention). اختلاف ماركة زجاج عن البقية مؤشر كذلك. إن لم تستطع قراءة الرمز فقل ذلك ولا تخمّن.`,
+  oil: `المطلوب: ملصق تغيير الزيت. اقرأ التاريخ، والممشى عند التغيير، والممشى القادم، ونوع الزيت، وضعها في extracted.oil. إذا كان ممشى الملصق أكبر من الممشى المعلن للسيارة فهذا مؤشر قوي على تلاعب بالعداد (problem). ملصق قديم جداً يعني صيانة غير منتظمة.`,
+  smoke: `المطلوب: دخان العادم عند التشغيل البارد. لون الدخان: أزرق = حرق زيت، أبيض كثيف مستمر = ماء في الاحتراق (احتمال وجه رأس)، أسود = وقود زائد، بخار خفيف يختفي بعد دقيقة = طبيعي في البرد. ابحث أيضاً عن تسرب أو صدأ في الشكمان.`,
+  under: `المطلوب: أسفل السيارة والأرض تحتها. ابحث عن بقع تسريب على الأرض ولونها (أسود/بني زيت، أخضر/وردي ماء رديتر، أحمر زيت قير)، وصدأ الشاصيه الظاهر، وتلف الشكمان، وتمزق جلود العكوس.`,
+  general: `المطلوب: فحص عام لما يظهر في الصور من السيارة، بنفس الدقة.`
+};
+const MEASURE_SYSTEM = `أنت فني سيارات محترف. يصلك قياس من حساسات جوال (ميكروفون أو مستشعر حركة) مع وصف رقمي. فسّره بحذر:
+- القياس بالجوال مؤشر وليس جهازاً احترافياً؛ لا تجزم.
+- أعطِ الحكم (good/attention/problem)، وعنواناً، وشرحاً مبسطاً، وأرجح الأسباب مرتبة، وما يجب فعله للتأكد.
+أجب بكائن JSON فقط: {"verdict":"good|attention|problem","title":"","explanation":"","causes":[""],"advice":""}`;
+const INSPECT2_SYSTEM = `أنت فاحص سيارات محترف في السعودية تكتب تقرير فحص قبل الشراء من نتائج مراحل فحص أجراها المشتري بجواله (صور، وقياس صوت واهتزاز، وأكواد، وملاحظات).
+- قيّم السيارة من 100: الهيكل والحوادث 30، والمحرك 25، والقير والقيادة 20، والكهرباء والمقصورة 10، والأوراق والصيانة 15. المراحل التي لم تُفحص لا تعاقب عليها لكن اخفض الثقة.
+- علامات الخطر: الأهم أولاً، مع المرحلة التي ظهرت فيها.
+- العيوب الشائعة لهذا الموديل والسنة والممشى: اذكر فقط ما تعرفه بثقة.
+- قدّر تكلفة الإصلاحات بالريال السعودي (قطع تجاري جيد + يد)، واقترح سعر تفاوض واقعياً من السعر المطلوب.
+- جملة جاهزة يقولها المشتري للبائع، مهذبة ومبنية على الملاحظات.
+- أوزان الأدلة: سماكة الدهان وتواريخ الزجاج والأحزمة أقوى من صور الكاميرا في كشف الحوادث. عدم مطابقة رقم الهيكل للاستمارة أو اختلاف سنة الصنع علامة خطر كبرى. الجاهزية غير المكتملة تعني غالباً أكواداً ممسوحة قبل البيع. ممشى ملصق الزيت الأكبر من العداد يعني تلاعباً محتملاً.
+أجب بكائن JSON فقط: {"score":0,"verdict":"good|attention|problem","verdict_label":"","confidence":"high|medium|low","summary":"","red_flags":[{"title":"","stage":"","advice":""}],"common_issues":[""],"repair_cost_sar":0,"offer_price_sar":0,"seller_line":""}`;
+
 const INVOICE_SYSTEM = `أنت تقرأ صور فواتير ورش السيارات وقطع الغيار في دول الخليج.
 استخرج بنود القطع وأسعارها كما هي في الفاتورة (السعر النهائي لكل بند بعد الكمية إن وجد)، وأجرة اليد إن وجدت.
 أجب بكائن JSON فقط: {"items":[{"name":"اسم القطعة بالعربية","price":number}], "labor": number|null, "total": number|null, "currency": "رمز العملة إن ظهر"|null}
@@ -198,9 +243,21 @@ const QUESTIONS_SYSTEM = `أنت فني سيارات خبير في دول الخ
 // =====================================================================
 // 💳 نظام الدفع: خدمة واحدة مجانية لكل مستخدم، ثم "تذكرة وصول كامل" لمدة يوم (أو أيام/سنة)
 // =====================================================================
-const PAY_MODES = new Set(['wallet', 'use_free', 'redeem', 'codes_create', 'pay_stats', 'pay_webhook']);
-const PRODUCTS = { day: { days: 1 }, day3: { days: 3 }, annual: { days: 365 } };
-const GATED_FREE = new Set(['diagnose', 'questions', 'inspect']);   // يُسمح بها ضمن الخدمة المجانية الأولى
+const PAY_MODES = new Set(['wallet', 'use_free', 'redeem', 'codes_create', 'pay_stats', 'pay_webhook', 'tamclaim', 'tam_list', 'tam_decide', 'set_free_choice']);
+// uses = فحوصات (باقة 3)، days = وصول زمني، rc = فحص مستعملة، tu = استخدامات أدوات. day3 و annual قديمتان: نحترمهما لمن اشتراهما ولا تُباعان
+const PRODUCTS = { pack3: { uses: 3 }, day: { days: 1 }, week: { days: 7 }, report: { rc: 1 }, tools: { tu: 5 }, day3: { days: 3 }, annual: { days: 365 } };
+const SELLABLE = ['pack3', 'day', 'week', 'report', 'tools'];
+const FREE_CHOICES = new Set(['diag_only', 'parts_prices', 'single_tool']);
+// المنطقة من رمز الدولة: لروابط الدفع الخاصة بكل منطقة (LEMON_CHECKOUT_<PRODUCT>_<REGION>)
+const REGION_OF = (() => {
+  const m = {};
+  'US CA'.split(' ').forEach(c => m[c] = 'US');
+  'GB IE DE FR ES IT NL BE AT PT SE NO DK FI PL CH GR CZ RO HU BG HR SK SI LT LV EE LU MT CY IS'.split(' ').forEach(c => m[c] = 'EU');
+  'MX BR AR CL CO PE UY EC BO PY VE CR PA DO GT HN SV NI CU'.split(' ').forEach(c => m[c] = 'LATAM');
+  return m;
+})();
+const regionOf = cc => REGION_OF[String(cc || '').toUpperCase()] || '';
+const GATED_FREE = new Set(['diagnose', 'questions', 'inspect', 'vision', 'measure']);   // يُسمح بها ضمن الخدمة المجانية الأولى
 const GATED_PAID = new Set(['partcheck', 'invoice']);                // تحتاج وصولاً مدفوعاً دائماً
 const validWid = w => typeof w === 'string' && /^w_[a-z0-9]{12,24}$/.test(w);
 const validDid = d => typeof d === 'string' && /^[a-z0-9]{4,40}$/.test(d);
@@ -216,16 +273,50 @@ async function freeState(wid, ip, w) {
   const n = Number(await kv(['GET', (await ipKey(ip))])) || 0;
   return { used: n >= FREE_PER_IP_DAY, did: null };
 }
-async function walletView(wid, ip, w) {
+async function walletView(wid, ip, w, cc) {
   const f = await freeState(wid, ip, w);
-  return { passUntil: passActive(w) ? w.pass : 0, freeAvailable: !f.used, freeDid: f.did, links: checkoutLinks() };
+  let acc = null;
+  try { const a = (await kv(['MGET', 'stat:fb:yes', 'stat:fb:no', 'stat:fb:partial'])) || []; const y = +a[0] || 0, t = y + (+a[1] || 0) + (+a[2] || 0); if (t >= 20) acc = { yes: y, total: t }; } catch (e) {}
+  return { passUntil: passActive(w) ? w.pass : 0, freeAvailable: !f.used, freeDid: f.did, freeChoice: w.fc || null, paid: !!w.paid, uses: w.uses || 0, toolUses: w.tu || 0, unlocked: (w.unl || []).slice(-60), reports: w.rc || 0, links: checkoutLinks(cc), tam: tamLinks(), cfg: appConfig(), accuracy: acc };
 }
-// روابط صفحات الدفع في Lemon Squeezy (تُضبط من متغيرات البيئة بدون تعديل الكود)
-function checkoutLinks() {
+// حدود القياس قابلة للضبط من متغير VIB_LIMITS بدون تعديل الكود، مثل: {"idle":[0.02,0.05],"drive":[0.04,0.1],"brake":[1.6,2.5]}
+// حدود الاهتزاز من بيانات حقيقية: الحد الأول أعلى من 90% من السيارات السليمة المؤكدة،
+// والثاني عند أدنى ربع السيارات المؤكد أن فيها مشكلة. لا اقتراح قبل 15 سليمة و 8 فيها مشكلة.
+function vibSuggest(rows, current) {
+  const q = (arr, p) => { if (!arr.length) return null; const a = arr.slice().sort((x, y) => x - y); return a[Math.min(a.length - 1, Math.floor(p * (a.length - 1)))]; };
+  const normal = rows.filter(r => r.ok === 'normal').map(r => r.n), problem = rows.filter(r => r.ok === 'problem').map(r => r.n);
+  const out = { normal: normal.length, problem: problem.length, current, suggested: null };
+  if (normal.length >= 15 && problem.length >= 8) {
+    const l1 = q(normal, 0.9), l2 = Math.max(l1 * 1.25, q(problem, 0.25));
+    out.suggested = [Math.round(l1 * 1000) / 1000, Math.round(l2 * 1000) / 1000];
+    out.overlap = q(problem, 0.25) <= l1;   // تداخل كبير = الجوال لا يميز جيداً في هذا القياس
+  }
+  return out;
+}
+function appConfig() {
+  const def = { idle: [0.02, 0.05], drive: [0.04, 0.10], brake: [1.6, 2.5] };
+  try { const j = JSON.parse(ENV.VIB_LIMITS || '{}'); ['idle', 'drive', 'brake'].forEach(k => { if (Array.isArray(j[k]) && j[k].length === 2 && j[k].every(x => x > 0)) def[k] = j[k].map(Number); }); } catch (e) {}
+  return { vib: def };
+}
+// روابط TamPay (مدى و Apple Pay). لا توجد واجهة برمجية معلنة لـ TamPay، فالتفعيل
+// يتم بطلب من العميل برقم العملية، ثم موافقة المالك بضغطة من لوحة الإدارة.
+function tamLinks() {
   const l = {};
-  [['day', 'LEMON_CHECKOUT_DAY'], ['day3', 'LEMON_CHECKOUT_DAY3'], ['annual', 'LEMON_CHECKOUT_ANNUAL']].forEach(([k, e]) => {
-    const v = String(ENV[e] || '').trim();
-    if (/^https:\/\/[a-z0-9.-]+\.lemonsqueezy\.com\//i.test(v)) l[k] = v;
+  SELLABLE.forEach(k => {
+    const v = String(ENV['TAMPAY_LINK_' + k.toUpperCase()] || '').trim();
+    if (/^https:\/\/tampay\.io\/pay\/[A-Za-z0-9]{4,32}$/.test(v)) l[k] = v;
+  });
+  return l;
+}
+// روابط صفحات الدفع (تُضبط من متغيرات البيئة بدون تعديل الكود). Lemon Squeezy افتراضياً، وWhop متى أُضيف لاحقاً.
+// الرابط الخاص بالمنطقة LEMON_CHECKOUT_<PRODUCT>_<US|EU|LATAM> يُفضَّل على العام
+function checkoutLinks(cc) {
+  const l = {}, reg = regionOf(cc);
+  const ok = v => /^https:\/\/([a-z0-9-]+\.)*(lemonsqueezy\.com|whop\.com)\//i.test(v);
+  SELLABLE.forEach(k => {
+    const base = 'LEMON_CHECKOUT_' + k.toUpperCase();
+    const v = String((reg && ENV[base + '_' + reg]) || ENV[base] || '').trim();
+    if (ok(v)) l[k] = v;
   });
   return l;
 }
@@ -250,6 +341,18 @@ function variantMap() {   // LEMON_VARIANTS = "123456:day,123457:day3,123458:ann
   String(ENV.LEMON_VARIANTS || '').split(',').forEach(x => { const [v, p] = x.split(':').map(y => (y || '').trim()); if (v && PRODUCTS[p]) m[v] = p; });
   return m;
 }
+// المنتج من اسمه في Lemon (احتياطاً إن لم يُضبط LEMON_VARIANTS): الأخص أولاً
+function productFromName(n) {
+  n = String(n || '').toLowerCase();
+  if (/report|تقرير|used|مستعمل/.test(n)) return 'report';
+  if (/tool|أدوات|ادوات/.test(n)) return 'tools';
+  if (/pack|باقة 3|3 فحوص|ثلاث فحوص|three/.test(n)) return 'pack3';
+  if (/annual|year|سنة|سنوي/.test(n)) return 'annual';
+  if (/week|أسبوع|اسبوع/.test(n)) return 'week';
+  if (/3 days|3-day|day3|ثلاثة أيام|3 أيام/.test(n)) return 'day3';
+  if (/day|يوم/.test(n)) return 'day';
+  return null;
+}
 async function lemonWebhook(rawBody, signature) {
   const secret = ENV.LEMON_SIGNING_SECRET;
   if (!secret || !KV_URL) return [503, { error: 'not_configured' }];
@@ -262,8 +365,7 @@ async function lemonWebhook(rawBody, signature) {
   const item = a.first_order_item || {};
   // المنتج: من رقم النسخة إن ضُبط LEMON_VARIANTS، وإلا من اسم المنتج في Lemon (موقّع وموثوق)
   const pname = String((item.product_name || '') + ' ' + (item.variant_name || '')).toLowerCase();
-  const product = variantMap()[String(item.variant_id || '')]
-    || (/annual|year|سنة|سنوي/.test(pname) ? 'annual' : /3|three|ثلاث/.test(pname) ? 'day3' : /day|يوم/.test(pname) ? 'day' : null);
+  const product = variantMap()[String(item.variant_id || '')] || productFromName(pname);
   if (!['order_created', 'order_refunded'].includes(name)) return [200, { ok: true, ignored: name }];
   if (!product) { await kv(['SET', 'lemon:unmapped:' + orderId, rawBody.slice(0, 4000), 'EX', 90 * 864e2]); return [200, { ok: true, unmapped: true }]; }
   if (!validWid(wid)) { await kv(['SET', 'lemon:nowallet:' + orderId, JSON.stringify({ product, email: a.user_email || '' }), 'EX', 365 * 864e2]); return [200, { ok: true, no_wallet: true }]; }
@@ -277,17 +379,29 @@ async function lemonWebhook(rawBody, signature) {
     await kv(['INCR', 'stat:paid:' + product]);
     return [200, { ok: true }];
   }
-  // استرجاع: نخصم مدة المنتج من الوصول
+  // استرجاع: نخصم ما مُنح بالشراء من المحفظة
   const rid = 'refund:lemon:' + orderId;
   if (await kv(['EXISTS', rid])) return [200, { ok: true, duplicate: true }];
-  w.pass = Math.max(Date.now(), (w.pass || 0) - PRODUCTS[product].days * 864e5); await setWallet(wid, w);
+  revertProduct(w, product); await setWallet(wid, w);
   await kv(['SET', rid, '1', 'EX', 2 * 365 * 864e2]); await kv(['INCR', 'stat:refund:' + product]);
   return [200, { ok: true, refunded: true }];
 }
 function applyProduct(w, product) {
   const p = PRODUCTS[product]; if (!p) return false;
-  w.pass = Math.max(w.pass || 0, Date.now()) + p.days * 864e5;
+  if (p.days) w.pass = Math.max(w.pass || 0, Date.now()) + p.days * 864e5;
+  if (p.rc) w.rc = (w.rc || 0) + p.rc;
+  if (p.uses) w.uses = (w.uses || 0) + p.uses;
+  if (p.tu) w.tu = (w.tu || 0) + p.tu;
+  w.paid = 1;   // مشترك: يحق له تقييم دقة التشخيص
   return true;
+}
+// استرجاع المبلغ: نخصم ما مُنح بالشراء (لا ينزل شيء عن الصفر)
+function revertProduct(w, product) {
+  const p = PRODUCTS[product]; if (!p) return;
+  if (p.days) w.pass = Math.max(Date.now(), (w.pass || 0) - p.days * 864e5);
+  if (p.rc) w.rc = Math.max(0, (w.rc || 0) - p.rc);
+  if (p.uses) w.uses = Math.max(0, (w.uses || 0) - p.uses);
+  if (p.tu) w.tu = Math.max(0, (w.tu || 0) - p.tu);
 }
 function newCode() {
   const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = 'SD-';
@@ -298,17 +412,39 @@ function newCode() {
 async function accessGate(body, ip) {
   if (!KV_URL || !KV_TOKEN) return { ok: true };                 // نظام الدفع غير مفعّل: لا نعطل المستخدم
   if (!validWid(body.wid)) return { ok: false };
+  KV_ERR = false;
   const w = await getWallet(body.wid);
+  if (KV_ERR) return { ok: false, busy: true };                  // التخزين متعطل: لا نمنح خدمة مجانية بالخطأ
   if (passActive(w)) return { ok: true };
-  if (GATED_PAID.has(body.mode)) return { ok: false };
   const did = validDid(body.did) ? body.did : null;
+  const unl = Array.isArray(w.unl) ? w.unl : [];
+  if (did && unl.includes(did)) return { ok: true };               // خدمة سبق خصمها من رصيده أو فُتحت له
+  if (GATED_PAID.has(body.mode)) {
+    // مدقق الفاتورة: رصيد فحوصات، أو مرة واحدة لمن اختار «القطع والأسعار» كخدمته المجانية
+    if (body.mode === 'invoice') {
+      if ((w.uses || 0) > 0) return { ok: true };
+      if (w.fc === 'parts_prices' && w.freeDid && !w.fpu) { w.fpu = 1; await setWallet(body.wid, w); return { ok: true }; }
+    }
+    return { ok: false };
+  }
   const f = await freeState(body.wid, ip, w);
-  if (f.used) return { ok: !!did && f.did === did };
-  if (!did) return { ok: false };
-  if (body.mode === 'questions') return { ok: true };              // الأسئلة تسبق التشخيص في نفس الخدمة
-  w.freeDid = did; await setWallet(body.wid, w);
-  await kv(['INCR', (await ipKey(ip))]); await kv(['EXPIRE', (await ipKey(ip)), 24 * 3600]);
-  await kv(['INCR', 'stat:free']);
+  if (f.used && f.did === did && did) return { ok: true };         // نفس الخدمة المجانية
+  if (!f.used) {                                                    // الخدمة المجانية الواحدة لم تُستخدم بعد
+    if (!did) return { ok: false };
+    if (body.mode === 'questions') return { ok: true };            // الأسئلة تسبق التشخيص في نفس الخدمة
+    w.freeDid = did; await setWallet(body.wid, w);
+    await kv(['INCR', (await ipKey(ip))]); await kv(['EXPIRE', (await ipKey(ip)), 24 * 3600]);
+    await kv(['INCR', 'stat:free']);
+    return { ok: true };
+  }
+  // انتهت الخدمة المجانية: نخصم من الرصيد المدفوع (فحوصات للتشخيص، واستخدامات الأدوات للأدوات)
+  if (!did || body.mode === 'inspect') return { ok: false };
+  const tool = body.mode === 'vision' || body.mode === 'measure';
+  if (body.mode === 'questions') return { ok: (w.uses || 0) > 0 };
+  const key = tool ? 'tu' : 'uses';
+  if ((w[key] || 0) < 1) return { ok: false };
+  w[key] -= 1; w.unl = unl.concat(did).slice(-100);
+  await setWallet(body.wid, w);
   return { ok: true };
 }
 
@@ -318,13 +454,23 @@ async function payHandler(body, ip, res) {
 
   if (body.mode === 'wallet') {
     if (!validWid(wid)) return res.status(400).json({ error: 'bad_wallet' });
-    return res.status(200).json(await walletView(wid, ip, await getWallet(wid)));
+    return res.status(200).json(await walletView(wid, ip, await getWallet(wid), body.cc));
+  }
+
+  // اختيار الخدمة المجانية الواحدة: يُحفظ مرة واحدة ولا يتغير بعد استخدام الخدمة المجانية
+  if (body.mode === 'set_free_choice') {
+    if (!validWid(wid) || !FREE_CHOICES.has(body.choice)) return res.status(400).json({ error: 'bad_request' });
+    const w = await getWallet(wid);
+    if (w.fc) return res.status(200).json({ ok: true, freeChoice: w.fc, kept: true });
+    w.fc = body.choice; await setWallet(wid, w);
+    await kv(['INCR', 'stat:fc:' + body.choice]);
+    return res.status(200).json({ ok: true, freeChoice: w.fc });
   }
 
   if (body.mode === 'use_free') {   // لخدمات بدون ذكاء اصطناعي (مثل نتيجة الفحص قبل الشراء)
     if (!validWid(wid) || !validDid(body.did)) return res.status(400).json({ error: 'bad_request' });
     const g = await accessGate(Object.assign({}, body, { mode: 'inspect' }), ip);
-    return res.status(g.ok ? 200 : 402).json(Object.assign({ ok: g.ok }, await walletView(wid, ip, await getWallet(wid))));
+    return res.status(g.ok ? 200 : 402).json(Object.assign({ ok: g.ok }, await walletView(wid, ip, await getWallet(wid), body.cc)));
   }
 
   if (body.mode === 'redeem') {
@@ -341,7 +487,44 @@ async function payHandler(body, ip, res) {
     await kv(['SET', 'code:' + code, JSON.stringify(c), 'EX', 2 * 365 * 24 * 3600]);
     await setWallet(wid, w);
     await kv(['INCR', 'stat:redeem:' + c.t]);
-    return res.status(200).json(Object.assign({ ok: true, product: c.t }, await walletView(wid, ip, w)));
+    return res.status(200).json(Object.assign({ ok: true, product: c.t }, await walletView(wid, ip, w, body.cc)));
+  }
+
+  // ---------- TamPay: طلب تفعيل برقم العملية، ثم موافقة المالك ----------
+  if (body.mode === 'tamclaim') {
+    if (!validWid(body.wid) || !PRODUCTS[body.product]) return res.status(400).json({ error: 'bad_request' });
+    const ref = String(body.ref || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    if (ref.length < 4 || ref.length > 40) return res.status(400).json({ error: 'bad_ref' });
+    const dk = 'tcd:' + body.wid + ':' + dayKey(), n = Number(await kv(['INCR', dk])) || 0;
+    if (n === 1) await kv(['EXPIRE', dk, 2 * 864e2]);
+    if (n > 5) return res.status(429).json({ error: 'too_many' });
+    if (!(await kv(['SET', 'tcref:' + ref, '1', 'NX', 'EX', 400 * 864e2]))) return res.status(409).json({ error: 'ref_used' });
+    const id = 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    await kv(['SET', 'tc:' + id, JSON.stringify({ id, wid: body.wid, product: body.product, ref, contact: clip(body.contact, 80), at: Date.now(), status: 'pending' }), 'EX', 90 * 864e2]);
+    await kv(['SADD', 'tc:pending', id]);
+    BG(kv(['INCR', 'stat:tam:claims']));
+    return res.status(200).json({ ok: true, id });
+  }
+  if (body.mode === 'tam_list') {
+    if (!(await verifyOwner(body.token))) return res.status(403).json({ error: 'forbidden' });
+    const ids = ((await kv(['SMEMBERS', 'tc:pending'])) || []).slice(0, 50);
+    const rows = [];
+    for (const id of ids) { const x = await kv(['GET', 'tc:' + id]); if (x) { try { rows.push(JSON.parse(x)); } catch (e) {} } else await kv(['SREM', 'tc:pending', id]); }
+    rows.sort((a, b) => a.at - b.at);
+    return res.status(200).json({ claims: rows.map(c => Object.assign({}, c, { wid: c.wid.slice(0, 6) + '…' })) });
+  }
+  if (body.mode === 'tam_decide') {
+    if (!(await verifyOwner(body.token))) return res.status(403).json({ error: 'forbidden' });
+    const id = String(body.id || '').replace(/[^a-z0-9]/g, '').slice(0, 20);
+    const raw = await kv(['GET', 'tc:' + id]); if (!raw) return res.status(404).json({ error: 'not_found' });
+    const c = JSON.parse(raw); if (c.status !== 'pending') return res.status(409).json({ error: 'already_decided', status: c.status });
+    c.status = body.approve ? 'approved' : 'rejected'; c.decidedAt = Date.now();
+    if (body.approve) {
+      const w = await getWallet(c.wid); applyProduct(w, c.product); await setWallet(c.wid, w);
+      await kv(['INCR', 'stat:paid:' + c.product]); await kv(['INCR', 'stat:tam:approved']);
+    } else await kv(['DEL', 'tcref:' + c.ref]);   // الرفض يحرر رقم العملية إن كان خطأ كتابة
+    await kv(['SET', 'tc:' + id, JSON.stringify(c), 'EX', 90 * 864e2]); await kv(['SREM', 'tc:pending', id]);
+    return res.status(200).json({ ok: true, status: c.status });
   }
 
   if (body.mode === 'codes_create') {
@@ -374,6 +557,159 @@ async function payHandler(body, ip, res) {
     return res.status(200).json({ ok: true });
   }
   return res.status(400).json({ error: 'unknown_mode' });
+}
+
+// =====================================================================
+// 📊 أرقام الاستخدام + ✅ دقة التشخيص + 🔗 تقارير قابلة للمشاركة + 🩺 فحص سلامة الموقع
+// =====================================================================
+const APP_MODES = new Set(['track', 'feedback', 'report_save', 'report_get', 'report_del', 'insights', 'health', 'vibfb', 'clienterr', 'issue']);
+const EVENTS = new Set(['visit', 'diag_start', 'diag_done', 'tool_start', 'tool_done', 'insp_start', 'insp_report', 'pay_open', 'checkout_click', 'share']);
+const dayKey = (off) => { const d = new Date(Date.now() - (off || 0) * 864e5); return d.toISOString().slice(0, 10).replace(/-/g, ''); };
+const rid = (n) => { const A = 'abcdefghjkmnpqrstuvwxyz23456789'; const b = crypto.getRandomValues(new Uint8Array(n)); let o = ''; for (let i = 0; i < n; i++) o += A[b[i] % A.length]; return o; };
+async function appHandler(body, ip, res) {
+  if (!KV_URL || !KV_TOKEN) return res.status(body.mode === 'track' ? 200 : 503).json({ error: 'not_configured' });
+
+  // "أبلغ عن مشكلة": شكوى المستخدم تصلك قبل أن تصل للمتجر كتقييم
+  if (body.mode === 'issue') {
+    const text = clip(body.text, 600).trim();
+    if (text.length < 3) return res.status(400).json({ error: 'empty' });
+    if (!(await kv(['SET', 'issl:' + (await sha256hex('iss|' + ip)).slice(0, 24), '1', 'NX', 'EX', 30]))) return res.status(429).json({ error: 'slow_down' });
+    await kv(['LPUSH', 'issue:list', JSON.stringify({ text, contact: clip(body.contact, 80), page: clip(body.page, 20), ver: clip(body.ver, 12), ctx: noPii(clip(body.ctx, 200)), at: Date.now() })]);
+    await kv(['LTRIM', 'issue:list', 0, 99]);
+    const ik = 'ev:issue:' + dayKey(); await kv(['INCR', ik]); await kv(['EXPIRE', ik, 45 * 864e2]);
+    return res.status(200).json({ ok: true });
+  }
+
+  if (body.mode === 'clienterr') {
+    const msg = noPii(clip(body.msg, 200)); if (!msg) return res.status(200).json({ ok: true });
+    await kv(['LPUSH', 'err:list', JSON.stringify({ msg, page: clip(body.page, 20), ver: clip(body.ver, 12), ua: clip(body.ua, 60), at: Date.now() })]);
+    await kv(['LTRIM', 'err:list', 0, 49]);
+    const ek = 'ev:client_err:' + dayKey(); await kv(['INCR', ek]); await kv(['EXPIRE', ek, 45 * 864e2]);
+    return res.status(200).json({ ok: true });
+  }
+
+  if (body.mode === 'track') {
+    const ev = String(body.ev || '');
+    if (EVENTS.has(ev)) { const k = 'ev:' + ev + ':' + dayKey(); await kv(['INCR', k]); await kv(['EXPIRE', k, 45 * 864e2]); }
+    return res.status(200).json({ ok: true });
+  }
+
+  if (body.mode === 'feedback') {
+    const r = ['yes', 'no', 'partial'].includes(body.result) ? body.result : null;
+    if (!r || !validDid(body.did)) return res.status(400).json({ error: 'bad_request' });
+    // التقييم للمشتركين فقط (من اشترى فعلاً)، حتى تكون نسبة الدقة المعلنة موثوقة
+    if (!validWid(body.wid) || !(await getWallet(body.wid)).paid) return res.status(403).json({ error: 'subscribers_only' });
+    if (await kv(['EXISTS', 'fbd:' + body.did])) return res.status(200).json({ ok: true, duplicate: true });
+    await kv(['SET', 'fbd:' + body.did, r, 'EX', 365 * 864e2]);
+    await kv(['INCR', 'stat:fb:' + r]);
+    if (body.src === 'mechanic') await kv(['INCR', 'stat:fbm:' + r]);
+    if (r !== 'yes') { await kv(['LPUSH', 'fb:list', JSON.stringify({ r, title: clip(body.title, 100), car: clip(body.car, 60), actual: noPii(clip(body.actual, 200)), at: Date.now() })]); await kv(['LTRIM', 'fb:list', 0, 99]); }
+    return res.status(200).json({ ok: true });
+  }
+
+  if (body.mode === 'vibfb') {
+    const mode = ['idle', 'drive', 'brake'].includes(body.vmode) ? body.vmode : null;
+    const n = Number(body.net), ok = body.ok === 'normal' ? 'normal' : body.ok === 'problem' ? 'problem' : null;
+    if (!mode || !ok || !isFinite(n) || n < 0 || n > 20 || !validWid(body.wid)) return res.status(400).json({ error: 'bad_request' });
+    // تقييم واحد لكل محفظة ونوع قياس كل ساعة، حتى لا تُزوَّر البيانات بسهولة
+    if (!(await kv(['SET', 'vibfbl:' + body.wid + ':' + mode, '1', 'NX', 'EX', 3600]))) return res.status(200).json({ ok: true, duplicate: true });
+    await kv(['LPUSH', 'vibfb:' + mode, JSON.stringify({ n: Math.round(n * 10000) / 10000, ok, at: Date.now() })]);
+    await kv(['LTRIM', 'vibfb:' + mode, 0, 499]);
+    return res.status(200).json({ ok: true });
+  }
+
+  if (body.mode === 'report_save') {
+    if (!validWid(body.wid)) return res.status(400).json({ error: 'bad_wallet' });
+    const rp = body.report;
+    if (!rp || typeof rp !== 'object' || typeof rp.score !== 'number') return res.status(400).json({ error: 'bad_report' });
+    // نحفظ نسخة منقّحة بدون أي رقم هيكل أو بيانات شخصية
+    const noVin = t => clip(t, 400).replace(/\b[A-HJ-NPR-Z0-9]{17}\b/g, '•••');
+    const doc = {
+      car: clip(body.car, 60), km: clip(body.km, 12), price: clip(body.price, 12), at: Date.now(),
+      score: Math.max(0, Math.min(100, Math.round(rp.score))), verdict: ['good', 'attention', 'problem'].includes(rp.verdict) ? rp.verdict : 'attention',
+      verdict_label: clip(rp.verdict_label, 40), confidence: clip(rp.confidence, 10), summary: noPii(noVin(rp.summary)),
+      red_flags: (Array.isArray(rp.red_flags) ? rp.red_flags : []).slice(0, 8).map(f => ({ title: noVin(f && f.title).slice(0, 100), stage: clip(f && f.stage, 40), advice: noVin(f && f.advice).slice(0, 200) })),
+      stages: (Array.isArray(body.stages) ? body.stages : []).slice(0, 8).map(x => ({ name: clip(x && x.name, 50), verdict: clip(x && x.verdict, 12) })),
+      common_issues: (Array.isArray(rp.common_issues) ? rp.common_issues : []).slice(0, 6).map(x => clip(x, 160)),
+      repair_cost_sar: Math.round(Number(rp.repair_cost_sar) || 0), offer_price_sar: Math.round(Number(rp.offer_price_sar) || 0)
+    };
+    const id = rid(10);
+    await kv(['SET', 'rep:' + id, JSON.stringify(doc), 'EX', 120 * 864e2]);
+    await kv(['SET', 'repown:' + id, (await sha256hex('rep|' + body.wid)).slice(0, 32), 'EX', 120 * 864e2]);
+    await kv(['INCR', 'stat:reports']);
+    return res.status(200).json({ id });
+  }
+
+  if (body.mode === 'report_del') {
+    const id = String(body.id || '').replace(/[^a-z0-9]/g, '').slice(0, 12);
+    if (!id || !validWid(body.wid)) return res.status(400).json({ error: 'bad_request' });
+    const own = await kv(['GET', 'repown:' + id]);
+    if (!own || own !== (await sha256hex('rep|' + body.wid)).slice(0, 32)) return res.status(403).json({ error: 'forbidden' });
+    await kv(['DEL', 'rep:' + id]); await kv(['DEL', 'repown:' + id]);
+    return res.status(200).json({ ok: true });
+  }
+
+  if (body.mode === 'report_get') {
+    const id = String(body.id || '').replace(/[^a-z0-9]/g, '').slice(0, 12);
+    const raw = id ? await kv(['GET', 'rep:' + id]) : null;
+    if (!raw) return res.status(404).json({ error: 'not_found' });
+    return res.status(200).json(JSON.parse(raw));
+  }
+
+  if (body.mode === 'insights') {
+    if (!(await verifyOwner(body.token))) return res.status(403).json({ error: 'forbidden' });
+    const days = [0, 1, 2, 3, 4, 5, 6].map(dayKey), evs = [...EVENTS];
+    const keys = []; evs.forEach(e => days.forEach(d => keys.push('ev:' + e + ':' + d)));
+    const vals = (await kv(['MGET'].concat(keys))) || [];
+    const funnel = {}; evs.forEach((e, i) => { funnel[e] = days.reduce((a, d, j) => a + (Number(vals[i * days.length + j]) || 0), 0); });
+    const st = (await kv(['MGET', 'stat:fb:yes', 'stat:fb:no', 'stat:fb:partial', 'stat:reports', 'ev:ai_fail:' + dayKey(), 'stat:free', 'stat:blocked'])) || [];
+    const fb = ((await kv(['LRANGE', 'fb:list', 0, 14])) || []).map(x => { try { return JSON.parse(x); } catch (e) { return null; } }).filter(Boolean);
+    const sm = (await kv(['MGET', 'stat:fbm:yes', 'stat:fbm:no', 'stat:fbm:partial', 'ev:client_err:' + dayKey(), 'stat:quota_hit'])) || [];
+    const errs = ((await kv(['LRANGE', 'err:list', 0, 9])) || []).map(x => { try { return JSON.parse(x); } catch (e) { return null; } }).filter(Boolean);
+    const issues = ((await kv(['LRANGE', 'issue:list', 0, 9])) || []).map(x => { try { return JSON.parse(x); } catch (e) { return null; } }).filter(Boolean);
+    const issuesToday = Number(await kv(['GET', 'ev:issue:' + dayKey()])) || 0;
+    const vib = {};
+    for (const mode of ['idle', 'drive', 'brake']) {
+      const rows = ((await kv(['LRANGE', 'vibfb:' + mode, 0, 499])) || []).map(x => { try { return JSON.parse(x); } catch (e) { return null; } }).filter(Boolean);
+      vib[mode] = vibSuggest(rows, appConfig().vib[mode]);
+    }
+    return res.status(200).json({ funnel, accuracy: { yes: +st[0] || 0, no: +st[1] || 0, partial: +st[2] || 0 }, verified: { yes: +sm[0] || 0, no: +sm[1] || 0, partial: +sm[2] || 0 }, client_err_today: +sm[3] || 0, quota_hits: +sm[4] || 0, errors: errs, issues, issues_today: issuesToday, vib, reports: +st[3] || 0, ai_fail_today: +st[4] || 0, free: +st[5] || 0, blocked: +st[6] || 0, mismatches: fb });
+  }
+
+  if (body.mode === 'health') {
+    if (!(await verifyOwner(body.token))) return res.status(403).json({ error: 'forbidden' });
+    const out = { kv: false, gemini_key: !!ENV.GEMINI_API_KEY, gemini_ok: false, lemon_secret: !!ENV.LEMON_SIGNING_SECRET, lemon_links: Object.keys(checkoutLinks()).length, models: { main: MAIN, light: LIGHT, escalate: ESCALATE } };
+    try { await kv(['SET', 'health:ping', '1', 'EX', 60]); out.kv = (await kv(['GET', 'health:ping'])) === '1'; } catch (e) {}
+    if (ENV.GEMINI_API_KEY) {
+      try { const t = await callGemini({ name: 'gemini', key: ENV.GEMINI_API_KEY, model: LIGHT[0] || MAIN[0] }, 'أجب بكائن JSON فقط: {"ok":true}', 'اختبار', 20, 8000); out.gemini_ok = /ok/.test(t || ''); }
+      catch (e) { out.gemini_error = String(e.message || e).slice(0, 120); }
+    }
+    return res.status(200).json(out);
+  }
+  return res.status(400).json({ error: 'unknown_mode' });
+}
+
+// ---------- مكتبة مرجعية: نقارن القياس بقياسات نفس الموديل من مستخدمين آخرين ----------
+async function peerCompare(car, metric, value) {
+  if (!KV_URL || !car || !metric || !(value >= 0) || value > 1000) return null;
+  const mk = normKey(String(car).replace(/\d{4}/g, '')).slice(0, 40);      // الشركة والموديل بدون السنة
+  if (mk.length < 3) return null;
+  const key = 'peer:' + clip(metric, 20).replace(/[^a-z_]/g, '') + ':' + (await sha256hex(mk)).slice(0, 16);
+  const prev = ((await kv(['LRANGE', key, 0, 199])) || []).map(Number).filter(x => x >= 0);
+  await kv(['LPUSH', key, String(Math.round(value * 10000) / 10000)]); await kv(['LTRIM', key, 0, 199]); await kv(['EXPIRE', key, 2 * 365 * 864e2]);
+  if (prev.length < 5) return { n: prev.length };
+  const below = prev.filter(x => x < value).length;
+  return { n: prev.length, percentile: Math.round(below / prev.length * 100) };
+}
+
+// ---------- حالات عامة للبحث (بدون أي نص كتبه المستخدم) ----------
+async function publishCase(body, out) {
+  if (String(ENV.PUBLIC_CASES || '1') === '0' || !KV_URL) return;
+  const car = clip(body.car, 60).trim(); if (car.length < 4 || !out.title) return;
+  const id = (await sha256hex(normKey(car) + '|' + normKey(out.title))).slice(0, 12);
+  if (await kv(['EXISTS', 'case:' + id])) return;
+  await kv(['SET', 'case:' + id, JSON.stringify({ car, title: clip(out.title, 100), sev: out.severity, explanation: clip(out.explanation, 500), advice: clip(out.advice, 300), checks: (out.checks || []).slice(0, 4), at: Date.now() }), 'EX', 2 * 365 * 864e2]);
+  await kv(['LPUSH', 'case:index', id]); await kv(['LTRIM', 'case:index', 0, 999]);
 }
 
 // ---------- التنظيم التلقائي (Gemma أولاً لأن حده اليومي كبير) ----------
@@ -432,7 +768,7 @@ const REVIEW_SYSTEM = `أنت مدقق خبير لقاعدة معرفة أعطا
 let OWNER; // يُضبط في initEnv
 let FIREBASE_WEB_KEY; // يُضبط في initEnv
 async function verifyOwner(token) {
-  if (!token || typeof token !== 'string' || token.length > 4000) return null;
+  if (!OWNER || !token || typeof token !== 'string' || token.length > 4000) return null;   // بدون OWNER_EMAIL لا يُعترف بأي مالك
   try {
     const d = await post('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + FIREBASE_WEB_KEY, { 'content-type': 'application/json' }, { idToken: token }, 6000);
     const u = (d.users || [])[0];
@@ -468,6 +804,66 @@ const INSPECT_SYSTEM = `أنت خبير فحص سيارات مستعملة في 
 - لا تخترع أسعاراً، ولا تقدم نفسك كشهادة فحص رسمية.
 أجب بكائن JSON فقط: {"summary": "خلاصة في 2-3 جمل", "risks": ["أهم المخاطر بالترتيب"], "model_notes": "ملاحظة عن الموديل أو null", "next_steps": "ماذا يفعل المشتري الآن"}`;
 
+// =====================================================================
+// 🌍 الدولة المقترحة + الترجمة التلقائية للواجهة (تُحفظ في Redis للأبد، فلا تُترجم الجملة مرتين)
+// =====================================================================
+const LANG_OK = l => typeof l === 'string' && /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(l) && l.toLowerCase() !== 'ar';
+const I18N_SYSTEM = `أنت مترجم واجهات تطبيقات. ترجم النصوص العربية إلى اللغة المطلوبة بأسلوب طبيعي ومختصر يناسب أزرار وعناوين تطبيق سيارات.
+- احتفظ بالرموز {0} {1} … كما هي تماماً في أماكنها المناسبة، ولا تغيّر الأرقام ولا الرموز التعبيرية.
+- لا تضف شرحاً. اترك أسماء العلامات التجارية (مثل Lemon Squeezy) كما هي.
+أجب بكائن JSON فقط: {"map":{"النص العربي الأصلي":"الترجمة"}} بنفس المفاتيح حرفياً.`;
+async function i18nHandler(body, res) {
+  if (!KV_URL || !KV_TOKEN) return res.status(503).json({ error: 'not_configured' });
+  const lang = body.lang; if (!LANG_OK(lang)) return res.status(400).json({ error: 'bad_lang' });
+  const hk = 'i18n:' + lang;
+  if (body.mode === 'i18n_pack') {
+    const flat = (await kv(['HGETALL', hk])) || [], map = {};
+    for (let i = 0; i + 1 < flat.length && i < 12000; i += 2) map[flat[i]] = flat[i + 1];
+    return res.status(200).json({ map });
+  }
+  const strings = (Array.isArray(body.strings) ? body.strings : []).slice(0, 40).map(s => clip(s, 400)).filter(s => /[؀-ۿ]/.test(s));
+  if (!strings.length) return res.status(200).json({ map: {} });
+  const have = (await kv(['HMGET', hk].concat(strings))) || [], map = {}, miss = [];
+  strings.forEach((s, i) => { if (have[i]) map[s] = have[i]; else miss.push(s); });
+  if (miss.length && (ENV.GEMINI_API_KEY || ENV.ANTHROPIC_API_KEY)) {
+    // سقف يومي لتكلفة الترجمة (يُضبط بـ I18N_DAILY)
+    const qk = 'i18nq:' + dayKey(), used = Number(await kv(['INCRBY', qk, miss.length])) || 0;
+    if (used <= miss.length) BG(kv(['EXPIRE', qk, 2 * 864e2]));
+    if (used <= (parseInt(ENV.I18N_DAILY || '4000') || 4000)) {
+      try {
+        const ctx = { left: () => 15000 };
+        const { data } = await callAI(buildChain('light'), I18N_SYSTEM, 'اللغة الهدف: ' + lang + '\n' + JSON.stringify(miss), 1800, ctx, d => d && d.map && typeof d.map === 'object');
+        const save = [];
+        miss.forEach(s => {
+          const t = clip(data.map[s], 500).trim(); if (!t) return;
+          const toks = x => (String(x).match(/\{\d+\}/g) || []).sort().join();
+          if (toks(t) !== toks(s)) return;   // رمز {0} ضائع أو مضاف: نرفض الترجمة ونعيدها لاحقاً
+          map[s] = t; save.push(s, t);
+        });
+        if (save.length) BG(kv(['HSET', hk].concat(save)));
+      } catch (e) { console.error('i18n fail', String(e.message || e).slice(0, 150)); }
+    }
+  }
+  return res.status(200).json({ map });
+}
+
+// نص التقرير: نبنيه من حقائق الفحص نفسها دون أن نخترع شيئاً (لا أرقام ولا قطع من خارج الحقائق)
+function reportBody(f) {
+  f = f && typeof f === 'object' ? f : {};
+  const L = [];
+  L.push('السيارة: ' + clip(f.car, 80) + (f.km ? ' • الممشى: ' + clip(f.km, 20) : '') + (f.place ? ' • ' + clip(f.place, 60) : ''));
+  L.push('التشخيص المبدئي: ' + clip(f.title, 140) + (f.code ? ' (' + clip(f.code, 10) + ')' : ''));
+  if (f.severity) L.push('درجة الخطورة: ' + clip(f.severity, 40));
+  if (f.description) L.push('وصف المالك: ' + clip(f.description, 300));
+  if (f.structured) L.push('معلومات إضافية: ' + clip(f.structured, 300));
+  if (f.explanation) L.push('\nالشرح:\n' + clip(f.explanation, 700));
+  if (Array.isArray(f.checks) && f.checks.length) L.push('\nما يُفحص أولاً:\n' + f.checks.slice(0, 6).map(c => '• ' + clip(c, 160)).join('\n'));
+  if (Array.isArray(f.parts) && f.parts.length) L.push('\nالقطع المحتملة:\n' + f.parts.slice(0, 8).map(c => '• ' + clip(c, 80)).join('\n') + (f.total ? '\nالتكلفة التقريبية: ' + clip(f.total, 40) : ''));
+  if (f.advice) L.push('\nالنصيحة:\n' + clip(f.advice, 600));
+  L.push('\nتنبيه: تقدير مبدئي يساعدك قبل الذهاب للورشة، ولا يغني عن فحص الفني. اطلب عرض سعر مكتوباً واحتفظ بالقطع القديمة.');
+  return L.join('\n');
+}
+
 async function handle(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
@@ -484,10 +880,49 @@ async function handle(req, res) {
   body = body || {};
   if (body.mode !== 'pay_webhook' && rateLimited(ip)) return res.status(429).json({ error: 'too_many_requests' });
 
+  // الدولة المقترحة من شبكة المستخدم (Cloudflare)، بلا إذن موقع وبلا تخزين
+  if (body.mode === 'geo') {
+    const cc = String(req.headers['cf-ipcountry'] || '').toUpperCase(), ok = /^[A-Z]{2}$/.test(cc) && cc !== 'XX' && cc !== 'T1';
+    return res.status(200).json({ country: ok ? cc : null, supported: ok });
+  }
+  if (body.mode === 'i18n' || body.mode === 'i18n_pack') return i18nHandler(body, res);
+  // ميزات لم تكتمل في هذا الإصدار: ترفضها بوضوح بدل أن تفشل بصمت
+  if (['rpack_list', 'rpack_build', 'insp_save', 'insp_get'].includes(body.mode)) return res.status(501).json({ error: 'not_implemented' });
+  // تقرير PDF: لصاحب وصول مدفوع أو فحص مفتوح له فقط
+  if (body.mode === 'report_write') {
+    if (!KV_URL || !KV_TOKEN || !validWid(body.wid)) return res.status(503).json({ error: 'not_configured' });
+    const w = await getWallet(body.wid);
+    if (!passActive(w) && !(validDid(body.did) && (w.unl || []).includes(body.did))) return res.status(402).json({ error: 'payment_required' });
+    const text = reportBody(body.facts);
+    return res.status(200).json({ summary: clip(body.facts && body.facts.title, 140), body: text, issues: [] });
+  }
+
   // 💳 المحفظة والدفع: لا تحتاج مفاتيح ذكاء اصطناعي
   if (PAY_MODES.has(body.mode)) return payHandler(body, ip, res);
+  if (APP_MODES.has(body.mode)) return appHandler(body, ip, res);
+  // حدود يومية لكل محفظة (تُعدَّل بـ AI_DAILY_LIMITS مثل {"vision":40,"text":120,"report":10})
+  const QCLASS = { vision: 'vision', inspect2: 'report', diagnose: 'text', questions: 'text', measure: 'text', partcheck: 'text', invoice: 'vision', inspect: 'text' }[body.mode];
+  if (QCLASS && KV_URL && KV_TOKEN && validWid(body.wid)) {
+    const lim = Object.assign({ vision: 40, text: 120, report: 10 }, (() => { try { return JSON.parse(ENV.AI_DAILY_LIMITS || '{}'); } catch (e) { return {}; } })());
+    const qk = 'q:' + body.wid + ':' + dayKey() + ':' + QCLASS;
+    const used = Number(await kv(['INCR', qk])) || 0;
+    if (used === 1) BG(kv(['EXPIRE', qk, 2 * 864e2]));
+    if (used > (Number(lim[QCLASS]) || 1e9)) { BG(kv(['INCR', 'stat:quota_hit'])); return res.status(429).json({ error: 'daily_limit', kind: QCLASS }); }
+  }
+  let reportWallet = null;
+  if (body.mode === 'inspect2' && KV_URL && KV_TOKEN) {
+    if (!validWid(body.wid)) return res.status(400).json({ error: 'bad_wallet' });
+    KV_ERR = false;
+    const w = await getWallet(body.wid);
+    if (KV_ERR) return res.status(503).json({ error: 'busy' });
+    if (!passActive(w)) {
+      if ((w.rc || 0) < 1) { BG(kv(['INCR', 'stat:blocked'])); return res.status(402).json({ error: 'payment_required', product: 'report' }); }
+      reportWallet = w;   // يُخصم بعد نجاح التقرير فقط
+    }
+  }
   if (GATED_FREE.has(body.mode) || GATED_PAID.has(body.mode)) {
     const g = await accessGate(body, ip);
+    if (!g.ok && g.busy) return res.status(503).json({ error: 'busy' });
     if (!g.ok) { BG(kv(['INCR', 'stat:blocked'])); return res.status(402).json({ error: 'payment_required' }); }
   }
   if (!ENV.GEMINI_API_KEY && !ENV.ANTHROPIC_API_KEY) return res.status(503).json({ error: 'not_configured' });
@@ -537,11 +972,12 @@ async function handle(req, res) {
         explanation: clip(j.explanation, 600),
         advice: clip(j.advice, 500),
         checks: Array.isArray(j.checks) ? j.checks.slice(0, 5).map(c => clip(c, 140)) : [],
-        question: j.question ? clip(j.question, 200) : null,
+        question: realQuestion(j.question) ? clip(j.question, 200) : null,
         model
       };
       // لا نحفظ إلا التشخيص الواثق (عالي أو متوسط)
       if (key && out.confidence !== 'low') BG(kv(['SET', key, JSON.stringify(out), 'EX', CACHE_TTL]));
+      if (key && out.confidence === 'high') BG(publishCase(body, out).catch(() => {}));
       // 🤖 التعلّم التلقائي: إذا تكررت الحالة من عدة مستخدمين بثقة عالية نُنشئ صفاً "تلقائياً – غير معتمد"
       if (key && out.confidence === 'high' && !(body.reference || []).length) {
         try { await curate(body, out, ip, ctx); } catch (e) { console.error('curate', String(e.message || e).slice(0, 150)); }
@@ -697,6 +1133,76 @@ async function handle(req, res) {
       });
     }
 
+    if (body.mode === 'vision') {
+      const kind = body.kind === 'docs' ? 'vin' : VISION_KINDS[body.kind] ? body.kind : 'general';
+      const imgs = Array.isArray(body.images) ? body.images.slice(0, 8) : [];
+      const okImg = x => typeof x === 'string' && x.length > 100 && x.length < 600000 && /^[A-Za-z0-9+/=]+$/.test(x.slice(0, 200));
+      if (!imgs.length || !imgs.every(okImg)) return res.status(400).json({ error: 'bad_images' });
+      const content = imgs.map(d => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: d } }));
+      content.push({ type: 'text', text: ['السيارة: ' + clip(body.car, 100), body.km ? 'الممشى المعلن: ' + clip(body.km, 20) + ' كم' : '', body.notes ? 'ملاحظات المستخدم: ' + clip(body.notes, 400) : '', 'عدد الصور: ' + imgs.length + (Array.isArray(body.labels) ? ' — ' + body.labels.slice(0, 8).map((l, i) => i + ': ' + clip(l, 40)).join('، ') : '')].filter(Boolean).join('\n') });
+      const sys = VISION_BASE + '\n\n' + VISION_KINDS[kind];
+      const deadline = Date.now() + 40000;
+      const models = [...new Set(MAIN.concat(ESCALATE))].filter(m => !/^gemma/i.test(m));
+      for (const m of models) {
+        const left = deadline - Date.now(); if (left < 8000) break;
+        try {
+          const text = await callGemini({ name: 'gemini', key: ENV.GEMINI_API_KEY, model: m }, sys, content, 1800, Math.min(24000, left - 1000));
+          const d = extractJson(text || '');
+          if (!d || !Array.isArray(d.findings)) { console.error('vision bad output', m); continue; }
+          const sev = v => ['ok', 'attention', 'problem'].includes(v) ? v : 'attention';
+          return res.status(200).json({
+            kind, model: m,
+            verdict: ['good', 'attention', 'problem'].includes(d.verdict) ? d.verdict : 'attention',
+            summary: noPii(clip(d.summary, 400)),
+            findings: d.findings.slice(0, 12).map(f => ({ title: clip(f && f.title, 80), location: clip(f && f.location, 60), severity: sev(f && f.severity), confidence: f && f.confidence === 'low' ? 'low' : 'medium', advice: clip(f && f.advice, 200), frame: Number.isInteger(f && f.frame) && f.frame >= 0 && f.frame < imgs.length ? f.frame : null })).filter(f => f.title),
+            ok: Array.isArray(d.ok) ? d.ok.slice(0, 8).map(x => clip(x, 60)) : [],
+            extracted: d.extracted && typeof d.extracted === 'object' ? { vin: clip(d.extracted.vin, 20).toUpperCase().replace(/[^A-HJ-NPR-Z0-9]/g, ''), dot: Array.isArray(d.extracted.dot) ? d.extracted.dot.slice(0, 6).map(x => clip(x, 12)) : [], odometer: clip(d.extracted.odometer, 20), lights: Array.isArray(d.extracted.lights) ? d.extracted.lights.slice(0, 8).map(x => clip(x, 40)) : [], battery: clip(d.extracted.battery, 30), dates: Array.isArray(d.extracted.dates) ? d.extracted.dates.slice(0, 10).map(x => clip(x, 40)) : [], oil: clip(d.extracted.oil, 120) } : {},
+            retake: Array.isArray(d.retake) ? d.retake.filter(n => Number.isInteger(n)).slice(0, 8) : []
+          });
+        } catch (e) { console.error('vision fail:', m, String(e.message || e).slice(0, 200)); }
+      }
+      return res.status(502).json({ error: 'ai_failed' });
+    }
+
+    if (body.mode === 'measure') {
+      const v = body.vib;
+      if (v && ['idle', 'drive', 'brake'].includes(v.mode) && isFinite(+v.net) && +v.net >= 0 && +v.net < 20)
+        BG((async () => { await kv(['LPUSH', 'vib:' + v.mode, JSON.stringify({ n: Math.round(+v.net * 10000) / 10000, hz: Math.round(+v.hz || 0), fs: Math.round(+v.fs || 0), at: Date.now() })]); await kv(['LTRIM', 'vib:' + v.mode, 0, 999]); })());
+      const prompt = ['السيارة: ' + clip(body.car, 100), 'نوع القياس: ' + clip(body.kind, 40), 'نتيجة القياس: ' + clip(body.summary, 700), body.notes ? 'ملاحظات: ' + clip(body.notes, 300) : ''].filter(Boolean).join('\n');
+      const valid = d => ['good', 'attention', 'problem'].includes(d.verdict) && d.title;
+      const { data: j } = await callAI(buildChain('light'), MEASURE_SYSTEM, prompt, 600, ctx, valid);
+      let peer = null; try { peer = await peerCompare(body.car, body.metric, Number(body.value)); } catch (e) {}
+      return res.status(200).json({ verdict: j.verdict, title: clip(j.title, 100), explanation: clip(j.explanation, 500), causes: Array.isArray(j.causes) ? j.causes.slice(0, 5).map(x => clip(x, 120)) : [], advice: clip(j.advice, 300), peer });
+    }
+
+    if (body.mode === 'inspect2') {
+      const stages = Array.isArray(body.stages) ? body.stages.slice(0, 12) : [];
+      const prompt = ['السيارة: ' + clip(body.car, 100), 'الممشى: ' + clip(body.km, 20) + ' كم', 'السعر المطلوب: ' + clip(body.price, 20) + ' ر.س',
+        'نتائج المراحل:\n' + (stages.length ? stages.map(st => '- ' + clip(st && st.name, 60) + ': ' + clip(st && st.text, 900)).join('\n') : 'لم تُفحص أي مرحلة'),
+        body.codes ? 'أكواد الكمبيوتر: ' + clip(body.codes, 200) : '', body.notes ? 'ملاحظات المشتري: ' + clip(body.notes, 500) : ''].filter(Boolean).join('\n');
+      const deadline = Date.now() + 40000;
+      const models = [...new Set(ESCALATE.concat(MAIN))].filter(m => !/^gemma/i.test(m));
+      for (const m of models) {
+        const left = deadline - Date.now(); if (left < 8000) break;
+        try {
+          const text = await callGemini({ name: 'gemini', key: ENV.GEMINI_API_KEY, model: m }, INSPECT2_SYSTEM, prompt, 1500, Math.min(25000, left - 1000));
+          const d = extractJson(text || '');
+          if (!d || typeof d.score !== 'number') { console.error('inspect2 bad output', m); continue; }
+          if (reportWallet) { reportWallet.rc = (reportWallet.rc || 0) - 1; await setWallet(body.wid, reportWallet); }
+          return res.status(200).json({
+            model: m, score: Math.max(0, Math.min(100, Math.round(d.score))),
+            verdict: ['good', 'attention', 'problem'].includes(d.verdict) ? d.verdict : 'attention', verdict_label: clip(d.verdict_label, 40),
+            confidence: ['high', 'medium', 'low'].includes(d.confidence) ? d.confidence : 'medium', summary: clip(d.summary, 500),
+            red_flags: Array.isArray(d.red_flags) ? d.red_flags.slice(0, 8).map(f => ({ title: clip(f && f.title, 100), stage: clip(f && f.stage, 40), advice: clip(f && f.advice, 200) })).filter(f => f.title) : [],
+            common_issues: Array.isArray(d.common_issues) ? d.common_issues.slice(0, 6).map(x => clip(x, 160)) : [],
+            repair_cost_sar: Math.max(0, Math.round(Number(d.repair_cost_sar) || 0)), offer_price_sar: Math.max(0, Math.round(Number(d.offer_price_sar) || 0)),
+            seller_line: clip(d.seller_line, 300)
+          });
+        } catch (e) { console.error('inspect2 fail:', m, String(e.message || e).slice(0, 200)); }
+      }
+      return res.status(502).json({ error: 'ai_failed' });
+    }
+
     if (body.mode === 'invoice') {
       const image = String(body.image || '');
       if (!image || image.length > 4_000_000 || !/^[A-Za-z0-9+/=]+$/.test(image.slice(0, 200))) return res.status(400).json({ error: 'bad_image' });
@@ -714,6 +1220,7 @@ async function handle(req, res) {
     return res.status(400).json({ error: 'unknown_mode' });
   } catch (e) {
     console.error(e);
+    try { const k = 'ev:ai_fail:' + dayKey(); BG(kv(['INCR', k]).then(() => kv(['EXPIRE', k, 45 * 864e2]))); } catch (x) {}
     return res.status(502).json({ error: 'ai_failed' });
   }
 }
@@ -732,7 +1239,7 @@ function initEnv() {
   KV_URL = ENV.KV_REST_API_URL || ENV.UPSTASH_REDIS_REST_URL || '';
   KV_TOKEN = ENV.KV_REST_API_TOKEN || ENV.UPSTASH_REDIS_REST_TOKEN || '';
   FREE_PER_IP_DAY = Math.max(1, parseInt(ENV.FREE_PER_IP_DAY || '3'));
-  OWNER = String(ENV.OWNER_EMAIL || 'majed111333sj@gmail.com').toLowerCase();
+  OWNER = String(ENV.OWNER_EMAIL || '').trim().toLowerCase();   // بريد المالك من متغير البيئة OWNER_EMAIL في Cloudflare (لا يُكتب في الكود)
   FIREBASE_WEB_KEY = ENV.FIREBASE_API_KEY || 'AIzaSyACt18eL1b_k0udQwXNH0dq56DmMXL8iLE';
 }
 
