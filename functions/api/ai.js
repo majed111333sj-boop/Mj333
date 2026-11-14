@@ -407,6 +407,59 @@ async function lemonWebhook(rawBody, signature) {
   await kv(['SET', rid, '1', 'EX', 2 * 365 * 864e2]); await kv(['INCR', 'stat:refund:' + product]);
   return [200, { ok: true, refunded: true }];
 }
+// ---------- Whop: Webhook موقّع (Standard Webhooks: webhook-id / webhook-timestamp / webhook-signature) ----------
+async function hmacB64(secret, msg) {
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = new Uint8Array(await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(msg)));
+  let b = ''; sig.forEach(x => { b += String.fromCharCode(x); }); return btoa(b);
+}
+// أول نص في الحمولة يطابق نمط رقم المحفظة (تحمّلاً لاختلاف مكان metadata في حمولة Whop)
+function deepFindWid(o, d = 0) {
+  if (d > 6 || o == null) return null;
+  if (typeof o === 'string') { const m = o.match(/(?:^|[^a-z0-9_])(w_[a-z0-9]{12,24})(?![a-z0-9_])/); return m ? m[1] : null; }
+  if (typeof o === 'object') { for (const k of Object.keys(o)) { const r = deepFindWid(o[k], d + 1); if (r) return r; } }
+  return null;
+}
+async function whopWebhook(rawBody, h) {
+  const secret = ENV.WHOP_WEBHOOK_SECRET;
+  if (!secret || !KV_URL) return [503, { error: 'not_configured' }];
+  const id = h.get('webhook-id') || '', ts = h.get('webhook-timestamp') || '', sigHdr = h.get('webhook-signature') || '';
+  if (!id || !/^\d{9,12}$/.test(ts) || Math.abs(Date.now() / 1000 - Number(ts)) > 300) return [401, { error: 'bad_timestamp' }];
+  const expect = await hmacB64(secret, id + '.' + ts + '.' + rawBody);
+  const okSig = sigHdr.split(' ').some(p => { const [v, sig] = p.split(','); return v === 'v1' && sig && safeEqual(sig, expect); });
+  if (!okSig) return [401, { error: 'bad_signature' }];
+  let ev; try { ev = JSON.parse(rawBody); } catch (e) { return [400, { error: 'bad_json' }]; }
+  const type = String(ev.type || ev.action || ev.event || ''), d = ev.data || {};
+  const pid = String(d.id || '');
+  if (type === 'payment.succeeded') {
+    if (!pid) return [200, { ok: true, ignored: 'no_id' }];
+    const oid = 'order:whop:' + pid;
+    if (await kv(['EXISTS', oid])) return [200, { ok: true, duplicate: true }];
+    const names = [d.product && (d.product.title || d.product.name), d.plan && (d.plan.title || d.plan.name), d.product_title, d.plan_title, d.description, d.name].filter(x => typeof x === 'string').join(' ').toLowerCase();
+    let map = {}; try { map = JSON.parse(ENV.WHOP_PRODUCTS || '{}'); } catch (e) {}   // اختياري: {"plan_xxx":"full"}
+    const ids = [d.plan && d.plan.id, d.plan_id, d.product && d.product.id, d.product_id].filter(Boolean);
+    const product = (ids.map(i => map[i]).find(Boolean)) || productFromName(names);
+    const wid = deepFindWid(d.metadata) || deepFindWid(d);
+    if (!product) { await kv(['SET', 'whop:unmapped:' + pid, rawBody.slice(0, 4000), 'EX', 90 * 864e2]); return [200, { ok: true, unmapped: true }]; }
+    if (!validWid(wid)) { await kv(['SET', 'whop:nowallet:' + pid, JSON.stringify({ product }), 'EX', 365 * 864e2]); return [200, { ok: true, no_wallet: true }]; }
+    const w = await getWallet(wid); applyProduct(w, product); await setWallet(wid, w);
+    await kv(['SET', oid, JSON.stringify({ wid, product, at: Date.now() }), 'EX', 2 * 365 * 864e2]);
+    await kv(['INCR', 'stat:paid:' + product]);
+    return [200, { ok: true }];
+  }
+  if (type === 'refund.created' || type === 'refund.updated') {   // نعرف الأصل من رقم الدفعة المحفوظ عند الشراء
+    const ref = String((d.payment && d.payment.id) || d.payment_id || '');
+    if (!ref || (d.status && !/succe|complet|refund/i.test(String(d.status)))) return [200, { ok: true, ignored: 'refund_state' }];
+    const rid = 'refund:whop:' + ref;
+    if (await kv(['EXISTS', rid])) return [200, { ok: true, duplicate: true }];
+    const raw = await kv(['GET', 'order:whop:' + ref]); if (!raw) return [200, { ok: true, unknown_order: true }];
+    const o = JSON.parse(raw), w = await getWallet(o.wid);
+    revertProduct(w, o.product); await setWallet(o.wid, w);
+    await kv(['SET', rid, '1', 'EX', 2 * 365 * 864e2]); await kv(['INCR', 'stat:refund:' + o.product]);
+    return [200, { ok: true, refunded: true }];
+  }
+  return [200, { ok: true, ignored: type }];
+}
 function applyProduct(w, product) {
   const p = PRODUCTS[product]; if (!p) return false;
   if (p.days) w.pass = Math.max(w.pass || 0, Date.now()) + p.days * 864e5;
@@ -1387,6 +1440,10 @@ export async function onRequest(context) {
   headers['x-forwarded-for'] = request.headers.get('cf-connecting-ip') || headers['x-forwarded-for'] || '';
   if (!headers.host) { try { headers.host = new URL(request.url).host; } catch (e) {} }
   const body = request.method === 'POST' ? await request.text() : '';
+  if (new URL(request.url).searchParams.get('src') === 'whop' && request.method === 'POST') {
+    const [st, o] = await whopWebhook(body, request.headers);
+    return new Response(JSON.stringify(o), { status: st, headers: { 'content-type': 'application/json' } });
+  }
   if (new URL(request.url).searchParams.get('src') === 'lemon' && request.method === 'POST') {
     const [st, o] = await lemonWebhook(body, request.headers.get('x-signature'));
     return new Response(JSON.stringify(o), { status: st, headers: { 'content-type': 'application/json' } });

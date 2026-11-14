@@ -352,3 +352,28 @@ test('3.3.0: دمج محفظة الجهاز المدفوعة في محفظة ا�
   const again = await api({ mode: 'acct_link', wid: wb, token: 'tok-ali' });
   assert.equal(again.json.cr.full, 2);   // لا مضاعفة
 });
+
+async function whop(type, data, { secret = 'ws_test', id = 'msg_' + Math.random().toString(36).slice(2), ts = Math.floor(Date.now() / 1000) } = {}) {
+  const raw = JSON.stringify({ type, data });
+  const sig = 'v1,' + crypto.createHmac('sha256', secret).update(id + '.' + ts + '.' + raw).digest('base64');
+  const req = new Request('https://app.test/api/ai?src=whop', { method: 'POST', body: raw, headers: { 'webhook-id': id, 'webhook-timestamp': String(ts), 'webhook-signature': sig } });
+  const res = await onRequest({ env: Object.assign({}, ENV, { WHOP_WEBHOOK_SECRET: 'ws_test' }), request: req, waitUntil: () => {} });
+  return { status: res.status, json: await res.json() };
+}
+test('3.3.0 Whop: توقيع خاطئ أو قديم يُرفض', async () => {
+  assert.equal((await whop('payment.succeeded', { id: 'pay_1' }, { secret: 'bad' })).status, 401);
+  assert.equal((await whop('payment.succeeded', { id: 'pay_1' }, { ts: 1000000000 })).status, 401);
+});
+test('3.3.0 Whop: الدفع يمنح الرصيد مرة واحدة، والاسترجاع يخصمه', async () => {
+  const w = wid(), d = { id: 'pay_' + did(), product: { title: 'أسعار القطع' }, metadata: { wid: w } };
+  assert.equal((await whop('payment.succeeded', d)).json.ok, true);
+  assert.equal((await whop('payment.succeeded', d)).json.duplicate, true);
+  assert.equal((await api({ mode: 'wallet', wid: w })).json.cr.prices, 1);
+  const rf = await whop('refund.created', { id: 'rf_1', payment: { id: d.id }, status: 'succeeded' });
+  assert.equal(rf.json.refunded, true);
+  assert.equal((await api({ mode: 'wallet', wid: w })).json.cr.prices, 0);
+});
+test('3.3.0 Whop: منتج مجهول أو بلا محفظة لا يمنح شيئاً ويُحفظ للمراجعة', async () => {
+  assert.equal((await whop('payment.succeeded', { id: 'pay_x', product: { title: 'شيء آخر' }, metadata: { wid: wid() } })).json.unmapped, true);
+  assert.equal((await whop('payment.succeeded', { id: 'pay_y', product: { title: 'الفحص الوافي' } })).json.no_wallet, true);
+});
