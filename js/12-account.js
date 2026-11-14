@@ -37,7 +37,8 @@ async function acctLink() {
     if (r.status !== 200 || !r.json || !r.json.wid) { Acct.msg = r.status === 401 ? 'تعذر التحقق من الحساب، حاول مرة أخرى.' : 'تعذر الربط الآن، حاول بعد قليل.'; return false; }
     const changed = r.json.wid !== store.get('sd_wallet', null);
     if (changed) store.set('sd_wallet', r.json.wid);
-    store.set('sd_acct', r.json.email || u.email || 'حساب جوجل');
+    store.set('sd_acct', u.email || r.json.email || 'حساب جوجل');
+    store.set('sd_acct_name', String(u.displayName || '').trim().split(/\s+/)[0] || '');
     Acct.msg = '';
     if (typeof walletRefresh === 'function') await walletRefresh();
     return true;
@@ -88,3 +89,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 // قبل الدفع نذكّر بالتسجيل حتى لا يضيع الرصيد؛ تُستدعى بعد كل فتح لنافذة الدفع
 window.renderAcct = renderAcct;
+
+// ---------- عند أول عملية شراء: تسجيل بضغطة واحدة (الاسم والبريد يأتيان من جوجل) ----------
+function acctNeeded() {
+    if (acctEmail()) return false;
+    const sk = store.get('sd_acct_skip', 0);
+    return !(sk && Date.now() - sk < 30 * 864e5);   // من اختار المتابعة بدون حساب لا نسأله شهراً
+}
+function acctPrefill() {   // يُضاف لرابط الدفع فلا يكتب المشتري بياناته مرة ثانية
+    const e = store.get('sd_acct', null), n = store.get('sd_acct_name', '');
+    if (!e || !/^[^@\s]+@[^@\s]+$/.test(e)) return '';
+    return '&checkout[email]=' + encodeURIComponent(e) + (n ? '&checkout[name]=' + encodeURIComponent(n) : '');
+}
+function acctAsk(k) {
+    let m = document.getElementById('acct-ask');
+    if (m) m.remove();
+    m = el('div', 'fixed inset-0 bg-black/75 z-[90] flex items-center justify-center p-4'); m.id = 'acct-ask';
+    const c = el('div', 'bg-white w-full max-w-sm rounded-2xl p-4 space-y-2.5 shadow-2xl'); m.appendChild(c);
+    c.appendChild(el('h3', 'font-black text-sm', '👋 خطوة واحدة قبل الدفع'));
+    c.appendChild(el('p', 'text-[12px] text-slate-600 leading-relaxed', 'سجّل بضغطة واحدة بحساب جوجل (يأخذ اسمك الأول وبريدك تلقائياً). فيُحفظ رصيدك معك على أي جوال، ويصلك إيصال الدفع.'));
+    const err = el('p', 'text-[11px] font-bold text-red-700'); c.appendChild(err);
+    const g = el('button', 'w-full min-h-[48px] rounded-xl bg-slate-900 text-white font-black text-[13px]', 'متابعة بحساب جوجل'); g.type = 'button';
+    g.onclick = async () => { g.disabled = true; await acctGoogle(); g.disabled = false; if (acctEmail()) { m.remove(); buyProduct(k); } else err.textContent = Acct.msg || ''; };
+    c.appendChild(g);
+    const sk = el('button', 'w-full text-[11px] underline text-slate-500 py-1.5', 'متابعة الدفع بدون حساب'); sk.type = 'button';
+    sk.onclick = () => { store.set('sd_acct_skip', Date.now()); m.remove(); buyProduct(k); };
+    c.appendChild(sk);
+    document.body.appendChild(m);
+}

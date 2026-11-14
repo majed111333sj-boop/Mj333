@@ -259,6 +259,7 @@ async function watchTam() {
     }
 }
 function buyProduct(k) {
+    if (typeof acctNeeded === 'function' && acctNeeded()) return acctAsk(k);   // أول عملية شراء: تسجيل بضغطة واحدة
     const links = Object.assign({}, PAY_LINKS, (Wallet.state && Wallet.state.links) || {});
     const link = links[k];
     if (!link) { if (((Wallet.state && Wallet.state.tam) || {})[k]) return tamBuy(k); alert('الدفع الإلكتروني سيتوفر قريباً.\nإذا لديك كود تفعيل، أدخله في الأسفل.'); $('pm-code').focus(); return; }
@@ -268,8 +269,9 @@ function buyProduct(k) {
         location.href = link + (link.includes('?') ? '&' : '?') + 'd2c=true&metadata[wid]=' + encodeURIComponent(walletId()) + '&metadata[product]=' + encodeURIComponent(k);
         return;
     }
+    const pre = typeof acctPrefill === 'function' ? acctPrefill() : '';   // الاسم والبريد جاهزان في صفحة الدفع
     const url = link.replace('{WID}', encodeURIComponent(walletId()))
-        + (link.includes('{WID}') ? '' : (link.includes('?') ? '&' : '?') + 'checkout[custom][wid]=' + encodeURIComponent(walletId()));
+        + (link.includes('{WID}') ? '' : (link.includes('?') ? '&' : '?') + 'checkout[custom][wid]=' + encodeURIComponent(walletId())) + pre;
     store.set('sd_pay_pending', Object.assign({ k, at: Date.now() }, paySnap())); track('checkout_click');
     location.href = url;
 }
