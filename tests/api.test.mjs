@@ -385,7 +385,7 @@ test('3.3.0 Whop: إنشاء جلسة دفع تحمل المحفظة والمن�
   const env = { WHOP_API_KEY: 'k', WHOP_WEBHOOK_SECRET: 'ws_test', WHOP_PLAN_PRICES: 'plan_abc12345' };
   const r = await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env });
   assert.equal(r.status, 200); assert.match(r.json.url, /^https:\/\/whop\.com\/checkout\//);
-  assert.deepEqual(globalThis.__whopReq, { plan_id: 'plan_abc12345', mode: 'payment', metadata: { wid: w, product: 'prices' } });
+  assert.deepEqual(globalThis.__whopReq, { variant_id: 'plan_abc12345', mode: 'payment', metadata: { wid: w, product: 'prices' } });
   assert.equal((await api({ mode: 'whop_checkout', wid: w, product: 'nope' }, { env })).status, 400);
   assert.equal((await api({ mode: 'whop_checkout', wid: w, product: 'full' }, { env })).status, 503);   // معرّف الخطة غير مضبوط
   assert.equal((await api({ mode: 'wallet', wid: w }, { env })).json.whop, true);
