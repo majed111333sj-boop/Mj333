@@ -813,10 +813,16 @@ const TOOLS = [
     ['lights', 'لمبات الطبلون', 'صوّر اللمبة واعرف معناها'],
     ['code', 'قراءة كود العطل', 'معنى الكود وما يجب فعله']
 ];
+// قسمان: الأدوات الأساسية (أول ثلاث) والفرعية (الباقي)
+const MAIN_TOOLS = ['camera', 'sound', 'vibration'];
 function showPicker() {
     $('title').textContent = 'أدوات الفحص'; $('subtitle').textContent = 'استخدم أي أداة وحدها لسيارتك';
-    const box = $('v-pick'); box.classList.remove('hidden'); box.style.cssText = 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px';
-    TOOLS.forEach(([k, n, d]) => { const a = el('a', 'card'); a.href = k === 'code' ? '/?tab=code' : 'tools.html?t=' + k; a.style.cssText = 'text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:4px;min-height:96px'; a.appendChild(el('b', null, n)); a.appendChild(el('span', 'muted', d)); box.appendChild(a); });
+    const box = $('v-pick'); box.classList.remove('hidden'); box.style.cssText = 'display:block';
+    [['أدوات الفحص الأساسية', 'الأقوى تحليلاً: كاميرا وصوت واهتزاز', t => MAIN_TOOLS.includes(t[0])], ['أدوات الفحص الفرعية', 'فحوصات سريعة ومحددة', t => !MAIN_TOOLS.includes(t[0])]].forEach(([h, sub, f]) => {
+        const head = el('div'); head.style.cssText = 'margin:14px 2px 8px'; head.appendChild(el('b', null, h)); head.appendChild(el('div', 'muted', sub)); box.appendChild(head);
+        const grid = el('div'); grid.style.cssText = 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px'; box.appendChild(grid);
+        TOOLS.filter(f).forEach(([k, n, d]) => { const a = el('a', 'card'); a.href = k === 'code' ? '/?tab=code' : 'tools.html?t=' + k; a.style.cssText = 'text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:4px;min-height:96px'; a.appendChild(el('b', null, n)); a.appendChild(el('span', 'muted', d)); grid.appendChild(a); });
+    });
 }
 function init() {
     if (FLOW) {
