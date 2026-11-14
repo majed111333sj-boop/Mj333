@@ -343,10 +343,10 @@ function variantMap() {   // LEMON_VARIANTS = "123456:day,123457:day3,123458:ann
 }
 // المنتج من اسمه في Lemon (احتياطاً إن لم يُضبط LEMON_VARIANTS): الأخص أولاً
 function productFromName(n) {
-  n = String(n || '').toLowerCase();
+  n = String(n || '').toLowerCase().replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));   // أرقام عربية ← لاتينية
   if (/report|تقرير|used|مستعمل/.test(n)) return 'report';
   if (/tool|أدوات|ادوات/.test(n)) return 'tools';
-  if (/pack|باقة 3|3 فحوص|ثلاث فحوص|three/.test(n)) return 'pack3';
+  if (/pack|باقة\s*3|3\s*فحوص|ثلاث\s*فحوص|three/.test(n)) return 'pack3';
   if (/annual|year|سنة|سنوي/.test(n)) return 'annual';
   if (/week|أسبوع|اسبوع/.test(n)) return 'week';
   if (/3 days|3-day|day3|ثلاثة أيام|3 أيام/.test(n)) return 'day3';

@@ -110,6 +110,15 @@ test('باقة 3 فحوصات: تُخصم مرة لكل فحص جديد ولا �
   assert.equal(v.uses, 0); assert.ok(v.unlocked.includes(a));
 });
 
+test('أسماء منتجات Lemon الفعلية في المتجر تُعرف صحيحاً', async () => {
+  const names = { 'الفاحص الذكي – باقة الأدوات': 'tools', 'الفاحص الذكي / باقة ٣ فحوصات': 'pack3', 'الفاحص الذكي / باقة الاسبوع': 'week', 'الفاحص الذكي / باقة اليوم': 'day', 'فحص سيارة مستعملة قبل الشراء': 'report' };
+  for (const [name, prod] of Object.entries(names)) {
+    const w = wid(); await lemon(w, name); const v = (await api({ mode: 'wallet', wid: w })).json;
+    const got = prod === 'tools' ? v.toolUses === 5 : prod === 'pack3' ? v.uses === 3 : prod === 'report' ? v.reports === 1 : v.passUntil > Date.now();
+    assert.ok(got, name);
+  }
+});
+
 test('اليوم والأسبوع: وصول زمني، والاسترجاع يلغيه', async () => {
   const w = wid(); await api(diagBody(w, did()));
   const o = await lemon(w, 'Week - أسبوع كامل');
