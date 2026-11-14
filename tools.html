@@ -14,7 +14,7 @@
     <meta property="og:url" content="https://alfahis.pages.dev/tools.html">
     <meta name="twitter:card" content="summary_large_image">
 <title>أدوات الفحص | الفاحص الذكي</title>
-<script src="js/00-i18n.js?v=3.2.4"></script>
+<script src="js/00-i18n.js?v=3.2.5"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -163,7 +163,7 @@ textarea.f{width:100%;border:1px solid #CBD5E1;border-radius:12px;padding:10px 1
 </div>
 <script>
 // ---------- الإصدار وتسجيل الأخطاء: أي خطأ عند المستخدم يصل للوحة الإدارة (3 كحد أقصى لكل جلسة) ----------
-const APP_VERSION = '3.2.4';
+const APP_VERSION = '3.2.5';
 (() => {
     let n = 0;
     const send = m => { if (n++ >= 3 || location.protocol === 'file:') return; try { fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ mode: 'clienterr', msg: String(m).slice(0, 200), page: location.pathname.slice(-20), ver: APP_VERSION, ua: navigator.userAgent.slice(0, 60) }) }).catch(() => {}); } catch (e) {} };
@@ -239,10 +239,10 @@ async function api(body, ms) {
 }
 const passActive = () => !!(WS && WS.passUntil > Date.now());
 // الأدوات المستقلة خارج باقات اليوم والأسبوع: الخدمة المجانية، أو باقة الأدوات، أو داخل فحص مستعملة مدفوع
-// الأدوات الأساسية (كاميرا/صوت/اهتزاز) 9 ر.س للاستخدام، والفرعية 3.5 ر.س
+// الأدوات الأساسية (كاميرا/صوت/اهتزاز) 9 ر.س للاستخدام، والفرعية 3 ر.س
 const MAIN_TOOLS_SET = ['camera', 'sound', 'vibration'];
 const toolClass = () => (TOOL === 'parts' ? 'prices' : MAIN_TOOLS_SET.includes(TOOL) ? 'toolmain' : 'toolsub');   // أسعار القطع تُحسب برصيد «أسعار القطع» (3.5)
-const toolPriceText = () => (window.SD && SD.price(toolClass())) || (toolClass() === 'toolmain' ? '9 ر.س' : toolClass() === 'prices' ? '4 ر.س' : '3.5 ر.س');
+const toolPriceText = () => (window.SD && SD.price(toolClass())) || (toolClass() === 'toolmain' ? '9 ر.س' : toolClass() === 'prices' ? '4 ر.س' : '3 ر.س');
 function canUse() { return FLOW || !WS || WS.offline || WS.freeAvailable || (WS.freeDid && WS.freeDid === DID) || passActive() || ((WS.cr || {})[{ toolmain: 'tm', toolsub: 'ts', prices: 'prices' }[toolClass()]] || 0) > 0 || (WS.toolUses || 0) > 0; }
 function payNeeded() {
     if (FLOW) { alert('هذا الفحص غير مفعّل أو انتهت صلاحيته. اطلب من صاحب الفحص رابطاً جديداً.'); return; }
