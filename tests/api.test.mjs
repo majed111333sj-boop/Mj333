@@ -44,6 +44,11 @@ globalThis.fetch = async (url, init) => {
     if (geminiText == null) return new Response('no', { status: 500 });
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: geminiText }] } }] }), { status: 200 });
   }
+  if (u.includes('identitytoolkit.googleapis.com')) {
+    const tok = JSON.parse(init.body).idToken;
+    const users = { 'tok-ali': { localId: 'uid-ali', email: 'ali@example.com', providerUserInfo: [{ providerId: 'google.com' }] }, 'tok-anon': { localId: 'uid-anon', providerUserInfo: [] } };
+    return users[tok] ? new Response(JSON.stringify({ users: [users[tok]] }), { status: 200 }) : new Response('{"error":"bad"}', { status: 400 });
+  }
   return new Response('{}', { status: 404 });
 };
 
@@ -317,3 +322,33 @@ test('أسماء منتجات Lemon كما كُتبت فعلاً في المتج
 
 globalThis.fetch = globalThis.fetch;   // (realFetch محفوظ للتوثيق فقط)
 void realFetch;
+
+test('3.3.0: ربط الحساب: يربط المحفظة، ويرفض المجهول والرمز الخاطئ', async () => {
+  const w = wid();
+  assert.equal((await api({ mode: 'acct_link', wid: w, token: 'bad' })).status, 401);
+  assert.equal((await api({ mode: 'acct_link', wid: w, token: 'tok-anon' })).status, 401);
+  assert.equal((await api({ mode: 'acct_link', wid: 'x', token: 'tok-ali' })).status, 400);
+  const r = await api({ mode: 'acct_link', wid: w, token: 'tok-ali' });
+  assert.equal(r.status, 200); assert.equal(r.json.wid, w); assert.equal(r.json.merged, false); assert.equal(r.json.email, 'a***@example.com');
+});
+
+test('3.3.0: جهاز جديد: الدخول بنفس الحساب يعيد المحفظة الأصلية بأرصدتها، ولا يضاعفها التكرار', async () => {
+  const w1 = wid(), w2 = wid();
+  await lemon(w1, 'الفحص الوافي'); await lemon(w1, 'أسعار القطع');
+  await api({ mode: 'acct_link', wid: w1, token: 'tok-ali' });
+  const r = await api({ mode: 'acct_link', wid: w2, token: 'tok-ali' });   // جهاز آخر برصيد فارغ
+  assert.equal(r.json.wid, w1); assert.equal(r.json.cr.full, 1); assert.equal(r.json.cr.prices, 1);
+  const r2 = await api({ mode: 'acct_link', wid: w2, token: 'tok-ali' });   // تكرار
+  assert.equal(r2.json.cr.full, 1); assert.equal(r2.json.merged, false);
+});
+
+test('3.3.0: دمج محفظة الجهاز المدفوعة في محفظة الحساب مرة واحدة فقط', async () => {
+  const wa = wid(), wb = wid();
+  await lemon(wa, 'الفحص الوافي'); await api({ mode: 'acct_link', wid: wa, token: 'tok-ali' });
+  await lemon(wb, 'الفحص الوافي'); await lemon(wb, 'ترقية إلى الفحص الوافي');
+  const r = await api({ mode: 'acct_link', wid: wb, token: 'tok-ali' });
+  assert.equal(r.json.wid, wa); assert.equal(r.json.merged, true); assert.equal(r.json.cr.full, 2); assert.equal(r.json.cr.upg, 1);
+  const old = await api({ mode: 'wallet', wid: wb }); assert.equal(old.json.cr.full, 0);   // القديمة فُرّغت
+  const again = await api({ mode: 'acct_link', wid: wb, token: 'tok-ali' });
+  assert.equal(again.json.cr.full, 2);   // لا مضاعفة
+});

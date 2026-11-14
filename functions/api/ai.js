@@ -250,7 +250,7 @@ const QUESTIONS_SYSTEM = `أنت فني سيارات خبير في دول الخ
 // =====================================================================
 // 💳 نظام الدفع: خدمة واحدة مجانية لكل مستخدم، ثم "تذكرة وصول كامل" لمدة يوم (أو أيام/سنة)
 // =====================================================================
-const PAY_MODES = new Set(['wallet', 'use_free', 'redeem', 'codes_create', 'pay_stats', 'pay_webhook', 'tamclaim', 'tam_list', 'tam_decide', 'set_free_choice', 'upgrade', 'use_prices']);
+const PAY_MODES = new Set(['wallet', 'use_free', 'redeem', 'codes_create', 'pay_stats', 'pay_webhook', 'tamclaim', 'tam_list', 'tam_decide', 'set_free_choice', 'upgrade', 'use_prices', 'acct_link']);
 // uses = فحوصات (باقة 3)، days = وصول زمني، rc = فحص مستعملة، tu = استخدامات أدوات. day3 و annual قديمتان: نحترمهما لمن اشتراهما ولا تُباعان
 // نموذج 3.2.0: رصيد لكل خدمة (cr). full = الفحص الوافي حتى التقرير، diag = فحص السيارة + قطع الأعطال، upgrade = ترقية فحص إلى الوافي،
 // prices = أسعار القطع، toolmain = أداة أساسية (كاميرا/صوت/اهتزاز)، toolsub = أداة فرعية، report = فحص مستعملة، report5 = 5 فحوصات مستعملة (صالحة 6 أشهر)
@@ -544,6 +544,27 @@ async function payHandler(body, ip, res) {
     const w = await getWallet(wid);
     const g = passActive(w) ? { ok: true } : await pricesAccess(body, w);
     return res.status(g.ok ? 200 : 402).json(Object.assign({ ok: g.ok }, await walletView(wid, ip, await getWallet(wid), body.cc)));
+  }
+
+  // ربط المحفظة بحساب (جوجل): الرصيد يتبع الحساب لا الجهاز. بدون حساب يبقى كل شيء كما هو.
+  if (body.mode === 'acct_link') {
+    if (!validWid(wid)) return res.status(400).json({ error: 'bad_wallet' });
+    const u = await verifyAccount(body.token);
+    if (!u) return res.status(401).json({ error: 'bad_token' });
+    const ak = 'acct:' + u.uid;
+    let aw = await kv(['GET', ak]);
+    if (!aw || !validWid(aw)) {
+      const set = await kv(['SET', ak, wid, 'NX']);   // NX: لا يتجاوز ربطاً سبقه (سباق طلبين)
+      aw = set ? wid : await kv(['GET', ak]);
+    }
+    let merged = false;
+    if (aw !== wid) {
+      const cur = await getWallet(wid), acc = await getWallet(aw);
+      if (!cur.mg) { mergeWallets(acc, cur); cur.mg = aw; cur.cr = {}; cur.uses = 0; cur.tu = 0; cur.rc = 0; cur.pass = 0; cur.unl = []; cur.ful = []; cur.pu = []; cur.fc = null; await setWallet(aw, acc); await setWallet(wid, cur); merged = true; }
+    }
+    await kv(['SET', 'wacct:' + aw, u.uid, 'EX', 3 * 365 * 24 * 3600]);
+    await kv(['INCR', 'stat:acct:' + (merged ? 'merge' : 'link')]);
+    return res.status(200).json(Object.assign({ ok: true, wid: aw, merged, email: maskEmail(u.email) }, await walletView(aw, ip, await getWallet(aw), body.cc)));
   }
 
   if (body.mode === 'redeem') {
@@ -847,6 +868,29 @@ async function verifyOwner(token) {
     const u = (d.users || [])[0];
     return u && String(u.email || '').toLowerCase() === OWNER ? u.email : null;
   } catch (e) { return null; }
+}
+
+// التحقق من حساب زائر مسجّل (غير مجهول) عبر رمز Firebase. يُرجع {uid,email} أو null
+async function verifyAccount(token) {
+  if (!token || typeof token !== 'string' || token.length > 4000) return null;
+  try {
+    const d = await post('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + FIREBASE_WEB_KEY, { 'content-type': 'application/json' }, { idToken: token }, 6000);
+    const u = (d.users || [])[0];
+    if (!u || !u.localId || !Array.isArray(u.providerUserInfo) || !u.providerUserInfo.length) return null;   // الزائر المجهول لا يملك مزوّد دخول
+    return { uid: String(u.localId), email: String(u.email || '') };
+  } catch (e) { return null; }
+}
+const maskEmail = e => { const m = String(e || '').match(/^(.).*?(@.+)$/); return m ? m[1] + '***' + m[2] : ''; };
+// دمج محفظة الجهاز في محفظة الحساب: الأرصدة تُجمع، والصلاحيات بأطولها، والقوائم اتحاداً
+function mergeWallets(a, c) {
+  a.cr = a.cr || {}; Object.keys(c.cr || {}).forEach(k => { a.cr[k] = (a.cr[k] || 0) + (c.cr[k] || 0); });
+  a.uses = (a.uses || 0) + (c.uses || 0); a.tu = (a.tu || 0) + (c.tu || 0);
+  if (c.rc) { a.rc = (a.rc || 0) + c.rc; a.rcx = Math.max(a.rcx || 0, c.rcx || 0); }
+  a.pass = Math.max(a.pass || 0, c.pass || 0); a.paid = !!(a.paid || c.paid);
+  const un = (x, y, n) => Array.from(new Set((x || []).concat(y || []))).slice(-n);
+  a.unl = un(a.unl, c.unl, 100); a.ful = un(a.ful, c.ful, 100); a.pu = un(a.pu, c.pu, 50);
+  if (!a.fc && c.fc) { a.fc = c.fc; a.freeDid = a.freeDid || c.freeDid; a.fpu = a.fpu || c.fpu; }
+  return a;
 }
 
 const RESEARCH_SYSTEM = `أنت باحث خبير في أعطال السيارات بسوق الخليج والسعودية. ابحث في الإنترنت عن الموضوع المعطى، ثم لخّص النتيجة بكلماتك (لا تنسخ نصوصاً) في صف واحد لقاعدة معرفة تطبيق تشخيص.
