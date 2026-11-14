@@ -626,7 +626,7 @@ async function payHandler(body, ip, res) {
     if (!validWid(wid) || !SELLABLE.includes(body.product)) return res.status(400).json({ error: 'bad_request' });
     if (!whopReady()) return res.status(503).json({ error: 'not_configured' });
     const plan = String(ENV['WHOP_PLAN_' + body.product.toUpperCase()] || '').trim();
-    if (!/^plan_[A-Za-z0-9]{6,40}$/.test(plan)) return res.status(503).json({ error: 'plan_missing' });
+    if (!/^plan_[A-Za-z0-9]{6,40}$/.test(plan)) return res.status(503).json({ error: 'plan_missing', detail: body.product });
     try {
       const r = await post('https://api.whop.com/api/v1/checkout_configurations', { 'content-type': 'application/json', authorization: 'Bearer ' + ENV.WHOP_API_KEY }, { plan_id: plan, mode: 'payment', metadata: { wid, product: body.product } }, 8000);
       const url = String(r.purchase_url || '');
@@ -634,7 +634,7 @@ async function payHandler(body, ip, res) {
       if (!link) return res.status(502).json({ error: 'no_checkout' });
       await kv(['INCR', 'stat:checkout:' + body.product]);
       return res.status(200).json({ ok: true, url: link });
-    } catch (e) { return res.status(502).json({ error: 'whop_failed' }); }
+    } catch (e) { return res.status(502).json({ error: 'whop_failed', detail: String((e && e.message) || e).replace(/apik_[A-Za-z0-9]+/g, '***').slice(0, 220) }); }   // سبب رفض Whop (بلا أسرار) ليظهر للمالك عند التجربة
   }
 
   if (body.mode === 'redeem') {

@@ -263,7 +263,8 @@ async function buyWhop(k) {
     const r = await payApi({ mode: 'whop_checkout', product: k });
     if (r.status === 200 && r.json && r.json.url) { location.href = r.json.url; return; }
     store.del('sd_pay_pending');
-    alert('تعذر فتح صفحة الدفع الآن، حاول بعد قليل.');
+    const j = r.json || {};
+    alert('تعذر فتح صفحة الدفع الآن، حاول بعد قليل.' + (j.error ? '\n\n[' + r.status + ' ' + j.error + (j.detail ? ': ' + j.detail : '') + ']' : ''));
 }
 function buyProduct(k) {
     if (typeof acctNeeded === 'function' && acctNeeded()) return acctAsk(k);   // أول عملية شراء: تسجيل بضغطة واحدة
