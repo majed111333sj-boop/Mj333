@@ -243,10 +243,18 @@ const QUESTIONS_SYSTEM = `أنت فني سيارات خبير في دول الخ
 // =====================================================================
 // 💳 نظام الدفع: خدمة واحدة مجانية لكل مستخدم، ثم "تذكرة وصول كامل" لمدة يوم (أو أيام/سنة)
 // =====================================================================
-const PAY_MODES = new Set(['wallet', 'use_free', 'redeem', 'codes_create', 'pay_stats', 'pay_webhook', 'tamclaim', 'tam_list', 'tam_decide', 'set_free_choice']);
+const PAY_MODES = new Set(['wallet', 'use_free', 'redeem', 'codes_create', 'pay_stats', 'pay_webhook', 'tamclaim', 'tam_list', 'tam_decide', 'set_free_choice', 'upgrade', 'use_prices']);
 // uses = فحوصات (باقة 3)، days = وصول زمني، rc = فحص مستعملة، tu = استخدامات أدوات. day3 و annual قديمتان: نحترمهما لمن اشتراهما ولا تُباعان
-const PRODUCTS = { pack3: { uses: 3 }, day: { days: 1 }, week: { days: 7 }, report: { rc: 1 }, tools: { tu: 5 }, day3: { days: 3 }, annual: { days: 365 } };
-const SELLABLE = ['pack3', 'day', 'week', 'report', 'tools'];
+// نموذج 3.2.0: رصيد لكل خدمة (cr). full = الفحص الوافي حتى التقرير، diag = فحص السيارة + قطع الأعطال، upgrade = ترقية فحص إلى الوافي،
+// prices = أسعار القطع، toolmain = أداة أساسية (كاميرا/صوت/اهتزاز)، toolsub = أداة فرعية، report = فحص مستعملة، report5 = 5 فحوصات مستعملة (صالحة 6 أشهر)
+// المنتجات القديمة (pack3, day, week, tools, day3, annual) لا تُباع لكن تُحترم لمن اشتراها أو لاسترجاعها
+const PRODUCTS = {
+  full: { cr: { full: 1 } }, diag: { cr: { diag: 1 } }, upgrade: { cr: { upg: 1 } }, prices: { cr: { prices: 1 } },
+  toolmain: { cr: { tm: 1 } }, toolsub: { cr: { ts: 1 } }, report: { rc: 1 }, report5: { rc: 5, rcDays: 183 },
+  pack3: { uses: 3 }, day: { days: 1 }, week: { days: 7 }, tools: { tu: 5 }, day3: { days: 3 }, annual: { days: 365 }
+};
+const SELLABLE = ['full', 'diag', 'upgrade', 'prices', 'toolmain', 'toolsub', 'report', 'report5'];
+const MAIN_TOOLS = new Set(['camera', 'sound', 'vibration']);   // باقي الأدوات فرعية
 const FREE_CHOICES = new Set(['diag_only', 'parts_prices', 'single_tool']);
 // المنطقة من رمز الدولة: لروابط الدفع الخاصة بكل منطقة (LEMON_CHECKOUT_<PRODUCT>_<REGION>)
 const REGION_OF = (() => {
@@ -277,7 +285,7 @@ async function walletView(wid, ip, w, cc) {
   const f = await freeState(wid, ip, w);
   let acc = null;
   try { const a = (await kv(['MGET', 'stat:fb:yes', 'stat:fb:no', 'stat:fb:partial'])) || []; const y = +a[0] || 0, t = y + (+a[1] || 0) + (+a[2] || 0); if (t >= 20) acc = { yes: y, total: t }; } catch (e) {}
-  return { passUntil: passActive(w) ? w.pass : 0, freeAvailable: !f.used, freeDid: f.did, freeChoice: w.fc || null, paid: !!w.paid, uses: w.uses || 0, toolUses: w.tu || 0, unlocked: (w.unl || []).slice(-60), reports: w.rc || 0, links: checkoutLinks(cc), tam: tamLinks(), cfg: appConfig(), accuracy: acc };
+  return { passUntil: passActive(w) ? w.pass : 0, freeAvailable: !f.used, freeDid: f.did, freeChoice: w.fc || null, paid: !!w.paid, uses: w.uses || 0, toolUses: w.tu || 0, cr: Object.assign({ full: 0, diag: 0, upg: 0, prices: 0, tm: 0, ts: 0 }, w.cr || {}), unlocked: (w.unl || []).slice(-100), fullUnlocked: (w.ful || []).slice(-100), reports: rcValid(w) ? (w.rc || 0) : 0, links: checkoutLinks(cc), tam: tamLinks(), cfg: appConfig(), accuracy: acc };
 }
 // حدود القياس قابلة للضبط من متغير VIB_LIMITS بدون تعديل الكود، مثل: {"idle":[0.02,0.05],"drive":[0.04,0.1],"brake":[1.6,2.5]}
 // حدود الاهتزاز من بيانات حقيقية: الحد الأول أعلى من 90% من السيارات السليمة المؤكدة،
@@ -344,7 +352,13 @@ function variantMap() {   // LEMON_VARIANTS = "123456:day,123457:day3,123458:ann
 // المنتج من اسمه في Lemon (احتياطاً إن لم يُضبط LEMON_VARIANTS): الأخص أولاً
 function productFromName(n) {
   n = String(n || '').toLowerCase().replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));   // أرقام عربية ← لاتينية
-  if (/report|تقرير|used|مستعمل/.test(n)) return 'report';
+  if (/(report|used|مستعمل|تقرير)/.test(n)) return /(5|خمس)/.test(n) ? 'report5' : 'report';
+  if (/ترقية|ترقيه|upgrade/.test(n)) return 'upgrade';
+  if (/أساس|اساس|main|basic/.test(n)) return 'toolmain';
+  if (/فرعي|فرعى|sub|secondary/.test(n)) return 'toolsub';
+  if (/أسعار|اسعار|prices?/.test(n)) return 'prices';
+  if (/وافي|وافى|full|شامل/.test(n)) return 'full';
+  if (/قطع|عطل|diag/.test(n)) return 'diag';
   if (/tool|أدوات|ادوات/.test(n)) return 'tools';
   if (/pack|باقة\s*3|3\s*فحوص|ثلاث\s*فحوص|three/.test(n)) return 'pack3';
   if (/annual|year|سنة|سنوي/.test(n)) return 'annual';
@@ -389,12 +403,15 @@ async function lemonWebhook(rawBody, signature) {
 function applyProduct(w, product) {
   const p = PRODUCTS[product]; if (!p) return false;
   if (p.days) w.pass = Math.max(w.pass || 0, Date.now()) + p.days * 864e5;
-  if (p.rc) w.rc = (w.rc || 0) + p.rc;
+  if (p.rc) { w.rc = (w.rc || 0) + p.rc; w.rcx = Math.max(w.rcx || 0, Date.now() + (p.rcDays || 30) * 864e5); }
   if (p.uses) w.uses = (w.uses || 0) + p.uses;
   if (p.tu) w.tu = (w.tu || 0) + p.tu;
+  if (p.cr) { w.cr = w.cr || {}; Object.keys(p.cr).forEach(k => { w.cr[k] = (w.cr[k] || 0) + p.cr[k]; }); }
   w.paid = 1;   // مشترك: يحق له تقييم دقة التشخيص
   return true;
 }
+// رصيد فحوصات المستعملة صالح خلال مدته (30 يوماً للفحص الواحد، 6 أشهر للحزمة)؛ بلا تاريخ = قديم صالح
+const rcValid = w => (w.rc || 0) > 0 && (!w.rcx || w.rcx > Date.now());
 // استرجاع المبلغ: نخصم ما مُنح بالشراء (لا ينزل شيء عن الصفر)
 function revertProduct(w, product) {
   const p = PRODUCTS[product]; if (!p) return;
@@ -402,6 +419,7 @@ function revertProduct(w, product) {
   if (p.rc) w.rc = Math.max(0, (w.rc || 0) - p.rc);
   if (p.uses) w.uses = Math.max(0, (w.uses || 0) - p.uses);
   if (p.tu) w.tu = Math.max(0, (w.tu || 0) - p.tu);
+  if (p.cr && w.cr) Object.keys(p.cr).forEach(k => { w.cr[k] = Math.max(0, (w.cr[k] || 0) - p.cr[k]); });
 }
 function newCode() {
   const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = 'SD-';
@@ -418,15 +436,11 @@ async function accessGate(body, ip) {
   if (passActive(w)) return { ok: true };
   const did = validDid(body.did) ? body.did : null;
   const unl = Array.isArray(w.unl) ? w.unl : [];
-  if (did && unl.includes(did)) return { ok: true };               // خدمة سبق خصمها من رصيده أو فُتحت له
-  if (GATED_PAID.has(body.mode)) {
-    // مدقق الفاتورة: رصيد فحوصات، أو مرة واحدة لمن اختار «القطع والأسعار» كخدمته المجانية
-    if (body.mode === 'invoice') {
-      if ((w.uses || 0) > 0) return { ok: true };
-      if (w.fc === 'parts_prices' && w.freeDid && !w.fpu) { w.fpu = 1; await setWallet(body.wid, w); return { ok: true }; }
-    }
-    return { ok: false };
-  }
+  const ful = Array.isArray(w.ful) ? w.ful : [];
+  if (body.mode === 'partcheck') return { ok: !!(did && ful.includes(did)) };   // قطع الأعطال: فحص وافٍ فقط
+  if (body.mode === 'invoice') return pricesAccess(body, w);                     // الأسعار: رصيد أسعار أو مرة مجانية
+  if (did && (unl.includes(did) || ful.includes(did))) return { ok: true };      // خدمة سبق خصمها من رصيده أو فُتحت له
+  const tool = typeof body.tool === 'string' && /^[a-z_]{2,24}$/.test(body.tool) ? body.tool : null;
   const f = await freeState(body.wid, ip, w);
   if (f.used && f.did === did && did) return { ok: true };         // نفس الخدمة المجانية
   if (!f.used) {                                                    // الخدمة المجانية الواحدة لم تُستخدم بعد
@@ -438,12 +452,43 @@ async function accessGate(body, ip) {
     return { ok: true };
   }
   // انتهت الخدمة المجانية: نخصم من الرصيد المدفوع (فحوصات للتشخيص، واستخدامات الأدوات للأدوات)
-  if (!did || body.mode === 'inspect') return { ok: false };
-  const tool = body.mode === 'vision' || body.mode === 'measure';
-  if (body.mode === 'questions') return { ok: (w.uses || 0) > 0 };
-  const key = tool ? 'tu' : 'uses';
-  if ((w[key] || 0) < 1) return { ok: false };
-  w[key] -= 1; w.unl = unl.concat(did).slice(-100);
+  if (!did) return { ok: false };
+  const cr = w.cr = w.cr || {};
+  if (body.mode === 'questions') return { ok: (cr.full || 0) + (cr.diag || 0) + (w.uses || 0) > 0 };
+  if (tool) {   // أداة مستقلة: أساسية (كاميرا/صوت/اهتزاز) أو فرعية، ثم الرصيد القديم
+    const key = MAIN_TOOLS.has(tool) ? 'tm' : 'ts';
+    if ((cr[key] || 0) > 0) cr[key] -= 1;
+    else if ((w.tu || 0) > 0) w.tu -= 1;
+    else return { ok: false };
+    w.unl = unl.concat(did).slice(-100);
+    await setWallet(body.wid, w);
+    return { ok: true };
+  }
+  // تشخيص: الوافي (full) يفتح كل شيء، وفحص السيارة + قطع الأعطال (diag) يكفي للتشخيص؛ والرصيد القديم يعامل كوافٍ
+  const wantFull = body.level === 'full';
+  let full = false;
+  if (wantFull && (cr.full || 0) > 0) { cr.full -= 1; full = true; }
+  else if (!wantFull && (cr.diag || 0) > 0) cr.diag -= 1;
+  else if ((cr.full || 0) > 0) { cr.full -= 1; full = true; }
+  else if ((cr.diag || 0) > 0) cr.diag -= 1;
+  else if ((w.uses || 0) > 0) { w.uses -= 1; full = true; }
+  else return { ok: false };
+  w.unl = unl.concat(did).slice(-100);
+  if (full) w.ful = ful.concat(did).slice(-100);
+  await setWallet(body.wid, w);
+  return { ok: true };
+}
+// الأسعار (قراءة الفاتورة والمقارنة): رصيد أسعار، أو رصيد قديم، أو مرة مجانية لمن اختارها؛ نفس did لا يخصم مرتين
+async function pricesAccess(body, w) {
+  const did = validDid(body.did) ? body.did : null;
+  const pu = Array.isArray(w.pu) ? w.pu : [];
+  if (did && pu.includes(did)) return { ok: true };
+  w.cr = w.cr || {};
+  if ((w.cr.prices || 0) > 0) w.cr.prices -= 1;
+  else if ((w.uses || 0) > 0) w.uses -= 1;
+  else if (w.fc === 'parts_prices' && w.freeDid && !w.fpu) w.fpu = 1;
+  else return { ok: false };
+  w.pu = did ? pu.concat(did).slice(-50) : pu;
   await setWallet(body.wid, w);
   return { ok: true };
 }
@@ -470,6 +515,27 @@ async function payHandler(body, ip, res) {
   if (body.mode === 'use_free') {   // لخدمات بدون ذكاء اصطناعي (مثل نتيجة الفحص قبل الشراء)
     if (!validWid(wid) || !validDid(body.did)) return res.status(400).json({ error: 'bad_request' });
     const g = await accessGate(Object.assign({}, body, { mode: 'inspect' }), ip);
+    return res.status(g.ok ? 200 : 402).json(Object.assign({ ok: g.ok }, await walletView(wid, ip, await getWallet(wid), body.cc)));
+  }
+
+  // ترقية فحص سيارة (مفتوح عند صاحبه) إلى الفحص الوافي: تخصم رصيد ترقية، ولا تخصم مرتين لنفس الفحص
+  if (body.mode === 'upgrade') {
+    if (!validWid(wid) || !validDid(body.did)) return res.status(400).json({ error: 'bad_request' });
+    const w = await getWallet(wid);
+    const ful = Array.isArray(w.ful) ? w.ful : [], unl = Array.isArray(w.unl) ? w.unl : [];
+    if (passActive(w) || ful.includes(body.did)) return res.status(200).json(Object.assign({ ok: true, kept: true }, await walletView(wid, ip, w, body.cc)));
+    if (!unl.includes(body.did) && w.freeDid !== body.did) return res.status(404).json({ error: 'unknown_check' });
+    w.cr = w.cr || {};
+    if ((w.cr.upg || 0) < 1) return res.status(402).json({ error: 'payment_required', product: 'upgrade' });
+    w.cr.upg -= 1; w.ful = ful.concat(body.did).slice(-100);
+    await setWallet(wid, w);
+    return res.status(200).json(Object.assign({ ok: true }, await walletView(wid, ip, w, body.cc)));
+  }
+  // استخدام الأسعار (مقارنة بند فاتورة أو سعر قطعة): did واحد = خصم واحد
+  if (body.mode === 'use_prices') {
+    if (!validWid(wid) || !validDid(body.did)) return res.status(400).json({ error: 'bad_request' });
+    const w = await getWallet(wid);
+    const g = passActive(w) ? { ok: true } : await pricesAccess(body, w);
     return res.status(g.ok ? 200 : 402).json(Object.assign({ ok: g.ok }, await walletView(wid, ip, await getWallet(wid), body.cc)));
   }
 
@@ -892,7 +958,7 @@ async function handle(req, res) {
   if (body.mode === 'report_write') {
     if (!KV_URL || !KV_TOKEN || !validWid(body.wid)) return res.status(503).json({ error: 'not_configured' });
     const w = await getWallet(body.wid);
-    if (!passActive(w) && !(validDid(body.did) && (w.unl || []).includes(body.did))) return res.status(402).json({ error: 'payment_required' });
+    if (!passActive(w) && !(validDid(body.did) && (w.ful || []).includes(body.did))) return res.status(402).json({ error: 'payment_required', product: 'upgrade' });
     const text = reportBody(body.facts);
     return res.status(200).json({ summary: clip(body.facts && body.facts.title, 140), body: text, issues: [] });
   }
@@ -916,7 +982,7 @@ async function handle(req, res) {
     const w = await getWallet(body.wid);
     if (KV_ERR) return res.status(503).json({ error: 'busy' });
     if (!passActive(w)) {
-      if ((w.rc || 0) < 1) { BG(kv(['INCR', 'stat:blocked'])); return res.status(402).json({ error: 'payment_required', product: 'report' }); }
+      if (!rcValid(w)) { BG(kv(['INCR', 'stat:blocked'])); return res.status(402).json({ error: 'payment_required', product: 'report' }); }
       reportWallet = w;   // يُخصم بعد نجاح التقرير فقط
     }
   }

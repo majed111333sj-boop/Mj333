@@ -15,12 +15,11 @@
         BR: ['latam', 'BRL', 'R$', 'km', 'pt'], MX: ['latam', 'MXN', 'MX$', 'km', 'es'], AR: ['latam', 'USD', 'US$', 'km', 'es'], CO: ['latam', 'USD', 'US$', 'km', 'es'], CL: ['latam', 'USD', 'US$', 'km', 'es'], PE: ['latam', 'USD', 'US$', 'km', 'es']
     };
     const LANGS = { ar: 'العربية', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', es: 'Español', pt: 'Português' };
-    // أسعار الباقات المعروضة لكل منطقة (المبلغ الفعلي يحدده رابط الدفع لتلك المنطقة). mena تبقى بالريال من PRODUCTS.
-    const P = (a, b, c, d, e) => ({ pack3: a, day: b, week: c, report: d, tools: e });
+    // أسعار الخدمات خارج الشرق الأوسط: بالدولار دائماً (متجر Lemon بالدولار)، والمبلغ الفعلي يحدده رابط الدفع لتلك المنطقة. mena تبقى بالريال من PRODUCTS.
+    const P = (full, diag, upgrade, prices, toolmain, toolsub, report, report5) => ({ full, diag, upgrade, prices, toolmain, toolsub, report, report5 });
     const PRICES = {
-        us: P(2.99, 5.99, 11.99, 9.99, 4.99), eu: P(2.99, 5.99, 11.99, 9.99, 4.99), latam: P(1.99, 3.99, 7.99, 6.99, 2.99),
-        GB: P(2.49, 4.99, 9.99, 8.49, 3.99), CH: P(2.99, 5.99, 11.99, 9.99, 4.99), PL: P(11.99, 22.99, 44.99, 37.99, 17.99),
-        BR: P(9.90, 19.90, 39.90, 34.90, 14.90), MX: P(39, 79, 149, 129, 59)
+        us: P(8.99, 4.99, 5.99, 1.99, 4.99, 1.99, 19.99, 46.99), eu: P(8.99, 4.99, 5.99, 1.99, 4.99, 1.99, 19.99, 46.99),
+        latam: P(3.99, 2.49, 2.99, 1.99, 1.99, 1.99, 7.99, 18.99)
     };
 
     // اجعلها true لطلب الموافقة على إرسال البيانات من مستخدمي الشرق الأوسط أيضاً (قرار قانوني: راجع نظام حماية البيانات)
@@ -40,7 +39,7 @@
         setLang(l) { if (LANGS[l]) { set('sd_lang', l); location.reload(); } },
         // سعر الباقة بعملة المنطقة، أو null للشرق الأوسط (يُحسب هناك من الريال)
         // الرمز قبل المبلغ ($9.99، R$ 9.90)، إلا العملات التي تُكتب بعده (zł والعملات العربية)
-        price(k) { if (c[0] === 'mena') return null; const t = PRICES[cc] || PRICES[c[0]]; return !t || t[k] == null ? null : SD.money(t[k]); },
+        price(k) { if (c[0] === 'mena') return null; const t = PRICES[c[0]]; return !t || t[k] == null ? null : '$' + t[k].toFixed(t[k] % 1 ? 2 : 0); },
         money(n) { n = Number(n) || 0; const s = fmt(n, { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }); return after ? s + ' ' + c[2] : c[2] + (c[2].length > 1 ? ' ' : '') + s; },
         range(lo, hi) { if (lo === hi) return SD.money(lo); const f = v => fmt(v); return after ? f(lo) + '–' + f(hi) + ' ' + c[2] : c[2] + (c[2].length > 1 ? ' ' : '') + f(lo) + '–' + f(hi); },
         t: s => s,

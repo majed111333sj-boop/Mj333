@@ -425,12 +425,12 @@ const carKey = () => [state.car.make, state.car.model, state.car.year, state.car
 function inspectId() { const k = carKey(); let h = 5381; for (let i = 0; i < k.length; i++) h = ((h << 5) + h + k.charCodeAt(i)) >>> 0; return 'i' + h.toString(36) + k.length.toString(36); }
 let WS = null;   // حالة المحفظة
 const passActive = () => !!(WS && WS.passUntil > Date.now());
-const unlockedInspect = () => passActive() || !!(WS && WS.offline) || (WS && WS.freeDid === inspectId());
+const unlockedInspect = () => passActive() || !!(WS && WS.offline) || (WS && (WS.freeDid === inspectId() || (WS.unlocked || []).includes(inspectId())));
 function applyInspectLock() {
     const locked = !unlockedInspect();
     $('result').classList.toggle('locked', locked);
     $('i-paywall').classList.toggle('hidden', !locked);
-    $('ipw-btn').textContent = WS && WS.freeAvailable ? '🎁 افتح مجاناً (خدمتك المجانية)' : '🔓 افتح كل الخدمات يوماً كاملاً بـ ' + (9.99 * CC.rate).toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: Math.max(2, CC.dec || 0) }) + ' ' + CC.cur;
+    $('ipw-btn').textContent = WS && WS.freeAvailable ? '🎁 افتح مجاناً (خدمتك المجانية)' : '🔓 افتح هذا التقرير بـ ' + ((window.SD && SD.price('diag')) || (9 * CC.rate).toLocaleString('en', { minimumFractionDigits: 0, maximumFractionDigits: Math.max(2, CC.dec || 0) }) + ' ' + CC.cur);
 }
 async function walletRefresh() {
     const r = await payApi({ mode: 'wallet' });
@@ -445,7 +445,7 @@ async function unlockInspect() {
         if (r.json) WS = r.json;
     }
     if (unlockedInspect()) { applyInspectLock(); return; }
-    if (confirm('استخدمت خدمتك المجانية.\nلفتح هذا التقرير وكل خدمات التطبيق افتح الوصول الكامل (يوم بـ 9.99 ر.س، أو 3 أيام بـ 19.99، أو سنة بـ 79.99).\n\nالانتقال لصفحة الدفع؟ (تقدّمك هنا محفوظ)')) location.href = '/?pay=1';
+    if (confirm('استخدمت خدمتك المجانية.\nلفتح هذا التقرير وكل خدمات التطبيق افتح الوصول الكامل (فحص السيارة + قطع الأعطال بـ 9 ر.س، أو الفحص الوافي بـ 17 ر.س).\n\nالانتقال لصفحة الدفع؟ (تقدّمك هنا محفوظ)')) location.href = '/?pay=1';
     else $('ipw-code').focus();
 }
 async function redeemInspect() {

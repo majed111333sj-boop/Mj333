@@ -431,7 +431,7 @@ function localPartVerdict(part, kb) {
     return { verdict: 'unlikely', reason: 'هذه القطعة ليست ضمن القطع المعتادة لعطل "' + kb.title + '".', how_to_verify: 'اطلب من الفني أن يوضح علاقتها بالعطل، أو يريك سبب التلف قبل التبديل.', cheaper_first: null };
 }
 async function checkPart(where) {
-    if (!diagUnlocked()) return blockService('فحص القطع ضمن باقات الفحص.');
+    if (!fullUnlocked()) return blockFull('مدقق القطع ضمن الفحص الوافي.');
     const part = $('pc-part-' + where).value.trim();
     const box = $('pc-result-' + where);
     let fault = '', kb = null;
@@ -514,7 +514,7 @@ async function polishReport(type) {
     } catch (e) { return null; } finally { clearTimeout(t); }
 }
 async function exportReportPDF() {
-    if (!diagUnlocked()) return blockService('حفظ التقرير ضمن باقات الفحص.');
+    if (!fullUnlocked()) return blockFull('حفظ التقرير PDF ضمن الفحص الوافي.');
     const btn = document.querySelector('[onclick="exportReportPDF()"]'), old = btn ? btn.textContent : '';
     if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري كتابة التقرير ومراجعته…'; }
     const p = await polishReport('pdf');
@@ -548,7 +548,7 @@ async function aiDiagnose(meta, local) {
         const res = await fetch(AI_ENDPOINT, {
             method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
             body: JSON.stringify({
-                wid: walletId(), did: diagIdFor(meta),
+                wid: walletId(), did: diagIdFor(meta), level: diagLevel(),
                 mode: 'diagnose', car: carLabel(), country: C().name, city: cityName(), mileage: $('car-km').value || '',
                 description: meta.text || '', code: meta.code || '', sound: meta.soundSummary || '', context: meta.context || '',
                 structured: meta.structured || '', followups: followups.slice(-6),

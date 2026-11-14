@@ -48,8 +48,8 @@ globalThis.fetch = async (url, init) => {
 };
 
 const ENV = { KV_REST_API_URL: 'https://kv.test', KV_REST_API_TOKEN: 't', GEMINI_API_KEY: 'g', LEMON_SIGNING_SECRET: 'sec',
-  LEMON_CHECKOUT_DAY: 'https://shop.lemonsqueezy.com/checkout/buy/day', LEMON_CHECKOUT_DAY_US: 'https://shop-us.lemonsqueezy.com/checkout/buy/day',
-  LEMON_CHECKOUT_PACK3: 'https://shop.lemonsqueezy.com/checkout/buy/p3', OWNER_EMAIL: '' };
+  LEMON_CHECKOUT_FULL: 'https://shop.lemonsqueezy.com/checkout/buy/full', LEMON_CHECKOUT_FULL_US: 'https://shop-us.lemonsqueezy.com/checkout/buy/full',
+  LEMON_CHECKOUT_DIAG: 'https://shop.lemonsqueezy.com/checkout/buy/diag', OWNER_EMAIL: '' };
 let ipN = 0;
 async function api(body, { env = {}, headers = {} } = {}) {
   const ip = '10.0.' + Math.floor(ipN / 250) + '.' + (ipN++ % 250);
@@ -140,12 +140,12 @@ test('استرجاع باقة الفحوصات يخصم رصيدها ولا ين
 });
 
 test('باقة الأدوات: 5 استخدامات للأدوات المستقلة فقط', async () => {
-  const w = wid(); await api({ mode: 'measure', wid: w, did: 't' + did(), summary: 'x', kind: 'k' });   // مجاني (فشل AI لا يهم: الخدمة استُهلكت)
-  assert.equal((await api({ mode: 'measure', wid: w, did: 't' + did(), summary: 'x' })).status, 402);
+  const w = wid(); await api({ mode: 'measure', wid: w, did: 't' + did(), summary: 'x', kind: 'k', tool: 'tires' });   // مجاني (فشل AI لا يهم: الخدمة استُهلكت)
+  assert.equal((await api({ mode: 'measure', wid: w, did: 't' + did(), summary: 'x', tool: 'tires' })).status, 402);
   await lemon(w, 'Tools - باقة الأدوات');
   assert.equal((await api({ mode: 'wallet', wid: w })).json.toolUses, 5);
   geminiText = JSON.stringify({ verdict: 'good', title: 'سليم', explanation: '', causes: [], advice: '' });
-  assert.notEqual((await api({ mode: 'measure', wid: w, did: 't' + did(), summary: 'x' })).status, 402);
+  assert.notEqual((await api({ mode: 'measure', wid: w, did: 't' + did(), summary: 'x', tool: 'tires' })).status, 402);
   assert.equal((await api({ mode: 'wallet', wid: w })).json.toolUses, 4);
   assert.equal((await api(diagBody(w, did()))).status, 402);       // لا تفتح التشخيص
 });
@@ -155,7 +155,7 @@ test('فحص القطع لا يعمل إلا بوصول مدفوع أو فحص �
   await api(diagBody(w, d));                                        // المجاني
   const pc = { mode: 'partcheck', wid: w, did: d, car: 'x', fault: 'عطل', part: 'قطعة' };
   assert.equal((await api(pc)).status, 402);
-  await lemon(w, 'Pack3'); const d2 = did(); await api(diagBody(w, d2));
+  await lemon(w, 'Pack3'); const d2 = did(); await api(diagBody(w, d2));   // رصيد قديم يعامل كوافٍ
   assert.notEqual((await api(Object.assign({}, pc, { did: d2 }))).status, 402);
 });
 
@@ -164,7 +164,8 @@ test('مدقق الفاتورة: مرة واحدة لمن اختار القطع 
   const inv = { mode: 'invoice', wid: w, did: did(), image: 'A'.repeat(300) };
   geminiText = JSON.stringify({ items: [{ name: 'فلتر', price: 50 }] });
   assert.equal((await api(inv)).status, 200);
-  assert.equal((await api(inv)).status, 402);
+  assert.equal((await api(inv)).status, 200);                        // نفس did: بلا خصم ثانٍ
+  assert.equal((await api(Object.assign({}, inv, { did: did() }))).status, 402);
   const w2 = wid(); await api(diagBody(w2, did()));                  // لم يختر القطع والأسعار
   assert.equal((await api(Object.assign({}, inv, { wid: w2 }))).status, 402);
 });
@@ -179,9 +180,9 @@ test('تقييم الدقة للمشتركين فقط', async () => {
 
 test('روابط الدفع: العام، وخاص المنطقة، ولا روابط غير موثوقة', async () => {
   const w = wid();
-  let l = (await api({ mode: 'wallet', wid: w })).json.links; assert.match(l.day, /shop\.lemonsqueezy/); assert.ok(l.pack3); assert.equal(l.week, undefined);
-  l = (await api({ mode: 'wallet', wid: w, cc: 'US' })).json.links; assert.match(l.day, /shop-us/);
-  l = (await api({ mode: 'wallet', wid: w }, { env: { LEMON_CHECKOUT_WEEK: 'https://evil.example/pay' } })).json.links; assert.equal(l.week, undefined);
+  let l = (await api({ mode: 'wallet', wid: w })).json.links; assert.match(l.full, /shop\.lemonsqueezy/); assert.ok(l.diag); assert.equal(l.upgrade, undefined);
+  l = (await api({ mode: 'wallet', wid: w, cc: 'US' })).json.links; assert.match(l.full, /shop-us/);
+  l = (await api({ mode: 'wallet', wid: w }, { env: { LEMON_CHECKOUT_UPGRADE: 'https://evil.example/pay' } })).json.links; assert.equal(l.upgrade, undefined);
 });
 
 test('Webhook: توقيع خاطئ يُرفض، والتكرار لا يضاعف الرصيد', async () => {
@@ -217,6 +218,79 @@ test('لوحة المالك مغلقة عند عدم ضبط OWNER_EMAIL', async 
 test('ميزات غير مكتملة تعيد 501 بوضوح', async () => {
   assert.equal((await api({ mode: 'insp_get', id: 'abcd' })).status, 501);
   assert.equal((await api({ mode: 'rpack_list', token: 'x' })).status, 501);
+});
+
+// ---------- 3.2.0: الأرصدة لكل خدمة ----------
+const cr = async w => (await api({ mode: 'wallet', wid: w })).json.cr;
+const PC = (w, d) => ({ mode: 'partcheck', wid: w, did: d, car: 'x', fault: 'عطل', part: 'قطعة' });
+
+test('3.2.0: أسماء المنتجات الجديدة تُعرف وتمنح الرصيد الصحيح', async () => {
+  const cases = [['الفحص الوافي', 'full'], ['فحص السيارة + قطع الأعطال', 'diag'], ['ترقية إلى الفحص الوافي', 'upg'], ['أسعار القطع', 'prices'], ['أداة فحص أساسية', 'tm'], ['أداة فحص فرعية', 'ts']];
+  for (const [name, key] of cases) { const w = wid(); await lemon(w, name); const c = await cr(w); assert.equal(c[key], 1, name); assert.equal(Object.values(c).reduce((a, b) => a + b, 0), 1, name); }
+  const w = wid(); await lemon(w, 'فحص سيارة مستعملة قبل الشراء'); assert.equal((await api({ mode: 'wallet', wid: w })).json.reports, 1);
+  const w5 = wid(); await lemon(w5, 'باقة 5 فحوصات مستعملة'); assert.equal((await api({ mode: 'wallet', wid: w5 })).json.reports, 5);
+});
+
+test('3.2.0: الفحص الوافي يخصم رصيده ويفتح قطع الأعطال والتقرير', async () => {
+  const w = wid(), d = did(); await api(diagBody(w, did()));          // المجاني
+  await lemon(w, 'الفحص الوافي');
+  assert.equal((await api(diagBody(w, d, { level: 'full' }))).status, 200);
+  assert.equal((await cr(w)).full, 0);
+  const v = (await api({ mode: 'wallet', wid: w })).json; assert.ok(v.unlocked.includes(d) && v.fullUnlocked.includes(d));
+  assert.notEqual((await api(PC(w, d))).status, 402);
+  assert.equal((await api({ mode: 'report_write', wid: w, did: d, facts: { title: 'ت' } })).status, 200);
+});
+
+test('3.2.0: فحص السيارة + قطع الأعطال لا يفتح الوافي حتى الترقية، والترقية لا تُخصم مرتين', async () => {
+  const w = wid(), d = did(); await api(diagBody(w, did()));
+  await lemon(w, 'فحص السيارة + قطع الأعطال');
+  assert.equal((await api(diagBody(w, d))).status, 200);
+  assert.equal((await cr(w)).diag, 0);
+  assert.equal((await api(PC(w, d))).status, 402);                   // قطع الأعطال تحتاج الوافي
+  assert.equal((await api({ mode: 'report_write', wid: w, did: d, facts: { title: 'ت' } })).status, 402);
+  assert.equal((await api({ mode: 'upgrade', wid: w, did: d })).status, 402);   // لا رصيد ترقية
+  await lemon(w, 'ترقية إلى الفحص الوافي'); await lemon(w, 'ترقية إلى الفحص الوافي');
+  assert.equal((await api({ mode: 'upgrade', wid: w, did: d })).status, 200);
+  assert.equal((await api({ mode: 'upgrade', wid: w, did: d })).status, 200);   // نفس الفحص: بلا خصم
+  assert.equal((await cr(w)).upg, 1);
+  assert.notEqual((await api(PC(w, d))).status, 402);
+  assert.equal((await api({ mode: 'upgrade', wid: w, did: did() })).status, 404);   // فحص غير معروف
+});
+
+test('3.2.0: الأسعار: خصم لكل did مرة واحدة', async () => {
+  const w = wid(); await api(diagBody(w, did()));
+  const d = did();
+  assert.equal((await api({ mode: 'use_prices', wid: w, did: d })).status, 402);
+  await lemon(w, 'أسعار القطع'); await lemon(w, 'أسعار القطع');
+  assert.equal((await api({ mode: 'use_prices', wid: w, did: d })).status, 200);
+  assert.equal((await api({ mode: 'use_prices', wid: w, did: d })).status, 200);
+  assert.equal((await cr(w)).prices, 1);
+  geminiText = JSON.stringify({ items: [{ name: 'فلتر', price: 50 }] });
+  assert.equal((await api({ mode: 'invoice', wid: w, did: did(), image: 'A'.repeat(300) })).status, 200);
+  assert.equal((await cr(w)).prices, 0);
+});
+
+test('3.2.0: الأدوات الأساسية والفرعية رصيدان منفصلان', async () => {
+  const w = wid(); await api({ mode: 'measure', wid: w, did: 't' + did(), summary: 'x', tool: 'camera' });   // المجاني
+  geminiText = JSON.stringify({ verdict: 'good', title: 'سليم', explanation: '', causes: [], advice: '' });
+  await lemon(w, 'أداة فحص أساسية');
+  assert.equal((await api({ mode: 'measure', wid: w, did: 't' + did(), summary: 'x', tool: 'tires' })).status, 402);   // فرعية: لا تُدفع بالأساسي
+  assert.notEqual((await api({ mode: 'measure', wid: w, did: 't' + did(), summary: 'x', tool: 'vibration' })).status, 402);
+  assert.equal((await cr(w)).tm, 0);
+  await lemon(w, 'أداة فحص فرعية');
+  assert.notEqual((await api({ mode: 'measure', wid: w, did: 't' + did(), summary: 'x', tool: 'tires' })).status, 402);
+  assert.equal((await cr(w)).ts, 0);
+});
+
+test('3.2.0: الاسترجاع يخصم الرصيد الجديد، وحزمة 5 مستعملة صالحة 6 أشهر وتنتهي', async () => {
+  const w = wid(); const o = await lemon(w, 'الفحص الوافي'); await lemon(w, 'الفحص الوافي', { event: 'order_refunded', id: o.id });
+  assert.equal((await cr(w)).full, 0);
+  const w5 = wid(); await lemon(w5, 'باقة 5 فحوصات مستعملة');
+  const rec = JSON.parse(store.get('w:' + w5));
+  assert.ok(rec.rcx > Date.now() + 180 * 864e5 && rec.rcx < Date.now() + 186 * 864e5);
+  rec.rcx = Date.now() - 1000; store.set('w:' + w5, JSON.stringify(rec));
+  assert.equal((await api({ mode: 'wallet', wid: w5 })).json.reports, 0);
+  assert.equal((await api({ mode: 'inspect2', wid: w5, car: 'x', stages: [] })).status, 402);
 });
 
 globalThis.fetch = globalThis.fetch;   // (realFetch محفوظ للتوثيق فقط)

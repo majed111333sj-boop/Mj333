@@ -393,7 +393,7 @@ function buildReport(type) {
     return lines.join('\n').slice(0, 2000);
 }
 function openSend(p) {
-    if (lastDiag && lastDiag.title && !diagUnlocked()) { requirePaid(() => openSend(p)); return; }
+    if (lastDiag && lastDiag.title && !fullUnlocked()) { requirePaid(() => openSend(p)); return; }
     const report = buildReport(p.type);
     if (!report) { alert('افحص سيارتك أولاً (بالوصف أو الصوت أو الكود)، ثم أرسل التقرير.'); switchTab('diagnose'); return; }
     sendTarget = p;

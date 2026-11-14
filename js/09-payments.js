@@ -7,13 +7,18 @@ const PAYWALL_ON = true;
 // خدمة واحدة مجانية (أول فحص)، ثم وصول كامل لكل الخدمات بالمدة
 // الباقات: الفحص وأسعار القطع وخدماتهما. الأدوات المستقلة وفحص المستعملة لهما أسعارهما
 const PRODUCTS = {
-    pack3:  { sar: 9.99,  title: 'باقة 3 فحوصات', desc: 'ثلاث فحوصات كاملة مع أسعار القطع وكل خدمات الفحص' },
-    day:    { sar: 19.99,    title: 'يوم كامل', desc: 'فحوصات غير محدودة لمدة 24 ساعة', badge: 'الأكثر طلباً' },
-    week:   { sar: 139,    title: 'أسبوع كامل', desc: 'فحوصات غير محدودة لمدة 7 أيام • الأوفر' },
-    report: { sar: 33,    title: 'فحص سيارة مستعملة', desc: 'فحص كامل قبل الشراء مرة واحدة: كاميرا وصوت واهتزاز، ويمكن عن بعد' },
-    tools:  { sar: 14.9, title: 'باقة الأدوات', desc: '5 استخدامات للأدوات المستقلة (الكاميرا، الصوت، الاهتزاز، الكفرات…)' }
+    full:     { sar: 17,   title: 'الفحص الوافي', desc: 'تشخيص + قطع الأعطال وأسعارها + مدقق القطع + التقرير PDF وإرساله للورش', badge: 'الأوفى' },
+    diag:     { sar: 9,    title: 'فحص السيارة + قطع الأعطال', desc: 'تشخيص عطل واحد مع القطع المتوقعة وأسعارها وصيغة التفاوض' },
+    upgrade:  { sar: 11,   title: 'ترقية فحص إلى الوافي', desc: 'لفحص سبق أن اشتريته: يضيف مدقق القطع والتقرير PDF وإرساله للورش' },
+    prices:   { sar: 3.5,  title: 'أسعار القطع', desc: 'سعر عادل لقطعة أو بند فاتورة (قراءة الفاتورة والمقارنة)' },
+    toolmain: { sar: 9,    title: 'أداة فحص أساسية', desc: 'استخدام واحد: الفحص بالكاميرا، أو تحليل صوت المحرك، أو قياس الاهتزاز' },
+    toolsub:  { sar: 3.5,  title: 'أداة فحص فرعية', desc: 'استخدام واحد: الكفرات، اللمبات، سماكة الدهان، تواريخ الزجاج…' },
+    report:   { sar: 33,   title: 'فحص سيارة مستعملة', desc: 'فحص كامل قبل الشراء مرة واحدة (صالح 30 يوماً): كاميرا وصوت واهتزاز، ويمكن عن بعد' },
+    report5:  { sar: 77,   title: 'باقة 5 فحوصات مستعملة', desc: 'خمسة فحوصات مستعملة (حصرية) صالحة 6 أشهر', badge: 'الأوفر' },
+    // منتجات قديمة لا تُباع، تبقى هنا لعرض أسماء الأكواد والأرصدة القديمة
+    pack3:    { sar: 9.99, title: 'باقة 3 فحوصات', desc: '' }, day: { sar: 19.99, title: 'يوم كامل', desc: '' }, week: { sar: 139, title: 'أسبوع كامل', desc: '' }, tools: { sar: 14.9, title: 'باقة الأدوات', desc: '' }
 };
-const PAY_ORDER = ['pack3', 'day', 'week', 'report', 'tools'];
+const PAY_ORDER = ['full', 'diag', 'upgrade', 'prices', 'toolmain', 'toolsub', 'report', 'report5'];
 // السعر المعروض: بعملة المنطقة خارج الشرق الأوسط، ومن الريال داخله
 const prodPrice = k => (window.SD && SD.price(k)) || priceText(PRODUCTS[k].sar);
 // روابط الدفع تُضاف بعد اختيار بوابة الدفع؛ {WID} يُستبدل برقم محفظة المستخدم
@@ -43,10 +48,10 @@ async function walletRefresh() {
     const r = await payApi({ mode: 'wallet' });
     if (r.status === 200 && r.json) {
         Wallet.state = r.json;
-        store.set('sd_wallet_last_known', { passUntil: r.json.passUntil || 0, uses: r.json.uses || 0, toolUses: r.json.toolUses || 0, reports: r.json.reports || 0, unlocked: r.json.unlocked || [], freeChoice: r.json.freeChoice || null, at: Date.now() });
+        store.set('sd_wallet_last_known', { passUntil: r.json.passUntil || 0, uses: r.json.uses || 0, toolUses: r.json.toolUses || 0, cr: r.json.cr || {}, reports: r.json.reports || 0, unlocked: r.json.unlocked || [], fullUnlocked: r.json.fullUnlocked || [], freeChoice: r.json.freeChoice || null, at: Date.now() });
     } else if (r.status === 503 || r.status === 0) {
         const lk = store.get('sd_wallet_last_known', null);
-        Wallet.state = Object.assign({}, lk && lk.passUntil > Date.now() ? { passUntil: lk.passUntil, uses: lk.uses, toolUses: lk.toolUses, reports: lk.reports, unlocked: lk.unlocked || [] } : {}, { offline: true, freeAvailable: false });
+        Wallet.state = Object.assign({}, lk && lk.passUntil > Date.now() ? { passUntil: lk.passUntil, uses: lk.uses, toolUses: lk.toolUses, cr: lk.cr || {}, reports: lk.reports, unlocked: lk.unlocked || [], fullUnlocked: lk.fullUnlocked || [] } : {}, { offline: true, freeAvailable: false });
     }
     applyLock();
     return Wallet.state;
@@ -60,13 +65,33 @@ function diagIdFor(m) {
 const diagId = () => diagIdFor(lastMeta);
 const passActive = () => !!(Wallet.state && Wallet.state.passUntil > Date.now());
 function isUnlocked() { return !PAYWALL_ON || passActive(); }
-const hasUses = () => !!(Wallet.state && Wallet.state.uses > 0);
+const credits = () => (Wallet.state && Wallet.state.cr) || {};
+// رصيد فحوصات للتشخيص: وافٍ أو فحص السيارة + قطع الأعطال أو الرصيد القديم
+const hasUses = () => !!(Wallet.state && ((Wallet.state.uses || 0) + (credits().full || 0) + (credits().diag || 0)) > 0);
+// مستوى الفحص المطلوب خصمه: الوافي إن كان عنده رصيد وافٍ، وإلا فحص السيارة + قطع الأعطال
+const diagLevel = () => ((credits().full || 0) > 0 ? 'full' : 'diag');
+// مجموع الأرصدة (للتعرف على وصول الشراء بعد الدفع)
+const walletTotal = ws => { ws = ws || {}; const c = ws.cr || {}; return (ws.reports || 0) + (ws.uses || 0) + (ws.toolUses || 0) + Object.values(c).reduce((a, b) => a + (b || 0), 0); };
+const paySnap = () => ({ pu: (Wallet.state && Wallet.state.passUntil) || 0, tot: walletTotal(Wallet.state) });
+const boughtSince = (ws, pend) => (ws.passUntil || 0) > (pend.pu || 0) || walletTotal(ws) > (pend.tot || 0);
+// الفحص الوافي للفحص الحالي (مدقق القطع، التقرير PDF، إرسال الورش): وصول زمني أو فحص وافٍ أو مُرقّى
+function fullUnlocked() { return isUnlocked() || !!(Wallet.state && (Wallet.state.fullUnlocked || []).includes(diagId())); }
+// الفحص الحالي مفتوح كتشخيص لكنه ليس وافياً: نعرض الترقية
+const canUpgrade = () => !!(lastDiag && lastDiag.title && diagUnlocked() && !fullUnlocked() && Wallet.state && !Wallet.state.offline);
+async function upgradeCurrent() {
+    if (!canUpgrade()) return;
+    if ((credits().upg || 0) < 1) { openPayModal('الترقية إلى الفحص الوافي: اشترِ «ترقية» ثم اضغط الزر مرة أخرى.', 'upgrade'); return; }
+    const r = await payApi({ mode: 'upgrade', did: diagId() });
+    if (r.status === 200 && r.json && r.json.ok) { Wallet.state = r.json; applyLock(); alert('✅ تمت الترقية إلى الفحص الوافي لهذا الفحص.'); }
+    else if (r.status === 402) openPayModal('الترقية إلى الفحص الوافي: اشترِ «ترقية» أولاً.', 'upgrade');
+    else alert('تعذرت الترقية الآن، حاول بعد قليل.');
+}
 // الفحص الحالي مفتوح: بوصول زمني، أو لأنه خُصم من باقة الفحوصات
 function diagUnlocked() { return isUnlocked() || !!(Wallet.state && (Wallet.state.unlocked || []).includes(diagId())); }
 // هل يحق للمستخدم بدء هذه الخدمة؟ (أول خدمة مجانية، أو نفس الخدمة المجانية، أو وصول مدفوع)
 function canStart(did) {
     if (isUnlocked() || !Wallet.state) return true;          // قبل تحميل المحفظة نترك الخادم يقرر
-    if (Wallet.state.freeAvailable || hasUses()) return true;
+    if (Wallet.state.freeAvailable || hasUses()) return true;   // الخادم يقرر نوع الخصم
     return Wallet.state.freeDid === did || (Wallet.state.unlocked || []).includes(did);
 }
 function openCodeTool() {
@@ -126,9 +151,16 @@ function costsVisible() {
 }
 // جدول الأسعار وتدقيق الفاتورة: وصول مدفوع أو رصيد، أو مرة واحدة لمن اختارها مجاناً
 function canUsePrices() {
-    return isUnlocked() || hasUses() || (freeChoice() === 'parts_prices' && !!Wallet.state && !Wallet.state.offline && !store.get('sd_free_prices_used', false));
+    return isUnlocked() || (credits().prices || 0) > 0 || (Wallet.state && Wallet.state.uses > 0) || (freeChoice() === 'parts_prices' && !!Wallet.state && !Wallet.state.offline && !store.get('sd_free_prices_used', false));
 }
-function consumeFreePricesUse() { if (!isUnlocked() && !hasUses() && freeChoice() === 'parts_prices') store.set('sd_free_prices_used', true); }
+// مقارنة سعر: تخصم رصيد أسعار مرة واحدة لكل مقارنة (الخادم يحسب did، فتكرار نفس المقارنة لا يخصم)
+async function consumePricesUse(key) {
+    if (isUnlocked()) return true;
+    const r = await payApi({ mode: 'use_prices', did: 'p' + (key || Date.now().toString(36)).replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 30) });
+    if (r.status === 200 && r.json) { Wallet.state = Object.assign({}, Wallet.state, r.json); if (freeChoice() === 'parts_prices') store.set('sd_free_prices_used', true); applyLock(); return true; }
+    if (r.status === 402) { store.set('sd_free_prices_used', true); applyLock(); openPayModal('أسعار القطع: اشترِ «أسعار القطع» لمقارنة سعر جديد.', 'prices'); return false; }
+    alert(OFFLINE_MSG); return false;
+}
 const freeView = () => !!(lastDiag && lastDiag.title && Wallet.state && !diagUnlocked() && Wallet.state.freeDid && Wallet.state.freeDid === diagId() && freeChoice() === 'parts_prices');
 let _relock = false;
 function applyLock() {
@@ -143,25 +175,28 @@ function applyLock() {
     const pricesOpen = canUsePrices();
     $('tab-prices').classList.toggle('locked', !pricesOpen);
     $('prices-paywall').classList.toggle('hidden', pricesOpen);
-    $('pw-btn').textContent = '🔓 ' + PRODUCTS.pack3.title + ' بـ ' + prodPrice('pack3');
-    $('pw-sub').textContent = 'أو يوم كامل بـ ' + prodPrice('day') + ' • أسبوع ' + prodPrice('week');
+    $('pw-btn').textContent = '🔓 ' + PRODUCTS.diag.title + ' بـ ' + prodPrice('diag');
+    $('pw-sub').textContent = 'أو الفحص الوافي (مع مدقق القطع والتقرير PDF) بـ ' + prodPrice('full');
+    const ub = $('upgrade-box'); if (ub) { ub.classList.toggle('hidden', !canUpgrade()); const ut = $('upgrade-btn'); if (ut) ut.textContent = '⬆️ ترقية هذا الفحص إلى الوافي بـ ' + prodPrice('upgrade'); }
     const pb = $('pass-banner'); if (pb) { pb.textContent = passText(); pb.classList.toggle('hidden', !passActive()); }
     const wf = $('welcome-free'); if (wf) wf.classList.toggle('hidden', !(Wallet.state && Wallet.state.freeAvailable && !passActive()));
     const al = $('accuracy-line'), acc = Wallet.state && Wallet.state.accuracy;
     if (al && acc && acc.total >= 20) { al.textContent = '✅ ' + Math.round((acc.good !== undefined ? acc.good : acc.yes) / acc.total * 100) + '% من المشتركين قيّموا دقة التشخيص بـ 90% فأعلى (من ' + acc.total + ' تقييم)'; al.classList.remove('hidden'); }
 }
 async function unlockCurrent() { if (diagUnlocked()) return true; openPayModal(); return false; }
-function openPayModal(msg) {
+function openPayModal(msg, focus) {
     track('pay_open');
     $('pm-msg').textContent = msg || ''; $('pm-msg').classList.toggle('hidden', !msg);
     const ws = Wallet.state || {}, bal = [];
-    if (ws.uses) bal.push(ws.uses + ' فحوصات'); if (ws.reports) bal.push(ws.reports + ' فحص مستعملة'); if (ws.toolUses) bal.push(ws.toolUses + ' استخدامات أدوات');
+    const cc = ws.cr || {}, bl = [['full', 'وافي'], ['diag', 'فحص + قطع'], ['upg', 'ترقية'], ['prices', 'أسعار'], ['tm', 'أداة أساسية'], ['ts', 'أداة فرعية']];
+    bl.forEach(([k, n]) => { if (cc[k]) bal.push(cc[k] + ' ' + n); });
+    if (ws.uses) bal.push(ws.uses + ' فحوصات (قديم)'); if (ws.reports) bal.push(ws.reports + ' فحص مستعملة'); if (ws.toolUses) bal.push(ws.toolUses + ' أدوات (قديم)');
     $('pm-wallet').textContent = (passActive() ? passText() : '💼 لا يوجد وصول زمني فعّال') + (bal.length ? ' • رصيدك: ' + bal.join('، ') : '');
     $('pm-wid').textContent = walletId();
     const box = $('pm-products'); box.innerHTML = '';
-    PAY_ORDER.forEach(k => {
+    (focus ? [focus].concat(PAY_ORDER.filter(x => x !== focus)) : PAY_ORDER).forEach(k => {
         const p = PRODUCTS[k];
-        const c = el('button', 'w-full text-right border-2 rounded-xl p-2.5 flex items-center justify-between gap-2 ' + (p.badge ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white'));
+        const c = el('button', 'w-full text-right border-2 rounded-xl p-2.5 flex items-center justify-between gap-2 ' + (k === focus ? 'border-blue-600 bg-blue-50' : p.badge ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white'));
         const t = el('span', 'min-w-0'); t.appendChild(el('span', 'block font-black text-[12px]', p.title + (p.badge ? ' ⭐' : ''))); t.appendChild(el('span', 'block text-[10px] text-slate-500', p.desc + (p.badge ? ' • ' + p.badge : '')));
         c.appendChild(t); c.appendChild(el('span', 'shrink-0 font-black text-[13px] font-mono', prodPrice(k)));
         c.onclick = () => buyProduct(k);
@@ -202,7 +237,7 @@ function tamClaimForm(k) {
         go.disabled = true;
         const r = await payApi({ mode: 'tamclaim', product: k, ref: ref.value.trim(), contact: ct.value.trim() });
         go.disabled = false;
-        if (r.status === 200) { store.set('sd_tam_pending', { k, at: Date.now(), rc: (Wallet.state && Wallet.state.reports) || 0, pu: (Wallet.state && Wallet.state.passUntil) || 0, uc: (Wallet.state && Wallet.state.uses) || 0, tc: (Wallet.state && Wallet.state.toolUses) || 0 }); f.innerHTML = ''; f.appendChild(el('span', 'block font-black text-[14px] text-blue-900', '✅ وصلنا طلبك')); f.appendChild(el('span', 'block text-[12px] text-slate-600', 'نتحقق من الدفع ويتفعّل وصولك تلقائياً على هذا الجهاز، عادة خلال دقائق. يمكنك إغلاق النافذة.')); watchTam(); }
+        if (r.status === 200) { store.set('sd_tam_pending', Object.assign({ k, at: Date.now() }, paySnap())); f.innerHTML = ''; f.appendChild(el('span', 'block font-black text-[14px] text-blue-900', '✅ وصلنا طلبك')); f.appendChild(el('span', 'block text-[12px] text-slate-600', 'نتحقق من الدفع ويتفعّل وصولك تلقائياً على هذا الجهاز، عادة خلال دقائق. يمكنك إغلاق النافذة.')); watchTam(); }
         else if (r.status === 409) err.textContent = 'رقم العملية هذا مُستخدم من قبل. تأكد منه أو تواصل معنا.';
         else if (r.status === 429) err.textContent = 'طلبات كثيرة اليوم. تواصل معنا عبر «أبلغ عن مشكلة».';
         else err.textContent = 'تعذر الإرسال الآن، حاول بعد قليل.';
@@ -218,7 +253,7 @@ async function watchTam() {
         await walletRefresh();
         if (!passActive()) { pb.textContent = '⏳ طلب الدفع قيد التحقق، سيتفعّل وصولك تلقائياً.'; pb.classList.remove('hidden'); }
         const ws = Wallet.state || {};
-        if ((ws.passUntil || 0) > (pend.pu || 0) || (ws.reports || 0) > (pend.rc || 0) || (ws.uses || 0) > (pend.uc || 0) || (ws.toolUses || 0) > (pend.tc || 0)) { store.del('sd_tam_pending'); alert('✅ تم التحقق من الدفع وتفعيل وصولك. شكراً لثقتك 🌟'); return; }
+        if (boughtSince(ws, pend)) { store.del('sd_tam_pending'); alert('✅ تم التحقق من الدفع وتفعيل وصولك. شكراً لثقتك 🌟'); return; }
         await sleep(30000);
     }
 }
@@ -228,15 +263,13 @@ function buyProduct(k) {
     if (!link) { if (((Wallet.state && Wallet.state.tam) || {})[k]) return tamBuy(k); alert('الدفع الإلكتروني سيتوفر قريباً.\nإذا لديك كود تفعيل، أدخله في الأسفل.'); $('pm-code').focus(); return; }
     // رقم المحفظة يُرسل مع الطلب، فيُفعَّل الوصول تلقائياً فور الدفع
     if (/^https:\/\/(www\.)?whop\.com\//i.test(link)) {   // Whop (متى أُضيف لاحقاً): رقم المحفظة والمنتج في metadata
-        const w0w = Wallet.state || {};
-        store.set('sd_pay_pending', { k, at: Date.now(), pu: w0w.passUntil || 0, rc: w0w.reports || 0, uc: w0w.uses || 0, tc: w0w.toolUses || 0 }); track('checkout_click');
+        store.set('sd_pay_pending', Object.assign({ k, at: Date.now() }, paySnap())); track('checkout_click');
         location.href = link + (link.includes('?') ? '&' : '?') + 'd2c=true&metadata[wid]=' + encodeURIComponent(walletId()) + '&metadata[product]=' + encodeURIComponent(k);
         return;
     }
     const url = link.replace('{WID}', encodeURIComponent(walletId()))
         + (link.includes('{WID}') ? '' : (link.includes('?') ? '&' : '?') + 'checkout[custom][wid]=' + encodeURIComponent(walletId()));
-    const w0 = Wallet.state || {};
-    store.set('sd_pay_pending', { k, at: Date.now(), pu: w0.passUntil || 0, rc: w0.reports || 0, uc: w0.uses || 0, tc: w0.toolUses || 0 }); track('checkout_click');
+    store.set('sd_pay_pending', Object.assign({ k, at: Date.now() }, paySnap())); track('checkout_click');
     location.href = url;
 }
 // بعد الرجوع من صفحة الدفع: ننتظر إشعار البوابة ونفعّل تلقائياً
@@ -251,9 +284,9 @@ async function watchPayment() {
     for (let i = 0; i < 24; i++) {
         await walletRefresh();
         const ws = Wallet.state || {};
-        if ((ws.passUntil || 0) > (pend.pu || 0) || (ws.reports || 0) > (pend.rc || 0) || (ws.uses || 0) > (pend.uc || 0) || (ws.toolUses || 0) > (pend.tc || 0)) {
+        if (boughtSince(ws, pend)) {
             store.del('sd_pay_pending');
-            alert('✅ تم الدفع وتفعيل الوصول الكامل!\n' + (passActive() ? passText() : 'أُضيف الرصيد إلى حسابك') + '\nشكراً لثقتك 🌟');
+            alert('✅ تم الدفع!\n' + (passActive() ? passText() : 'أُضيف الرصيد إلى حسابك') + '\nشكراً لثقتك 🌟');
             return;
         }
         await sleep(5000);
@@ -278,7 +311,9 @@ async function restoreWallet() {
     store.set('sd_wallet', w); await walletRefresh(); openPayModal(); alert('تمت الاستعادة ✓');
 }
 // الخدمات المدفوعة تمر من هنا
-async function requirePaid(fn) { if (diagUnlocked()) return fn(); blockService('هذه الخدمة ضمن باقات الفحص.'); }
+async function requirePaid(fn) { if (fullUnlocked()) return fn(); blockFull('هذه الخدمة ضمن الفحص الوافي.'); }
+// خدمة تحتاج الفحص الوافي: إن كان الفحص مفتوحاً كتشخيص نعرض الترقية، وإلا صفحة الدفع
+function blockFull(msg) { if (diagUnlocked()) { openPayModal(msg + ' رقِّ هذا الفحص بـ ' + prodPrice('upgrade') + '.', 'upgrade'); return false; } return blockService(msg); }
 
 // ---------- أكواد التفعيل للمالك ----------
 async function ownerCreateCodes() {

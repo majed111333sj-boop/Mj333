@@ -57,8 +57,9 @@ function renderPriceLookup() {
     $('pl-max').textContent = fmtLocal(st.max);
     $('pl-source').textContent = st.count ? `محسوب من السعر المرجعي + ${st.count} فاتورة من مستخدمين في ${cityName()}` : `سعر مرجعي تقديري لـ ${cityName()} — ساهم بسعرك لتحسينه`;
 }
-function runAudit() {
-    if (!canUsePrices()) return blockService('تدقيق الفاتورة ضمن باقات الفحص.');
+let _invKey = null;   // قراءة فاتورة واحدة تخصم مرة واحدة مهما كثرت بنودها
+async function runAudit() {
+    if (!canUsePrices()) return blockService('مقارنة الأسعار تحتاج رصيد «أسعار القطع».');
     const part = $('audit-part').value;
     const price = parseFloat($('audit-part-price').value), labor = parseFloat($('audit-labor-price').value) || 0;
     const box = $('audit-result');
@@ -66,7 +67,8 @@ function runAudit() {
     if (!(price > 0)) { show('bg-amber-50 border-amber-200 text-amber-800', 'اكتب سعر القطعة في الفاتورة أولاً.'); return; }
     const st = partStats(part);
     if (!(st.avg > 0)) { show('bg-amber-50 border-amber-200 text-amber-800', 'لا يوجد سعر مرجعي لهذه القطعة بعد. جرّب قطعة أخرى.'); return; }
-    consumeFreePricesUse();
+    const h = [...part].reduce((a, ch) => ((a << 5) - a + ch.charCodeAt(0)) >>> 0, 7).toString(36);
+    if (!(await consumePricesUse(_invKey || (h + Math.round(price) + 'x' + Math.round(labor) + 'd' + Math.floor(Date.now() / 864e5))))) return;
     const diff = Math.round((price - st.avg) / st.avg * 100);
     let v, cls;
     if (price <= st.avg * 1.15) { v = '✅ السعر عادل'; cls = 'bg-emerald-50 border-emerald-200 text-emerald-800'; }
@@ -110,17 +112,18 @@ function compressImage(file, maxSide = 1400, quality = 0.8) {
     });
 }
 async function readInvoicePhoto(input) {
-    if (!canUsePrices()) { input.value = ''; return blockService('قراءة الفاتورة ضمن باقات الفحص.'); }
+    if (!canUsePrices()) { input.value = ''; return blockService('قراءة الفاتورة تحتاج رصيد «أسعار القطع».'); }
     const file = input.files && input.files[0]; input.value = '';
     if (!file) return;
     const st = $('invoice-status'), list = $('invoice-items');
     st.classList.remove('hidden'); st.textContent = '⏳ جاري قراءة الفاتورة…'; list.classList.add('hidden');
     if (location.protocol === 'file:' || !aiUsable()) { st.textContent = 'قراءة الفاتورة تحتاج تفعيل الذكاء الاصطناعي (راجع README). أدخل الأرقام يدوياً.'; return; }
     try {
+        const invKey = Date.now().toString(36);
         const image = await compressImage(file);
         const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 38000);
         const res = await fetch(AI_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal,
-            body: JSON.stringify({ mode: 'invoice', wid: walletId(), did: 'v' + Date.now().toString(36), image, currency: C().code }) });
+            body: JSON.stringify({ mode: 'invoice', wid: walletId(), did: 'p' + invKey, image, currency: C().code }) });
         clearTimeout(to);
         if (res.status === 503 || res.status === 404) { aiOff(); st.textContent = 'قراءة الفاتورة غير مفعّلة حالياً. أدخل الأرقام يدوياً.'; return; }
         if (!res.ok) throw new Error();
@@ -134,12 +137,12 @@ async function readInvoicePhoto(input) {
             const b = el('button', 'w-full flex justify-between bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[11px]');
             b.appendChild(el('span', 'truncate', name));
             b.appendChild(el('span', 'font-mono font-bold', fmtLocal(price)));
-            b.onclick = () => {
+            b.onclick = async () => {
                 const m = matchPart(name);
                 if (m) $('audit-part').value = m;
                 $('audit-part-price').value = price;
                 if (data.labor) $('audit-labor-price').value = Number(data.labor) || '';
-                if (!m) alert('لم أتعرف على هذه القطعة تلقائياً. اختر نوعها من القائمة ثم اضغط "قارن".'); else runAudit();
+                if (!m) alert('لم أتعرف على هذه القطعة تلقائياً. اختر نوعها من القائمة ثم اضغط "قارن".'); else { _invKey = invKey; try { await runAudit(); } finally { _invKey = null; } }
             };
             list.appendChild(b);
         });
