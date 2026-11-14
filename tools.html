@@ -14,7 +14,7 @@
     <meta property="og:url" content="https://alfahis.pages.dev/tools.html">
     <meta name="twitter:card" content="summary_large_image">
 <title>أدوات الفحص | الفاحص الذكي</title>
-<script src="js/00-i18n.js?v=3.2.0"></script>
+<script src="js/00-i18n.js?v=3.2.1"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -141,6 +141,17 @@ textarea.f{width:100%;border:1px solid #CBD5E1;border-radius:12px;padding:10px 1
     <button class="btn g" id="paint-go">حلّل القراءات</button>
   </section>
 
+  <!-- ===== أسعار القطع ===== -->
+  <section id="v-parts" class="hidden" style="display:flex;flex-direction:column;gap:12px">
+    <div class="card">
+      <p class="h">كيف تستخدمها؟</p>
+      <p style="margin:0">صوّر ورقة القطع (عرض سعر الورشة أو قائمة القطع أو رقم القطعة) وحمّلها هنا. يحلّلها الوكيل الذكي ويعرض جدولاً بالقطع وأسعارها العادلة التقريبية، ويقارنها بما كُتب في الورقة.</p>
+    </div>
+    <div class="card hidden" id="parts-prev"><img id="parts-img" alt="" style="width:100%;max-height:260px;object-fit:contain;border-radius:10px;background:#E2E8F0"></div>
+    <label class="btn w" style="cursor:pointer">📤 تحميل صورة ورقة القطع<input id="parts-file" type="file" accept="image/*" class="hidden"></label>
+    <button class="btn g hidden" id="parts-go">حلّل الورقة واعرض الأسعار</button>
+  </section>
+
   <!-- ===== النتيجة ===== -->
   <section id="v-res" class="hidden" style="display:flex;flex-direction:column;gap:12px"></section>
 </main>
@@ -152,7 +163,7 @@ textarea.f{width:100%;border:1px solid #CBD5E1;border-radius:12px;padding:10px 1
 </div>
 <script>
 // ---------- الإصدار وتسجيل الأخطاء: أي خطأ عند المستخدم يصل للوحة الإدارة (3 كحد أقصى لكل جلسة) ----------
-const APP_VERSION = '3.2.0';
+const APP_VERSION = '3.2.1';
 (() => {
     let n = 0;
     const send = m => { if (n++ >= 3 || location.protocol === 'file:') return; try { fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ mode: 'clienterr', msg: String(m).slice(0, 200), page: location.pathname.slice(-20), ver: APP_VERSION, ua: navigator.userAgent.slice(0, 60) }) }).catch(() => {}); } catch (e) {} };
@@ -230,9 +241,9 @@ const passActive = () => !!(WS && WS.passUntil > Date.now());
 // الأدوات المستقلة خارج باقات اليوم والأسبوع: الخدمة المجانية، أو باقة الأدوات، أو داخل فحص مستعملة مدفوع
 // الأدوات الأساسية (كاميرا/صوت/اهتزاز) 9 ر.س للاستخدام، والفرعية 3.5 ر.س
 const MAIN_TOOLS_SET = ['camera', 'sound', 'vibration'];
-const toolClass = () => (MAIN_TOOLS_SET.includes(TOOL) ? 'toolmain' : 'toolsub');
+const toolClass = () => (TOOL === 'parts' ? 'prices' : MAIN_TOOLS_SET.includes(TOOL) ? 'toolmain' : 'toolsub');   // أسعار القطع تُحسب برصيد «أسعار القطع» (3.5)
 const toolPriceText = () => (window.SD && SD.price(toolClass())) || (toolClass() === 'toolmain' ? '9 ر.س' : '3.5 ر.س');
-function canUse() { return FLOW || !WS || WS.offline || WS.freeAvailable || (WS.freeDid && WS.freeDid === DID) || passActive() || ((WS.cr || {})[toolClass() === 'toolmain' ? 'tm' : 'ts'] || 0) > 0 || (WS.toolUses || 0) > 0; }
+function canUse() { return FLOW || !WS || WS.offline || WS.freeAvailable || (WS.freeDid && WS.freeDid === DID) || passActive() || ((WS.cr || {})[{ toolmain: 'tm', toolsub: 'ts', prices: 'prices' }[toolClass()]] || 0) > 0 || (WS.toolUses || 0) > 0; }
 function payNeeded() {
     if (FLOW) { alert('هذا الفحص غير مفعّل أو انتهت صلاحيته. اطلب من صاحب الفحص رابطاً جديداً.'); return; }
     if (confirm('هذه الأداة تحتاج استخداماً واحداً بـ ' + toolPriceText() + '.\n\nالانتقال لصفحة الدفع؟')) location.href = '/?pay=1';
@@ -805,12 +816,68 @@ function analyzePaint() {
 }
 
 // =====================================================================
+// 🧾 أسعار القطع: صورة ورقة القطع ← تحليل الوكيل ← جدول بالأسعار
+// =====================================================================
+let partsImg = null, partsDid = null;   // معرّف لكل صورة: إعادة تحليل نفس الصورة لا تخصم مرتين
+async function pickPartsPhoto(f) {
+    if (!f.type.startsWith('image/')) return;
+    const img = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = URL.createObjectURL(f); });
+    if (!img) { alert('تعذر قراءة الصورة. جرّب صورة أخرى.'); return; }
+    const sc = Math.min(1, 1600 / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+    cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(img.src);
+    const url = cv.toDataURL('image/jpeg', 0.82); partsImg = url.split(',')[1]; partsDid = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    $('parts-img').src = url; $('parts-prev').classList.remove('hidden'); $('parts-go').classList.remove('hidden');
+}
+async function analyzeParts() {
+    if (!partsImg) return;
+    if (WS && !canUse()) return payNeeded();
+    if (!store.get('sd_parts_ok', false)) {
+        if (!confirm('صورة الورقة تُرسل للتحليل ثم تُحذف ولا نحفظها.\nغطِّ أي بيانات شخصية فيها (الاسم، رقم الجوال، رقم الهوية أو الهيكل) قبل التصوير.\n\nموافق؟')) return;
+        store.set('sd_parts_ok', true);
+    }
+    const go = $('parts-go'); go.disabled = true; go.textContent = '⏳ الوكيل يقرأ الورقة ويقدّر الأسعار…';
+    const cur = (window.SD && SD.currency) || 'SAR';
+    const r = await api({ mode: 'parts_sheet', did: partsDid, image: partsImg, car: $('car').value.trim(), country: (window.SD && SD.cc) || 'SA', city: '', currency: cur }, 45000);
+    go.disabled = false; go.textContent = 'حلّل الورقة واعرض الأسعار';
+    if (r.status === 402) return payNeeded();
+    if (r.status !== 200 || !r.json) { alert(r.status === 0 ? 'تعذر الاتصال بالخادم، تحقق من الإنترنت وأعد المحاولة.' : 'تعذر تحليل الورقة الآن. جرّب صورة أوضح بعد قليل.'); return; }
+    renderParts(r.json, (window.SD && SD.cur) || 'ر.س'); loadWallet();
+}
+function renderParts(d, cur) {
+    $('v-parts').classList.add('hidden');
+    const box = $('v-res'); box.innerHTML = ''; box.classList.remove('hidden');
+    const items = d.items || [];
+    const c = el('div', 'card'); c.appendChild(el('p', 'h', '🧾 جدول القطع وأسعارها'));
+    if (!items.length) { c.appendChild(el('p', 'muted', 'لم أجد قطعاً واضحة في الصورة. صوّر الورقة من الأعلى في إضاءة جيدة.')); box.appendChild(c); const a = el('button', 'btn g', 'جرّب صورة أخرى'); a.onclick = () => { box.classList.add('hidden'); $('v-parts').classList.remove('hidden'); }; box.appendChild(a); return; }
+    const money = v => v == null ? '—' : Number(v).toLocaleString('en', { maximumFractionDigits: 2 });
+    const tb = el('table'); tb.style.cssText = 'width:100%;border-collapse:collapse;font-size:14px';
+    const hr = el('tr'); ['القطعة', 'سعر الورقة', 'العادل التقريبي', ''].forEach(h => { const t = el('th', null, h); t.style.cssText = 'text-align:right;padding:6px 4px;border-bottom:2px solid #CBD5E1;font-size:12px;color:#64748B'; hr.appendChild(t); }); tb.appendChild(hr);
+    let text = '🧾 أسعار القطع\n';
+    items.forEach(it => {
+        let v = '', col = '#64748B';
+        if (it.listed && it.fair_max) { if (it.listed <= it.fair_max * 1.1) { v = '✅ عادل'; col = '#047857'; } else if (it.listed <= it.fair_max * 1.4) { v = '⚠️ أعلى'; col = '#B45309'; } else { v = '🛑 مبالغ'; col = '#B91C1C'; } }
+        const tr = el('tr'), nm = el('td'); nm.style.cssText = 'padding:8px 4px;border-bottom:1px solid #E2E8F0'; nm.appendChild(el('b', null, it.name + (it.qty > 1 ? ' ×' + it.qty : ''))); if (it.part_no) { const pn = el('div', 'muted', it.part_no); pn.dir = 'ltr'; pn.style.textAlign = 'right'; nm.appendChild(pn); }
+        const l = el('td', null, it.listed ? money(it.listed) : '—'), f = el('td', null, it.fair_min && it.fair_max ? money(it.fair_min) + '–' + money(it.fair_max) : '—'), vd = el('td', null, v);
+        [l, f, vd].forEach(t => t.style.cssText = 'padding:8px 4px;border-bottom:1px solid #E2E8F0;white-space:nowrap'); vd.style.color = col; vd.style.fontWeight = '700';
+        tr.appendChild(nm); tr.appendChild(l); tr.appendChild(f); tr.appendChild(vd); tb.appendChild(tr);
+        text += '• ' + it.name + ': ' + (it.listed ? money(it.listed) : '—') + ' (العادل ' + (it.fair_min && it.fair_max ? money(it.fair_min) + '–' + money(it.fair_max) : '—') + ') ' + v + '\n';
+    });
+    c.appendChild(tb); c.appendChild(el('p', 'muted', 'الأسعار بعملة ' + (d.currency || cur) + '. الأسعار العادلة تقديرية من الوكيل الذكي وتختلف حسب الورشة والمدينة ونوع القطعة (أصلي/تجاري)، فاسأل أكثر من ورشة.' + (d.note ? ' ' + d.note : '')));
+    box.appendChild(c);
+    const row = el('div', 'row'); const sh = el('button', 'btn w', 'مشاركة'); sh.onclick = () => shareText(text); row.appendChild(sh);
+    const again = el('button', 'btn w', 'ورقة أخرى'); again.onclick = () => { partsImg = null; $('parts-prev').classList.add('hidden'); $('parts-go').classList.add('hidden'); box.classList.add('hidden'); $('v-parts').classList.remove('hidden'); }; row.appendChild(again);
+    box.appendChild(row); finishButtons(box); window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// =====================================================================
 // التهيئة
 // =====================================================================
 const TOOLS = [
     ['camera', 'الفحص بالكاميرا', 'صوّر أي جزء من السيارة ونحلله'],
     ['sound', 'تحليل صوت المحرك', 'سجّل 8 ثوانٍ من صوت المحرك'],
     ['vibration', 'قياس الاهتزاز', 'وقوف أو قيادة'],
+    ['parts', 'أسعار القطع', 'حمّل صورة ورقة القطع ونعرض جدول الأسعار'],
     ['paint', 'سماكة الدهان', 'خريطة الرش والمعجون'],
     ['glass', 'تواريخ الزجاج والأحزمة', 'كشف القطع المستبدلة'],
     ['tires', 'فحص الكفرات', 'سنة الصنع والنقشة والتآكل'],
@@ -818,11 +885,11 @@ const TOOLS = [
     ['code', 'قراءة كود العطل', 'معنى الكود وما يجب فعله']
 ];
 // قسمان: الأدوات الأساسية (أول ثلاث) والفرعية (الباقي)
-const MAIN_TOOLS = ['camera', 'sound', 'vibration'];
+const MAIN_TOOLS = ['camera', 'sound', 'vibration', 'parts'];
 function showPicker() {
     $('title').textContent = 'أدوات الفحص'; $('subtitle').textContent = 'استخدم أي أداة وحدها لسيارتك';
     const box = $('v-pick'); box.classList.remove('hidden'); box.style.cssText = 'display:block';
-    [['أدوات الفحص الأساسية', 'الأقوى تحليلاً: كاميرا وصوت واهتزاز', t => MAIN_TOOLS.includes(t[0])], ['أدوات الفحص الفرعية', 'فحوصات سريعة ومحددة', t => !MAIN_TOOLS.includes(t[0])]].forEach(([h, sub, f]) => {
+    [['أدوات الفحص الأساسية', 'الأقوى تحليلاً: كاميرا وصوت واهتزاز وأسعار القطع', t => MAIN_TOOLS.includes(t[0])], ['أدوات الفحص الفرعية', 'فحوصات سريعة ومحددة', t => !MAIN_TOOLS.includes(t[0])]].forEach(([h, sub, f]) => {
         const head = el('div'); head.style.cssText = 'margin:14px 2px 8px'; head.appendChild(el('b', null, h)); head.appendChild(el('div', 'muted', sub)); box.appendChild(head);
         const grid = el('div'); grid.style.cssText = 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px'; box.appendChild(grid);
         TOOLS.filter(f).forEach(([k, n, d]) => { const a = el('a', 'card'); a.href = k === 'code' ? '/?tab=code' : 'tools.html?t=' + k; a.style.cssText = 'text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:4px;min-height:96px'; a.appendChild(el('b', null, n)); a.appendChild(el('span', 'muted', d)); grid.appendChild(a); });
@@ -855,6 +922,10 @@ function init() {
         $('file').onchange = e => { fromFiles(e.target.files); e.target.value = ''; $('cam-start-box').insertAdjacentElement('afterend', $('shots-box')); };
         // زر تحليل للصور المختارة من الجوال
         const ab = el('button', 'btn g', 'حلّل الصور'); ab.id = 'analyze-files'; ab.style.marginTop = '8px'; ab.onclick = analyze; $('shots-box').appendChild(ab);
+    } else if (TOOL === 'parts') {
+        $('title').textContent = 'أسعار القطع'; $('v-parts').classList.remove('hidden');
+        $('parts-file').onchange = e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) pickPartsPhoto(f); };
+        $('parts-go').onclick = analyzeParts;
     } else if (TOOL === 'paint') {
         $('title').textContent = 'سماكة الدهان'; $('v-paint').classList.remove('hidden');
         buildPaint(); $('paint-go').onclick = analyzePaint;

@@ -48,7 +48,7 @@
     };
 
     // ---------- كل طلب للخادم يحمل الدولة، ولغة الرد للمناطق غير العربية، وبعد موافقة المستخدم ----------
-    const AI_MODES = ['diagnose', 'questions', 'vision', 'measure', 'inspect2', 'invoice', 'partcheck', 'report_write', 'inspect'];
+    const AI_MODES = ['diagnose', 'questions', 'vision', 'measure', 'inspect2', 'invoice', 'parts_sheet', 'partcheck', 'report_write', 'inspect'];
     const CONSENT = {
         en: 'To analyse your car, the description, sounds or photos you provide are sent to our AI provider (Google) and deleted after analysis. We do not sell your data. Continue?',
         de: 'Zur Analyse werden Ihre Beschreibung, Geräusche oder Fotos an unseren KI-Anbieter (Google) gesendet und danach gelöscht. Wir verkaufen Ihre Daten nicht. Fortfahren?',

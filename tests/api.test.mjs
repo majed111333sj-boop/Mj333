@@ -293,5 +293,19 @@ test('3.2.0: الاسترجاع يخصم الرصيد الجديد، وحزمة 
   assert.equal((await api({ mode: 'inspect2', wid: w5, car: 'x', stages: [] })).status, 402);
 });
 
+test('3.2.1: ورقة القطع: تحتاج رصيد أسعار، تُخصم مرة لكل صورة، وتُنظَّف المخرجات', async () => {
+  const w = wid(); await api(diagBody(w, did()));
+  const d = did(), body = { mode: 'parts_sheet', wid: w, did: d, image: 'A'.repeat(300), car: 'كامري 2018', currency: 'SAR' };
+  assert.equal((await api(body)).status, 402);
+  await lemon(w, 'أسعار القطع');
+  geminiText = JSON.stringify({ items: [{ name: 'فلتر زيت', part_no: '04152', qty: 1, listed_price: 60, fair_min: 40, fair_max: 30 }, { name: '', qty: 2 }], currency: 'SAR' });
+  const r = await api(body);
+  assert.equal(r.status, 200); assert.equal(r.json.items.length, 1);
+  assert.deepEqual([r.json.items[0].fair_min, r.json.items[0].fair_max, r.json.items[0].listed], [30, 40, 60]);   // النطاق المقلوب يُصحَّح
+  assert.equal((await api(body)).status, 200);                      // نفس الصورة: بلا خصم ثانٍ
+  assert.equal((await cr(w)).prices, 0);
+  assert.equal((await api(Object.assign({}, body, { did: did() }))).status, 402);   // صورة جديدة تحتاج رصيداً جديداً
+});
+
 globalThis.fetch = globalThis.fetch;   // (realFetch محفوظ للتوثيق فقط)
 void realFetch;

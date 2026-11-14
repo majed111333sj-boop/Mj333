@@ -232,6 +232,13 @@ const INVOICE_SYSTEM = `أنت تقرأ صور فواتير ورش السيار�
 أجب بكائن JSON فقط: {"items":[{"name":"اسم القطعة بالعربية","price":number}], "labor": number|null, "total": number|null, "currency": "رمز العملة إن ظهر"|null}
 إذا لم تكن الصورة فاتورة واضحة فأرجع {"items":[]}.`;
 
+const PARTS_SHEET_SYSTEM = `أنت خبير قطع غيار سيارات. ستصلك صورة ورقة قطع (عرض سعر أو قائمة قطع أو فاتورة أو رقم قطعة مكتوب).
+استخرج كل قطعة: اسمها بالعربية، ورقم القطعة إن ظهر، والكمية، والسعر المكتوب على الورقة إن وجد.
+ثم قدّر نطاق السعر العادل للقطعة (أدنى وأعلى) في السوق المحلي بعملة المستخدم للسيارة المذكورة، كتقدير تقريبي لا سعراً مؤكداً. إن لم تستطع التقدير بثقة فاجعله null.
+لا تخترع قطعاً غير موجودة في الصورة. أجب بكائن JSON فقط:
+{"items":[{"name":"...","part_no":"..."|null,"qty":number,"listed_price":number|null,"fair_min":number|null,"fair_max":number|null}],"currency":"رمز العملة"|null,"note":"ملاحظة قصيرة"|null}
+إذا لم تكن الصورة ورقة قطع واضحة فأرجع {"items":[]}.`;
+
 const QUESTIONS_SYSTEM = `أنت فني سيارات خبير في دول الخليج. قبل أن تشخّص، اطرح على المالك أسئلة قصيرة تضيّق الاحتمالات.
 - اكتب من 3 إلى 4 أسئلة فقط، بالعربية البسيطة القريبة من اللهجة الخليجية.
 - اختر الأسئلة الأكثر تمييزاً بين الأعطال المحتملة لهذا الوصف (مكان الإحساس، متى يظهر، هل يتغير مع السرعة/اللف/الحرارة، لمبات، روائح، ألوان دخان…).
@@ -266,7 +273,7 @@ const REGION_OF = (() => {
 })();
 const regionOf = cc => REGION_OF[String(cc || '').toUpperCase()] || '';
 const GATED_FREE = new Set(['diagnose', 'questions', 'inspect', 'vision', 'measure']);   // يُسمح بها ضمن الخدمة المجانية الأولى
-const GATED_PAID = new Set(['partcheck', 'invoice']);                // تحتاج وصولاً مدفوعاً دائماً
+const GATED_PAID = new Set(['partcheck', 'invoice', 'parts_sheet']);                // تحتاج وصولاً مدفوعاً دائماً
 const validWid = w => typeof w === 'string' && /^w_[a-z0-9]{12,24}$/.test(w);
 const validDid = d => typeof d === 'string' && /^[a-z0-9]{4,40}$/.test(d);
 // الشبكات في الخليج يتشارك فيها كثيرون نفس العنوان، لذلك نحدّ الهدايا لكل عنوان بـ 3 يومياً بدلاً من منعها
@@ -438,7 +445,7 @@ async function accessGate(body, ip) {
   const unl = Array.isArray(w.unl) ? w.unl : [];
   const ful = Array.isArray(w.ful) ? w.ful : [];
   if (body.mode === 'partcheck') return { ok: !!(did && ful.includes(did)) };   // قطع الأعطال: فحص وافٍ فقط
-  if (body.mode === 'invoice') return pricesAccess(body, w);                     // الأسعار: رصيد أسعار أو مرة مجانية
+  if (body.mode === 'invoice' || body.mode === 'parts_sheet') return pricesAccess(body, w);                     // الأسعار: رصيد أسعار أو مرة مجانية
   if (did && (unl.includes(did) || ful.includes(did))) return { ok: true };      // خدمة سبق خصمها من رصيده أو فُتحت له
   const tool = typeof body.tool === 'string' && /^[a-z_]{2,24}$/.test(body.tool) ? body.tool : null;
   const f = await freeState(body.wid, ip, w);
@@ -967,7 +974,7 @@ async function handle(req, res) {
   if (PAY_MODES.has(body.mode)) return payHandler(body, ip, res);
   if (APP_MODES.has(body.mode)) return appHandler(body, ip, res);
   // حدود يومية لكل محفظة (تُعدَّل بـ AI_DAILY_LIMITS مثل {"vision":40,"text":120,"report":10})
-  const QCLASS = { vision: 'vision', inspect2: 'report', diagnose: 'text', questions: 'text', measure: 'text', partcheck: 'text', invoice: 'vision', inspect: 'text' }[body.mode];
+  const QCLASS = { vision: 'vision', inspect2: 'report', diagnose: 'text', questions: 'text', measure: 'text', partcheck: 'text', invoice: 'vision', parts_sheet: 'vision', inspect: 'text' }[body.mode];
   if (QCLASS && KV_URL && KV_TOKEN && validWid(body.wid)) {
     const lim = Object.assign({ vision: 40, text: 120, report: 10 }, (() => { try { return JSON.parse(ENV.AI_DAILY_LIMITS || '{}'); } catch (e) { return {}; } })());
     const qk = 'q:' + body.wid + ':' + dayKey() + ':' + QCLASS;
@@ -1281,6 +1288,22 @@ async function handle(req, res) {
         .map(it => ({ name: clip(it.name, 60), price: Number(it.price) || 0 }))
         .filter(it => it.name && it.price > 0 && it.price < 1e6);
       return res.status(200).json({ items, labor: Number(j.labor) || null, total: Number(j.total) || null, currency: j.currency ? clip(j.currency, 6) : null });
+    }
+
+    if (body.mode === 'parts_sheet') {
+      const image = String(body.image || '');
+      if (!image || image.length > 4_000_000 || !/^[A-Za-z0-9+/=]+$/.test(image.slice(0, 200))) return res.status(400).json({ error: 'bad_image' });
+      const content = [
+        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: image } },
+        { type: 'text', text: 'السيارة: ' + clip(body.car, 80) + '\nالدولة: ' + clip(body.country, 30) + ' - ' + clip(body.city, 30) + '\nالعملة: ' + clip(body.currency, 5) }
+      ];
+      const { data: j } = await callAI(buildChain('main'), PARTS_SHEET_SYSTEM, content, 1200, ctx, d => Array.isArray(d.items));
+      const num = v => { v = Number(v); return v > 0 && v < 1e7 ? Math.round(v * 100) / 100 : null; };
+      const items = j.items.slice(0, 25).map(it => {
+        let lo = num(it.fair_min), hi = num(it.fair_max); if (lo && hi && lo > hi) [lo, hi] = [hi, lo];
+        return { name: clip(it.name, 70), part_no: it.part_no ? clip(it.part_no, 30) : null, qty: Math.max(1, Math.min(99, Math.round(Number(it.qty) || 1))), listed: num(it.listed_price), fair_min: lo, fair_max: hi };
+      }).filter(it => it.name);
+      return res.status(200).json({ items, currency: j.currency ? clip(j.currency, 6) : null, note: j.note ? clip(j.note, 200) : null });
     }
 
     return res.status(400).json({ error: 'unknown_mode' });
