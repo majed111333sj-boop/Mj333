@@ -445,7 +445,7 @@ async function unlockInspect() {
         if (r.json) WS = r.json;
     }
     if (unlockedInspect()) { applyInspectLock(); return; }
-    if (confirm('استخدمت خدمتك المجانية.\nلفتح هذا التقرير وكل خدمات التطبيق افتح الوصول الكامل (فحص السيارة + قطع الأعطال بـ 9 ر.س، أو الفحص الوافي بـ 17 ر.س).\n\nالانتقال لصفحة الدفع؟ (تقدّمك هنا محفوظ)')) location.href = '/?pay=1';
+    if (confirm('استخدمت خدمتك المجانية.\nلفتح هذا التقرير وكل خدمات التطبيق افتح الوصول الكامل (فحص السيارة + قطع الأعطال بـ 9 ر.س، أو الفحص الوافي بـ 11 ر.س).\n\nالانتقال لصفحة الدفع؟ (تقدّمك هنا محفوظ)')) location.href = '/?pay=1';
     else $('ipw-code').focus();
 }
 async function redeemInspect() {
