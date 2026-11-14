@@ -10,7 +10,7 @@ const PRODUCTS = {
     full:     { sar: 17,   title: 'الفحص الوافي', desc: 'تشخيص + قطع الأعطال وأسعارها + مدقق القطع + التقرير PDF وإرساله للورش', badge: 'الأوفى' },
     diag:     { sar: 9,    title: 'فحص السيارة + قطع الأعطال', desc: 'تشخيص عطل واحد مع القطع المتوقعة وأسعارها وصيغة التفاوض' },
     upgrade:  { sar: 11,   title: 'ترقية فحص إلى الوافي', desc: 'لفحص سبق أن اشتريته: يضيف مدقق القطع والتقرير PDF وإرساله للورش' },
-    prices:   { sar: 3.5,  title: 'أسعار القطع', desc: 'سعر عادل لقطعة أو بند فاتورة (قراءة الفاتورة والمقارنة)' },
+    prices:   { sar: 4,  title: 'أسعار القطع', desc: 'سعر عادل لقطعة أو بند فاتورة (قراءة الفاتورة والمقارنة)' },
     toolmain: { sar: 9,    title: 'أداة فحص أساسية', desc: 'استخدام واحد: الفحص بالكاميرا، أو تحليل صوت المحرك، أو قياس الاهتزاز' },
     toolsub:  { sar: 3.5,  title: 'أداة فحص فرعية', desc: 'استخدام واحد: الكفرات، اللمبات، سماكة الدهان، تواريخ الزجاج…' },
     report:   { sar: 33,   title: 'فحص سيارة مستعملة', desc: 'فحص كامل قبل الشراء مرة واحدة (صالح 30 يوماً): كاميرا وصوت واهتزاز، ويمكن عن بعد' },
@@ -177,6 +177,7 @@ function applyLock() {
     $('prices-paywall').classList.toggle('hidden', pricesOpen);
     $('pw-btn').textContent = '🔓 ' + PRODUCTS.diag.title + ' بـ ' + prodPrice('diag');
     $('pw-sub').textContent = 'أو الفحص الوافي (مع مدقق القطع والتقرير PDF) بـ ' + prodPrice('full');
+    const pcp = $('parts-cta-price'), scp = $('sound-cta-price'); if (pcp) pcp.textContent = prodPrice('prices'); if (scp) scp.textContent = prodPrice('toolmain');
     const ub = $('upgrade-box'); if (ub) { ub.classList.toggle('hidden', !canUpgrade()); const ut = $('upgrade-btn'); if (ut) ut.textContent = '⬆️ ترقية هذا الفحص إلى الوافي بـ ' + prodPrice('upgrade'); }
     const pb = $('pass-banner'); if (pb) { pb.textContent = passText(); pb.classList.toggle('hidden', !passActive()); }
     const wf = $('welcome-free'); if (wf) wf.classList.toggle('hidden', !(Wallet.state && Wallet.state.freeAvailable && !passActive()));
