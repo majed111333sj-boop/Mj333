@@ -308,10 +308,11 @@ test('3.2.1: ورقة القطع: تحتاج رصيد أسعار، تُخصم م
 });
 
 test('أسماء منتجات Lemon كما كُتبت فعلاً في المتجر (همزات وتاء مربوطة بصيغة ه)', async () => {
-  const names = [['اداه فحص اساسيه', 'tm'], ['اداه فحص فرعيه', 'ts'], ['اسعار القطع', 'prices'], ['الفحص الوافي', 'full'], ['ترقيه الى الفحص الوافي', 'upg'], ['فحص السياره +قطع الاعطال', 'diag']];
+  const names = [['اداه فحص اساسيه', 'tm'], ['فحص اداه رئيسيه', 'tm'], ['فحص اداه فرعيه', 'ts'], ['اداه فحص فرعيه', 'ts'], ['اسعار القطع', 'prices'], ['الفحص الوافي', 'full'], ['ترقيه الى الفحص الوافي', 'upg'], ['فحص السياره +قطع الاعطال', 'diag']];
   for (const [name, key] of names) { const w = wid(); await lemon(w, name); const c = await cr(w); assert.equal(c[key], 1, name); }
   const w5 = wid(); await lemon(w5, 'باقه خمسه فحوصات مستعمله'); assert.equal((await api({ mode: 'wallet', wid: w5 })).json.reports, 5);
-  const w1 = wid(); await lemon(w1, 'فحص سياره مستعمله قبل الشراء'); assert.equal((await api({ mode: 'wallet', wid: w1 })).json.reports, 1);
+  const w1 = wid(); await lemon(w1, 'فحص سياره مستعمله قبل الشراء (الشامل)'); assert.equal((await api({ mode: 'wallet', wid: w1 })).json.reports, 1);
+  const w6 = wid(); await lemon(w6, 'فحص خمس سيارات مستعمله (الشامل)'); assert.equal((await api({ mode: 'wallet', wid: w6 })).json.reports, 5);
 });
 
 globalThis.fetch = globalThis.fetch;   // (realFetch محفوظ للتوثيق فقط)

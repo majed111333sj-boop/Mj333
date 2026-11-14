@@ -361,7 +361,7 @@ function productFromName(n) {
   n = String(n || '').toLowerCase().replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));   // أرقام عربية ← لاتينية
   if (/(report|used|مستعمل|تقرير)/.test(n)) return /(5|خمس)/.test(n) ? 'report5' : 'report';
   if (/ترقية|ترقيه|upgrade/.test(n)) return 'upgrade';
-  if (/أساس|اساس|main|basic/.test(n)) return 'toolmain';
+  if (/أساس|اساس|رئيس|main|basic/.test(n)) return 'toolmain';
   if (/فرعي|فرعى|sub|secondary/.test(n)) return 'toolsub';
   if (/أسعار|اسعار|prices?/.test(n)) return 'prices';
   if (/وافي|وافى|full|شامل/.test(n)) return 'full';
