@@ -258,8 +258,16 @@ async function watchTam() {
         await sleep(30000);
     }
 }
+async function buyWhop(k) {
+    store.set('sd_pay_pending', Object.assign({ k, at: Date.now() }, paySnap())); track('checkout_click');
+    const r = await payApi({ mode: 'whop_checkout', product: k });
+    if (r.status === 200 && r.json && r.json.url) { location.href = r.json.url; return; }
+    store.del('sd_pay_pending');
+    alert('تعذر فتح صفحة الدفع الآن، حاول بعد قليل.');
+}
 function buyProduct(k) {
     if (typeof acctNeeded === 'function' && acctNeeded()) return acctAsk(k);   // أول عملية شراء: تسجيل بضغطة واحدة
+    if (Wallet.state && Wallet.state.whop) return buyWhop(k);   // Whop هو البوابة الأساسية متى فُعّل على الخادم
     const links = Object.assign({}, PAY_LINKS, (Wallet.state && Wallet.state.links) || {});
     const link = links[k];
     if (!link) { if (((Wallet.state && Wallet.state.tam) || {})[k]) return tamBuy(k); alert('الدفع الإلكتروني سيتوفر قريباً.\nإذا لديك كود تفعيل، أدخله في الأسفل.'); $('pm-code').focus(); return; }

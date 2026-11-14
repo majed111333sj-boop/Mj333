@@ -250,7 +250,7 @@ const QUESTIONS_SYSTEM = `أنت فني سيارات خبير في دول الخ
 // =====================================================================
 // 💳 نظام الدفع: خدمة واحدة مجانية لكل مستخدم، ثم "تذكرة وصول كامل" لمدة يوم (أو أيام/سنة)
 // =====================================================================
-const PAY_MODES = new Set(['wallet', 'use_free', 'redeem', 'codes_create', 'pay_stats', 'pay_webhook', 'tamclaim', 'tam_list', 'tam_decide', 'set_free_choice', 'upgrade', 'use_prices', 'acct_link']);
+const PAY_MODES = new Set(['wallet', 'use_free', 'redeem', 'codes_create', 'pay_stats', 'pay_webhook', 'tamclaim', 'tam_list', 'tam_decide', 'set_free_choice', 'upgrade', 'use_prices', 'acct_link', 'whop_checkout']);
 // uses = فحوصات (باقة 3)، days = وصول زمني، rc = فحص مستعملة، tu = استخدامات أدوات. day3 و annual قديمتان: نحترمهما لمن اشتراهما ولا تُباعان
 // نموذج 3.2.0: رصيد لكل خدمة (cr). full = الفحص الوافي حتى التقرير، diag = فحص السيارة + قطع الأعطال، upgrade = ترقية فحص إلى الوافي،
 // prices = أسعار القطع، toolmain = أداة أساسية (كاميرا/صوت/اهتزاز)، toolsub = أداة فرعية، report = فحص مستعملة، report5 = 5 فحوصات مستعملة (صالحة 6 أشهر)
@@ -292,7 +292,7 @@ async function walletView(wid, ip, w, cc) {
   const f = await freeState(wid, ip, w);
   let acc = null;
   try { const a = (await kv(['MGET', 'stat:fb:yes', 'stat:fb:no', 'stat:fb:partial'])) || []; const y = +a[0] || 0, t = y + (+a[1] || 0) + (+a[2] || 0); if (t >= 20) acc = { yes: y, total: t }; } catch (e) {}
-  return { passUntil: passActive(w) ? w.pass : 0, freeAvailable: !f.used, freeDid: f.did, freeChoice: w.fc || null, paid: !!w.paid, uses: w.uses || 0, toolUses: w.tu || 0, cr: Object.assign({ full: 0, diag: 0, upg: 0, prices: 0, tm: 0, ts: 0 }, w.cr || {}), unlocked: (w.unl || []).slice(-100), fullUnlocked: (w.ful || []).slice(-100), reports: rcValid(w) ? (w.rc || 0) : 0, links: checkoutLinks(cc), tam: tamLinks(), cfg: appConfig(), accuracy: acc };
+  return { passUntil: passActive(w) ? w.pass : 0, freeAvailable: !f.used, freeDid: f.did, freeChoice: w.fc || null, paid: !!w.paid, uses: w.uses || 0, toolUses: w.tu || 0, cr: Object.assign({ full: 0, diag: 0, upg: 0, prices: 0, tm: 0, ts: 0 }, w.cr || {}), unlocked: (w.unl || []).slice(-100), fullUnlocked: (w.ful || []).slice(-100), reports: rcValid(w) ? (w.rc || 0) : 0, links: checkoutLinks(cc), whop: whopReady(), tam: tamLinks(), cfg: appConfig(), accuracy: acc };
 }
 // حدود القياس قابلة للضبط من متغير VIB_LIMITS بدون تعديل الكود، مثل: {"idle":[0.02,0.05],"drive":[0.04,0.1],"brake":[1.6,2.5]}
 // حدود الاهتزاز من بيانات حقيقية: الحد الأول أعلى من 90% من السيارات السليمة المؤكدة،
@@ -420,6 +420,7 @@ function deepFindWid(o, d = 0) {
   if (typeof o === 'object') { for (const k of Object.keys(o)) { const r = deepFindWid(o[k], d + 1); if (r) return r; } }
   return null;
 }
+const whopReady = () => !!(ENV.WHOP_API_KEY && ENV.WHOP_WEBHOOK_SECRET);
 async function whopWebhook(rawBody, h) {
   const secret = ENV.WHOP_WEBHOOK_SECRET;
   if (!secret || !KV_URL) return [503, { error: 'not_configured' }];
@@ -618,6 +619,22 @@ async function payHandler(body, ip, res) {
     await kv(['SET', 'wacct:' + aw, u.uid, 'EX', 3 * 365 * 24 * 3600]);
     await kv(['INCR', 'stat:acct:' + (merged ? 'merge' : 'link')]);
     return res.status(200).json(Object.assign({ ok: true, wid: aw, merged, email: maskEmail(u.email) }, await walletView(aw, ip, await getWallet(aw), body.cc)));
+  }
+
+  // Whop: ننشئ جلسة دفع من الخادم ومعها رقم المحفظة والمنتج (metadata)، لأن Whop لا يقبل metadata من رابط ثابت
+  if (body.mode === 'whop_checkout') {
+    if (!validWid(wid) || !SELLABLE.includes(body.product)) return res.status(400).json({ error: 'bad_request' });
+    if (!whopReady()) return res.status(503).json({ error: 'not_configured' });
+    const plan = String(ENV['WHOP_PLAN_' + body.product.toUpperCase()] || '').trim();
+    if (!/^plan_[A-Za-z0-9]{6,40}$/.test(plan)) return res.status(503).json({ error: 'plan_missing' });
+    try {
+      const r = await post('https://api.whop.com/api/v1/checkout_configurations', { 'content-type': 'application/json', authorization: 'Bearer ' + ENV.WHOP_API_KEY }, { plan_id: plan, mode: 'payment', metadata: { wid, product: body.product } }, 8000);
+      const url = String(r.purchase_url || '');
+      const link = /^https:\/\/([a-z0-9-]+\.)*whop\.com\//i.test(url) ? url : (/^ch_[A-Za-z0-9]+$/.test(String(r.id || '')) ? 'https://whop.com/checkout/' + r.id : '');
+      if (!link) return res.status(502).json({ error: 'no_checkout' });
+      await kv(['INCR', 'stat:checkout:' + body.product]);
+      return res.status(200).json({ ok: true, url: link });
+    } catch (e) { return res.status(502).json({ error: 'whop_failed' }); }
   }
 
   if (body.mode === 'redeem') {
