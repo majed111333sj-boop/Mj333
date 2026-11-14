@@ -272,6 +272,25 @@ function buildStageTabs() {
         box.appendChild(b);
     });
 }
+// ---------- أدوات القياس المدمجة في الفحص ----------
+// بند ← [الأداة، مفاتيح النتيجة المحفوظة، نص الزر]
+const TOOLMAP = {
+    start: ['sound', ['sound'], '🎙️ سجّل صوت المحرك'], idle: ['sound', ['sound'], '🎙️ سجّل صوت المحرك'],
+    vib: ['vibration', ['vib_idle', 'vib_drive'], '📳 قِس الاهتزاز'],
+    paint: ['paint', ['paint'], '🎨 قِس سماكة الدهان'], tires: ['tires', ['tires'], '📷 صوّر الكفر'], tireage: ['tires', ['tires'], '📷 صوّر الكفر'],
+    lights: ['lights', ['lights'], '📷 صوّر اللمبة'], smoke: ['smoke', ['smoke'], '📷 صوّر العادم'], under: ['under', ['under'], '📷 صوّر تحت السيارة'],
+    oil: ['oil', ['oil'], '📷 صوّر الزيت'], glass: ['glass', ['glass'], '📷 صوّر تواريخ الزجاج'], vin: ['vin', ['vin'], '📷 صوّر رقم الهيكل'],
+    leaks: ['engine', ['engine'], '📷 صوّر المحرك'], belts: ['engine', ['engine'], '📷 صوّر المحرك']
+};
+const VMAP = { good: ['ok', '✅ جيد'], attention: ['note', '⚠️ يحتاج انتباه'], problem: ['bad', '❌ مشكلة'] };
+function toolResult(keys) {
+    const all = store.get('sd_inspect_tools', {}); let best = null;
+    keys.forEach(k => { const e = all[k]; if (e && (!best || e.ts > best.ts)) best = e; });
+    return best;
+}
+function toolsBadge() {   // عدد ما قيس بالأدوات
+    return new Set(Object.values(TOOLMAP).flatMap(t => t[1]).filter(k => (store.get('sd_inspect_tools', {})[k]))).size;
+}
 function render() {
     buildStageTabs();
     const s = STAGES[stageIdx], box = $('stage-box'); box.innerHTML = '';
@@ -282,6 +301,22 @@ function render() {
         if (red) top.appendChild(el('span', 'shrink-0 text-[9px] font-black bg-red-100 text-red-700 px-1.5 py-0.5 rounded', 'مهم'));
         card.appendChild(top);
         card.appendChild(el('p', 'text-[11px] text-slate-500 leading-relaxed', '💡 ' + how));
+        const tm = TOOLMAP[id];
+        if (tm) {
+            const tr = toolResult(tm[1]);
+            const link = el('a', 'block text-center text-[12px] font-extrabold rounded-xl py-2 ' + (tr ? 'bg-slate-100 text-slate-700' : 'bg-blue-700 text-white'), tr ? '🔁 أعد القياس' : tm[2]);
+            link.href = 'tools.html?t=' + tm[0] + '&stage=' + (stageIdx + 1) + '&insp=' + inspectId().slice(1).toLowerCase().replace(/[^a-z0-9]/g, '').padEnd(4, '0').slice(0, 40) + '&tk=' + (state.tk || (state.tk = Math.random().toString(36).slice(2) + Date.now().toString(36)));
+            link.onclick = () => save();
+            if (tr) {
+                const v = VMAP[tr.verdict] || ['skip', '—'];
+                const res = el('div', 'rounded-xl border p-2 text-[11px] leading-relaxed ' + (v[0] === 'ok' ? 'border-emerald-200 bg-emerald-50' : v[0] === 'note' ? 'border-amber-200 bg-amber-50' : 'border-red-200 bg-red-50'));
+                res.appendChild(el('b', null, '📊 نتيجة القياس: ' + v[1] + ' — '));
+                res.appendChild(document.createTextNode(tr.summary || ''));
+                card.appendChild(res);
+                if (!state.answers[id] && VMAP[tr.verdict]) { state.answers[id] = VMAP[tr.verdict][0]; if (VMAP[tr.verdict][0] !== 'ok') state.notes[id] = (tr.summary || '').slice(0, 120); save(); }
+            }
+            card.appendChild(link);
+        }
         const row = el('div', 'flex gap-1.5');
         ANS.forEach(([k, label]) => {
             const b = el('button', 'ans ' + k + (state.answers[id] === k ? ' on' : ''), label);
@@ -399,7 +434,7 @@ function copyText(id) {
 }
 function resetAll() {
     if (!confirm('مسح هذا الفحص والبدء بسيارة جديدة؟')) return;
-    state = { answers: {}, notes: {}, car: {} }; store.del('sd_inspect');
+    state = { answers: {}, notes: {}, car: {} }; store.del('sd_inspect'); store.del('sd_inspect_tools');
     Object.keys(photos).forEach(k => delete photos[k]);
     ['i-model', 'i-km', 'i-price'].forEach(id => $(id).value = '');
     $('result').classList.add('hidden'); stageIdx = 0; render(); window.scrollTo({ top: 0, behavior: 'smooth' });
