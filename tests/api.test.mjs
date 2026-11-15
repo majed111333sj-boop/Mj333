@@ -49,7 +49,7 @@ globalThis.fetch = async (url, init) => {
     const users = { 'tok-ali': { localId: 'uid-ali', email: 'ali@example.com', providerUserInfo: [{ providerId: 'google.com' }] }, 'tok-anon': { localId: 'uid-anon', providerUserInfo: [] } };
     return users[tok] ? new Response(JSON.stringify({ users: [users[tok]] }), { status: 200 }) : new Response('{"error":"bad"}', { status: 400 });
   }
-  if (u.startsWith('https://api.whop.com/api/v1/checkout_configurations')) { globalThis.__whopReq = JSON.parse(init.body); return new Response(JSON.stringify({ id: 'ch_abc123', purchase_url: 'https://whop.com/checkout/ch_abc123/' }), { status: 200 }); }
+  if (u.startsWith('https://api.whop.com/api/v1/checkout_configurations')) { globalThis.__whopReq = JSON.parse(init.body); if (globalThis.__whopRejectRedirect && globalThis.__whopReq.redirect_url) return new Response('{"error":"bad"}', { status: 400 }); return new Response(JSON.stringify({ id: 'ch_abc123', purchase_url: 'https://whop.com/checkout/ch_abc123/' }), { status: 200 }); }
   return new Response('{}', { status: 404 });
 };
 
@@ -385,8 +385,17 @@ test('3.3.0 Whop: إنشاء جلسة دفع تحمل المحفظة والمن�
   const env = { WHOP_API_KEY: 'k', WHOP_WEBHOOK_SECRET: 'ws_test', WHOP_PLAN_PRICES: 'plan_abc12345' };
   const r = await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env });
   assert.equal(r.status, 200); assert.match(r.json.url, /^https:\/\/whop\.com\/checkout\//);
-  assert.deepEqual(globalThis.__whopReq, { variant_id: 'plan_abc12345', mode: 'payment', metadata: { wid: w, product: 'prices' } });
+  assert.deepEqual(globalThis.__whopReq, { redirect_url: 'https://alfahis.pages.dev/?paid=1', variant_id: 'plan_abc12345', mode: 'payment', metadata: { wid: w, product: 'prices' } });
   assert.equal((await api({ mode: 'whop_checkout', wid: w, product: 'nope' }, { env })).status, 400);
   assert.equal((await api({ mode: 'whop_checkout', wid: w, product: 'full' }, { env })).status, 503);   // معرّف الخطة غير مضبوط
   assert.equal((await api({ mode: 'wallet', wid: w }, { env })).json.whop, true);
+});
+
+test('3.3.6 Whop: إن رفض حقل الرجوع نكمل إنشاء الجلسة بدونه', async () => {
+  const w = wid(), env = { WHOP_API_KEY: 'k', WHOP_WEBHOOK_SECRET: 'ws_test', WHOP_PLAN_PRICES: 'plan_abc12345' };
+  globalThis.__whopRejectRedirect = true;
+  try {
+    const r = await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env });
+    assert.equal(r.status, 200); assert.equal(globalThis.__whopReq.redirect_url, undefined);
+  } finally { globalThis.__whopRejectRedirect = false; }
 });

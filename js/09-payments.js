@@ -275,6 +275,7 @@ function buyProduct(k) {
     if (Wallet.state && Wallet.state.whop) return buyWhop(k);   // Whop هو البوابة الأساسية متى فُعّل على الخادم
     const links = Object.assign({}, PAY_LINKS, (Wallet.state && Wallet.state.links) || {});
     const link = links[k];
+    if (!link && !((Wallet.state && Wallet.state.tam) || {})[k] && !(Wallet.state && Wallet.state.offline === false && Wallet.state.whop === false)) return buyWhop(k);   // حالة المحفظة قد تكون ناقصة (انقطاع لحظي): الخادم يقرر ويعيد سبب الرفض
     if (!link) { if (((Wallet.state && Wallet.state.tam) || {})[k]) return tamBuy(k); alert('الدفع الإلكتروني سيتوفر قريباً.\nإذا لديك كود تفعيل، أدخله في الأسفل.'); $('pm-code').focus(); return; }
     // رقم المحفظة يُرسل مع الطلب، فيُفعَّل الوصول تلقائياً فور الدفع
     if (/^https:\/\/(www\.)?whop\.com\//i.test(link)) {   // Whop (متى أُضيف لاحقاً): رقم المحفظة والمنتج في metadata

@@ -628,7 +628,10 @@ async function payHandler(body, ip, res) {
     const plan = String(ENV['WHOP_PLAN_' + body.product.toUpperCase()] || '').trim();
     if (!/^plan_[A-Za-z0-9]{6,40}$/.test(plan)) return res.status(503).json({ error: 'plan_missing', detail: body.product });
     try {
-      const r = await post('https://api.whop.com/api/v1/checkout_configurations', { 'content-type': 'application/json', authorization: 'Bearer ' + ENV.WHOP_API_KEY }, { variant_id: plan, mode: 'payment', metadata: { wid, product: body.product } }, 8000);
+      const hdr = { 'content-type': 'application/json', authorization: 'Bearer ' + ENV.WHOP_API_KEY }, base = { variant_id: plan, mode: 'payment', metadata: { wid, product: body.product } };
+      let r;
+      try { r = await post('https://api.whop.com/api/v1/checkout_configurations', hdr, Object.assign({ redirect_url: 'https://alfahis.pages.dev/?paid=1' }, base), 8000); }   // يعيد الزبون للتطبيق بعد الدفع
+      catch (e1) { r = await post('https://api.whop.com/api/v1/checkout_configurations', hdr, base, 8000); }   // إن رفض Whop حقل الرجوع نكمل بدونه
       const url = String(r.purchase_url || '');
       const link = /^https:\/\/([a-z0-9-]+\.)*whop\.com\//i.test(url) ? url : (/^ch_[A-Za-z0-9]+$/.test(String(r.id || '')) ? 'https://whop.com/checkout/' + r.id : '');
       if (!link) return res.status(502).json({ error: 'no_checkout' });
