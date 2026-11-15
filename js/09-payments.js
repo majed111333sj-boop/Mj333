@@ -181,7 +181,7 @@ function openPayModal(msg, focus, scope) {
     const cc = ws.cr || {};
     BAL_NAMES.forEach(([k, n]) => { if (cc[k]) bal.push(cc[k] + ' ' + n); });
     if (ws.uses) bal.push(ws.uses + ' فحوصات (قديم)'); if (ws.reports) bal.push(ws.reports + ' فحص مستعملة'); if (ws.toolUses) bal.push(ws.toolUses + ' أدوات (قديم)');
-    $('pm-wallet').textContent = (passActive() ? passText() : '💼 لا يوجد وصول زمني فعّال') + (bal.length ? ' • رصيدك: ' + bal.join('، ') : '');
+    $('pm-wallet').textContent = passActive() ? passText() + (bal.length ? ' • رصيدك: ' + bal.join('، ') : '') : '💼 رصيدك: ' + (bal.length ? bal.join('، ') : 'لا شيء بعد');
     $('pm-wid').textContent = walletId();
     const box = $('pm-products'); box.innerHTML = '';
     const keys = PAY_SCOPES[scope] ? PAY_ORDER.filter(x => PAY_SCOPES[scope].includes(x)) : PAY_ORDER;   // قسم محدد: يظهر سعره فقط
