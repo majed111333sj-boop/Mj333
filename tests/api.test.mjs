@@ -47,6 +47,7 @@ globalThis.fetch = async (url, init) => {
   if (u.includes('identitytoolkit.googleapis.com')) {
     const tok = JSON.parse(init.body).idToken;
     const users = { 'tok-ali': { localId: 'uid-ali', email: 'ali@example.com', providerUserInfo: [{ providerId: 'google.com' }] }, 'tok-anon': { localId: 'uid-anon', providerUserInfo: [] } };
+    if (/^tok-g-/.test(tok)) users[tok] = { localId: 'uid-' + tok, email: tok + '@example.com', providerUserInfo: [{ providerId: 'google.com' }] };
     return users[tok] ? new Response(JSON.stringify({ users: [users[tok]] }), { status: 200 }) : new Response('{"error":"bad"}', { status: 400 });
   }
   if (u.startsWith('https://api.whop.com/api/v1/checkout_configurations')) { globalThis.__whopReq = JSON.parse(init.body); if (globalThis.__whopRejectRedirect && globalThis.__whopReq.redirect_url) return new Response('{"error":"bad"}', { status: 400 }); return new Response(JSON.stringify({ id: 'ch_abc123', purchase_url: 'https://whop.com/checkout/ch_abc123/' }), { status: 200 }); }
@@ -74,6 +75,9 @@ const wid = () => 'w_' + crypto.randomBytes(8).toString('hex');
 const did = () => 'd' + crypto.randomBytes(5).toString('hex');
 const diagBody = (w, d, extra) => Object.assign({ mode: 'diagnose', wid: w, did: d, car: 'تويوتا كامري 2018', description: 'صوت طقطقة عند اللف ' + d, catalog: [{ id: 'cv', title: 'جوزة' }] }, extra);
 
+const linked = async () => { const w = wid(); await api({ mode: 'acct_link', wid: w, token: 'tok-g-' + w }); return w; };
+const burnFree = async w => { await api(diagBody(w, did())); await api(diagBody(w, did())); };   // يستهلك التشخيصين المجانيين
+
 test.beforeEach(() => { store.clear(); geminiText = JSON.stringify({ kb_id: 'cv', title: 'تلف جوزة العكس', severity: 'caution', confidence: 'medium', explanation: 'شرح', advice: 'افحص', checks: [], question: null }); });
 
 test('محفظة جديدة: الخدمة المجانية متاحة والأرصدة صفر', async () => {
@@ -91,18 +95,33 @@ test('اختيار الخدمة المجانية يُحفظ مرة واحدة و
   assert.equal((await api({ mode: 'set_free_choice', wid: w, choice: 'hack' })).status, 400);
 });
 
-test('الخدمة المجانية: فحص واحد فقط ثم 402 لفحص آخر، ويُسمح بنفس الفحص', async () => {
-  const w = wid(), d1 = did(), d2 = did();
+test('الخدمة المجانية: تشخيصان فقط ثم 402 لتشخيص ثالث، ويُسمح بنفس التشخيص', async () => {
+  const w = wid(), d1 = did(), d2 = did(), d3 = did();
   assert.equal((await api(diagBody(w, d1))).status, 200);
-  assert.equal((await api(diagBody(w, d1))).status, 200);          // نفس الخدمة
-  assert.equal((await api(diagBody(w, d2))).status, 402);          // خدمة جديدة
+  assert.equal((await api(diagBody(w, d1))).status, 200);          // نفس التشخيص
+  assert.equal((await api({ mode: 'wallet', wid: w })).json.freeLeft, 1);
+  assert.equal((await api(diagBody(w, d2))).status, 200);          // الثاني المجاني
+  assert.equal((await api(diagBody(w, d3))).status, 402);          // ثالث: يحتاج رصيداً
   const v = (await api({ mode: 'wallet', wid: w })).json;
-  assert.equal(v.freeAvailable, false); assert.equal(v.freeDid, d1);
+  assert.equal(v.freeAvailable, false); assert.equal(v.freeLeft, 0); assert.deepEqual(v.freeDids, [d1, d2]);
+  assert.equal((await api(diagBody(w, d1))).status, 200);          // القديم يبقى متاحاً
+});
+
+test('فتح تفاصيل تشخيص مجاني برصيد: يخصم مرة ولا يفتح تشخيصاً غير معروف', async () => {
+  const w = wid(), d = did();
+  await api(diagBody(w, d));
+  assert.equal((await api({ mode: 'unlock', wid: w, did: d })).status, 402);            // لا رصيد
+  assert.equal((await api({ mode: 'unlock', wid: w, did: did() })).status, 404);         // تشخيص لم يُجرَ
+  await lemon(w, 'فحص السيارة + قطع الأعطال');
+  const r = await api({ mode: 'unlock', wid: w, did: d });
+  assert.equal(r.status, 200); assert.ok(r.json.unlocked.includes(d)); assert.equal(r.json.cr.diag, 0);
+  assert.equal((await api({ mode: 'unlock', wid: w, did: d })).json.kept, true);         // لا خصم ثانٍ
+  assert.ok(!(await api({ mode: 'wallet', wid: w })).json.fullUnlocked.includes(d));     // diag لا يفتح الوافي
 });
 
 test('باقة 3 فحوصات: تُخصم مرة لكل فحص جديد ولا تُخصم لتكرار نفس الفحص', async () => {
   const w = wid();
-  await api(diagBody(w, did()));                                    // تستهلك المجاني
+  await burnFree(w);                                                // تستهلك المجانيين
   assert.equal((await lemon(w, 'Pack3 - 3 فحوصات')).status, 200);
   assert.equal((await api({ mode: 'wallet', wid: w })).json.uses, 3);
   const a = did(), b = did(), c = did(), e = did();
@@ -126,7 +145,7 @@ test('أسماء منتجات Lemon الفعلية في المتجر تُعرف 
 });
 
 test('اليوم والأسبوع: وصول زمني، والاسترجاع يلغيه', async () => {
-  const w = wid(); await api(diagBody(w, did()));
+  const w = wid(); await burnFree(w);
   const o = await lemon(w, 'Week - أسبوع كامل');
   let v = (await api({ mode: 'wallet', wid: w })).json;
   assert.ok(v.passUntil > Date.now() + 6.5 * 864e5 && v.passUntil < Date.now() + 7.5 * 864e5);
@@ -139,14 +158,14 @@ test('اليوم والأسبوع: وصول زمني، والاسترجاع يل
 
 test('استرجاع باقة الفحوصات يخصم رصيدها ولا ينزل عن الصفر', async () => {
   const w = wid(); const o = await lemon(w, 'Pack3');
-  await api(diagBody(w, did())); // مجاني
+  await burnFree(w);
   await api(diagBody(w, did())); // خصم 1
   await lemon(w, 'Pack3', { event: 'order_refunded', id: o.id });
   assert.equal((await api({ mode: 'wallet', wid: w })).json.uses, 0);
 });
 
 test('باقة الأدوات: 5 استخدامات للأدوات المستقلة فقط', async () => {
-  const w = wid(); await api({ mode: 'measure', wid: w, did: 't' + did(), summary: 'x', kind: 'k', tool: 'tires' });   // مجاني (فشل AI لا يهم: الخدمة استُهلكت)
+  const w = wid(); await burnFree(w);   // الأدوات ليست مجانية
   assert.equal((await api({ mode: 'measure', wid: w, did: 't' + did(), summary: 'x', tool: 'tires' })).status, 402);
   await lemon(w, 'Tools - باقة الأدوات');
   assert.equal((await api({ mode: 'wallet', wid: w })).json.toolUses, 5);
@@ -158,7 +177,7 @@ test('باقة الأدوات: 5 استخدامات للأدوات المستق�
 
 test('فحص القطع لا يعمل إلا بوصول مدفوع أو فحص مفتوح', async () => {
   const w = wid(), d = did();
-  await api(diagBody(w, d));                                        // المجاني
+  await burnFree(w); await api(diagBody(w, d));                     // المجاني
   const pc = { mode: 'partcheck', wid: w, did: d, car: 'x', fault: 'عطل', part: 'قطعة' };
   assert.equal((await api(pc)).status, 402);
   await lemon(w, 'Pack3'); const d2 = did(); await api(diagBody(w, d2));   // رصيد قديم يعامل كوافٍ
@@ -238,7 +257,7 @@ test('3.2.0: أسماء المنتجات الجديدة تُعرف وتمنح ا
 });
 
 test('3.2.0: الفحص الوافي يخصم رصيده ويفتح قطع الأعطال والتقرير', async () => {
-  const w = wid(), d = did(); await api(diagBody(w, did()));          // المجاني
+  const w = wid(), d = did(); await burnFree(w);          // المجاني
   await lemon(w, 'الفحص الوافي');
   assert.equal((await api(diagBody(w, d, { level: 'full' }))).status, 200);
   assert.equal((await cr(w)).full, 0);
@@ -248,7 +267,7 @@ test('3.2.0: الفحص الوافي يخصم رصيده ويفتح قطع ال�
 });
 
 test('3.2.0: فحص السيارة + قطع الأعطال لا يفتح الوافي حتى الترقية، والترقية لا تُخصم مرتين', async () => {
-  const w = wid(), d = did(); await api(diagBody(w, did()));
+  const w = wid(), d = did(); await burnFree(w);
   await lemon(w, 'فحص السيارة + قطع الأعطال');
   assert.equal((await api(diagBody(w, d))).status, 200);
   assert.equal((await cr(w)).diag, 0);
@@ -379,8 +398,8 @@ test('3.3.0 Whop: منتج مجهول أو بلا محفظة لا يمنح شي�
   assert.equal((await whop('payment.succeeded', { id: 'pay_y', product: { title: 'الفحص الوافي' } })).json.no_wallet, true);
 });
 
-test('3.3.0 Whop: إنشاء جلسة دفع تحمل المحفظة والمنتج، ولا تعمل بدون الإعداد', async () => {
-  const w = wid();
+test('3.3.0 Whop: إنشاء جلسة دفع تحمل المحفظة والمنتج، ولا تعمل بدون الإعداد أو بدون حساب', async () => {
+  const w = await linked();
   assert.equal((await api({ mode: 'whop_checkout', wid: w, product: 'prices' })).status, 503);
   const env = { WHOP_API_KEY: 'k', WHOP_WEBHOOK_SECRET: 'ws_test', WHOP_PLAN_PRICES: 'plan_abc12345' };
   const r = await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env });
@@ -389,10 +408,12 @@ test('3.3.0 Whop: إنشاء جلسة دفع تحمل المحفظة والمن�
   assert.equal((await api({ mode: 'whop_checkout', wid: w, product: 'nope' }, { env })).status, 400);
   assert.equal((await api({ mode: 'whop_checkout', wid: w, product: 'full' }, { env })).status, 503);   // معرّف الخطة غير مضبوط
   assert.equal((await api({ mode: 'wallet', wid: w }, { env })).json.whop, true);
+  const anon = await api({ mode: 'whop_checkout', wid: wid(), product: 'prices' }, { env });         // بلا حساب Google
+  assert.equal(anon.status, 403); assert.equal(anon.json.error, 'account_required');
 });
 
 test('3.3.6 Whop: إن رفض حقل الرجوع نكمل إنشاء الجلسة بدونه', async () => {
-  const w = wid(), env = { WHOP_API_KEY: 'k', WHOP_WEBHOOK_SECRET: 'ws_test', WHOP_PLAN_PRICES: 'plan_abc12345' };
+  const w = await linked(), env = { WHOP_API_KEY: 'k', WHOP_WEBHOOK_SECRET: 'ws_test', WHOP_PLAN_PRICES: 'plan_abc12345' };
   globalThis.__whopRejectRedirect = true;
   try {
     const r = await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env });

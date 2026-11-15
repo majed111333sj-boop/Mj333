@@ -236,12 +236,6 @@ let lastMeta = null, followups = [];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function runDiagnosis(scores, meta) {
-    // أول استخدام: يختار المستخدم خدمته المجانية الواحدة قبل أن نبدأ التحليل (أداة مستقلة ← صفحة الأدوات)
-    if (freeStillOpen() && !freeChoice()) {
-        const ch = await promptFreeServiceChoiceIfNeeded();
-        if (!ch) return;
-        if (ch === 'single_tool') { location.href = 'tools.html'; return; }
-    }
     track('diag_start');
     const seq = ++diagSeq;
     lastMeta = meta;

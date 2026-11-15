@@ -4,17 +4,17 @@
 // 💳 الدفع: النتيجة الأساسية مجانية، والتقرير الكامل مدفوع (أول تقرير مجاني)
 // =====================================================================
 const PAYWALL_ON = true;
-// خدمة واحدة مجانية (أول فحص)، ثم وصول كامل لكل الخدمات بالمدة
+// تشخيصان مجانيان (بلا قطع ولا أسعار)، ثم رصيد لكل خدمة
 // الباقات: الفحص وأسعار القطع وخدماتهما. الأدوات المستقلة وفحص المستعملة لهما أسعارهما
 const PRODUCTS = {
-    full:     { sar: 11,   title: 'الفحص الوافي', desc: 'تشخيص + قطع الأعطال وأسعارها + مدقق القطع + التقرير PDF وإرساله للورش', badge: 'الأوفى' },
-    diag:     { sar: 9,    title: 'فحص السيارة + قطع الأعطال', desc: 'تشخيص عطل واحد مع القطع المتوقعة وأسعارها وصيغة التفاوض' },
-    upgrade:  { sar: 3,   title: 'ترقية إلى الفحص الوافي', desc: 'من «فحص السيارة + قطع الأعطال» إلى «الوافي»: يضيف مدقق القطع والتقرير PDF وإرساله للورش' },
-    prices:   { sar: 4,  title: 'أسعار القطع', desc: 'سعر عادل لقطعة أو بند فاتورة (قراءة الفاتورة والمقارنة)' },
+    full:     { sar: 9,    title: 'الفحص الوافي', desc: 'تشخيص + قطع الأعطال وأسعارها وأجرة الفني + مدقق القطع + التقرير PDF وإرساله للورش', badge: 'الأوفى' },
+    diag:     { sar: 7,    title: 'تفاصيل الفحص', desc: 'القطع المتوقعة وأسعارها العادلة وأجرة الفني وصيغة التفاوض لهذا الفحص' },
+    upgrade:  { sar: 3,   title: 'ترقية إلى الفحص الوافي', desc: 'من «تفاصيل الفحص» إلى «الوافي»: يضيف مدقق القطع والتقرير PDF وإرساله للورش' },
+    prices:   { sar: 5,  title: 'أسعار القطع', desc: 'سعر عادل لقطعة أو بند فاتورة (قراءة الفاتورة والمقارنة)' },
     toolmain: { sar: 9,    title: 'أداة فحص أساسية', desc: 'استخدام واحد: الفحص بالكاميرا، أو تحليل صوت المحرك، أو قياس الاهتزاز' },
     toolsub:  { sar: 3,  title: 'أداة فحص فرعية', desc: 'استخدام واحد: الكفرات، اللمبات، سماكة الدهان، تواريخ الزجاج…' },
-    report:   { sar: 33,   title: 'فحص سيارة مستعملة', desc: 'فحص كامل قبل الشراء مرة واحدة (صالح 30 يوماً): كاميرا وصوت واهتزاز، ويمكن عن بعد' },
-    report5:  { sar: 77,   title: 'باقة 5 فحوصات مستعملة', desc: 'خمسة فحوصات مستعملة (حصرية) صالحة 6 أشهر', badge: 'الأوفر' },
+    report:   { sar: 15,   title: 'فحص سيارة مستعملة', desc: 'فحص كامل قبل الشراء مرة واحدة (صالح 30 يوماً): كاميرا وصوت واهتزاز، ويمكن عن بعد' },
+    report5:  { sar: 45,   title: 'باقة 5 فحوصات مستعملة', desc: 'خمسة فحوصات مستعملة (حصرية) صالحة 6 أشهر', badge: 'الأوفر' },
     // منتجات قديمة لا تُباع، تبقى هنا لعرض أسماء الأكواد والأرصدة القديمة
     pack3:    { sar: 9.99, title: 'باقة 3 فحوصات', desc: '' }, day: { sar: 19.99, title: 'يوم كامل', desc: '' }, week: { sar: 139, title: 'أسبوع كامل', desc: '' }, tools: { sar: 14.9, title: 'باقة الأدوات', desc: '' }
 };
@@ -49,7 +49,7 @@ async function walletRefresh() {
     const r = await payApi({ mode: 'wallet' });
     if (r.status === 200 && r.json) {
         Wallet.state = r.json;
-        store.set('sd_wallet_last_known', { passUntil: r.json.passUntil || 0, uses: r.json.uses || 0, toolUses: r.json.toolUses || 0, cr: r.json.cr || {}, reports: r.json.reports || 0, unlocked: r.json.unlocked || [], fullUnlocked: r.json.fullUnlocked || [], freeChoice: r.json.freeChoice || null, at: Date.now() });
+        store.set('sd_wallet_last_known', { passUntil: r.json.passUntil || 0, uses: r.json.uses || 0, toolUses: r.json.toolUses || 0, cr: r.json.cr || {}, reports: r.json.reports || 0, unlocked: r.json.unlocked || [], fullUnlocked: r.json.fullUnlocked || [], at: Date.now() });
     } else if (r.status === 503 || r.status === 0) {
         const lk = store.get('sd_wallet_last_known', null);
         Wallet.state = Object.assign({}, lk && lk.passUntil > Date.now() ? { passUntil: lk.passUntil, uses: lk.uses, toolUses: lk.toolUses, cr: lk.cr || {}, reports: lk.reports, unlocked: lk.unlocked || [], fullUnlocked: lk.fullUnlocked || [] } : {}, { offline: true, freeAvailable: false });
@@ -93,7 +93,7 @@ function diagUnlocked() { return isUnlocked() || !!(Wallet.state && (Wallet.stat
 function canStart(did) {
     if (isUnlocked() || !Wallet.state) return true;          // قبل تحميل المحفظة نترك الخادم يقرر
     if (Wallet.state.freeAvailable || hasUses()) return true;   // الخادم يقرر نوع الخصم
-    return Wallet.state.freeDid === did || (Wallet.state.unlocked || []).includes(did);
+    return (Wallet.state.freeDids || []).includes(did) || Wallet.state.freeDid === did || (Wallet.state.unlocked || []).includes(did);
 }
 function openCodeTool() {
     switchTab('diagnose'); setDiagMode('code');
@@ -102,69 +102,35 @@ function openCodeTool() {
 const OFFLINE_MSG = 'تعذر الاتصال بالخادم، تحقق من الإنترنت وأعد المحاولة.';
 function blockService(msg, scope) {
     if (Wallet.state && Wallet.state.offline && !passActive()) { alert(OFFLINE_MSG); return false; }
-    openPayModal(msg || 'استخدمت خدمتك المجانية. لإكمال هذه الخدمة اختر الباقة المناسبة.', null, scope || 'diag');
+    openPayModal(msg || 'استخدمت فحصيك المجانيين. لإكمال هذه الخدمة اختر الباقة المناسبة.', null, scope || 'diag');
     return false;
 }
-function onFreeUsed(did) { if (Wallet.state && !passActive() && Wallet.state.freeAvailable) { Wallet.state.freeAvailable = false; Wallet.state.freeDid = did; } }
+function onFreeUsed(did) {   // الخادم يحسب الحصة؛ هنا نحدّث العرض فوراً (تشخيصان مجانيان)
+    const ws = Wallet.state; if (!ws || passActive() || !ws.freeAvailable) return;
+    const ds = ws.freeDids || [];
+    if (!ds.includes(did)) { ws.freeDids = ds.concat(did); ws.freeLeft = Math.max(0, (ws.freeLeft || 0) - 1); }
+    ws.freeDid = did; if (!ws.freeLeft) ws.freeAvailable = false;
+}
 function passText() {
     if (!passActive()) return '';
     const d = new Date(Wallet.state.passUntil);
     return '✅ وصول كامل حتى ' + d.toLocaleString('ar', { weekday: 'long', hour: 'numeric', minute: '2-digit' });
 }
-// الخدمة المجانية الأولى تعرض الفحص وأسعار القطع مرة واحدة؛ بعدها صفحة الدفع
-// ---------- الخدمة المجانية الواحدة بالاختيار (فحص السيارة المستعملة خارجها تماماً) ----------
-const FREE_CHOICES = [
-    ['diag_only', '🔍 فحص وتشخيص عطل واحد', 'اسم العطل والخطورة والشرح. عدد القطع وأسعارها وصيغة التفاوض ضمن الباقات.'],
-    ['parts_prices', '💰 عدد القطع وأسعارها العادلة', 'يفتح جدول القطع وأسعارها وأجرة اليد وتدقيق الفاتورة لمرة واحدة.'],
-    ['single_tool', '🛠️ أداة فحص مستقلة واحدة', 'الصوت أو الكود أو مدقق القطع لمرة واحدة.']
-];
-const freeChoice = () => (Wallet.state && Wallet.state.freeChoice) || store.get('sd_free_choice', null);
-const freeStillOpen = () => !!(Wallet.state && Wallet.state.freeAvailable && !passActive() && !hasUses());
-let _choiceP = null;
-function promptFreeServiceChoiceIfNeeded() {
-    if (!freeStillOpen() || freeChoice()) return Promise.resolve(freeChoice());
-    if (_choiceP) return _choiceP;
-    _choiceP = new Promise(resolve => {
-        const wrap = el('div', 'fixed inset-0 z-[70] bg-slate-900/70 flex items-end sm:items-center justify-center p-3');
-        const box = el('div', 'bg-white rounded-2xl p-4 w-full max-w-md space-y-2.5'); wrap.appendChild(box);
-        box.appendChild(el('p', 'font-black text-[15px] text-slate-900', '🎁 خدمتك المجانية: اختر واحدة'));
-        box.appendChild(el('p', 'text-[12px] text-slate-600', 'لك خدمة مجانية واحدة. اختر ما يناسبك الآن (لا يمكن تغييرها بعد الاختيار).'));
-        FREE_CHOICES.forEach(([id, t, d]) => {
-            const b = el('button', 'w-full text-right border-2 border-slate-200 hover:border-blue-600 rounded-xl p-2.5');
-            b.appendChild(el('span', 'block font-black text-[13px]', t)); b.appendChild(el('span', 'block text-[11px] text-slate-500', d));
-            b.onclick = async () => {
-                store.set('sd_free_choice', id); if (Wallet.state) Wallet.state.freeChoice = id;
-                payApi({ mode: 'set_free_choice', choice: id });
-                wrap.remove(); _choiceP = null; resolve(id);
-            };
-            box.appendChild(b);
-        });
-        const no = el('button', 'w-full text-[12px] text-slate-500 py-1.5', 'لاحقاً'); no.onclick = () => { wrap.remove(); _choiceP = null; resolve(null); }; box.appendChild(no);
-        document.body.appendChild(wrap);
-    });
-    return _choiceP;
-}
-// القطع والأسعار وصيغة التفاوض: تُعرض بوصول مدفوع، أو في الخدمة المجانية إن اختارها المستخدم
-function costsVisible() {
-    if (diagUnlocked()) return true;
-    const ws = Wallet.state; if (!ws || ws.offline) return false;
-    return !!(ws.freeDid && ws.freeDid === diagId() && freeChoice() === 'parts_prices');
-}
-// جدول الأسعار وتدقيق الفاتورة: وصول مدفوع أو رصيد، أو مرة واحدة لمن اختارها مجاناً
-function canUsePrices() {
-    return isUnlocked() || (credits().prices || 0) > 0 || (Wallet.state && Wallet.state.uses > 0) || (freeChoice() === 'parts_prices' && !!Wallet.state && !Wallet.state.offline && !store.get('sd_free_prices_used', false));
-}
+// ---------- الخدمة المجانية: تشخيصان فقط (اسم العطل والخطورة والأسباب)، بلا قطع ولا أسعار ولا أجرة ولا تقرير ----------
+// القطع والأسعار وصيغة التفاوض: تُعرض بوصول مدفوع أو بعد فتح التفاصيل برصيد
+function costsVisible() { return diagUnlocked(); }
+// جدول الأسعار وتدقيق الفاتورة: وصول مدفوع أو رصيد
+function canUsePrices() { return isUnlocked() || (credits().prices || 0) > 0 || (Wallet.state && Wallet.state.uses > 0); }
 // مقارنة سعر: تخصم رصيد أسعار مرة واحدة لكل مقارنة (الخادم يحسب did، فتكرار نفس المقارنة لا يخصم)
 async function consumePricesUse(key) {
     if (isUnlocked()) return true;
     const r = await payApi({ mode: 'use_prices', did: 'p' + (key || Date.now().toString(36)).replace(/[^a-z0-9]/gi, '').toLowerCase().slice(0, 30) });
-    if (r.status === 200 && r.json) { Wallet.state = Object.assign({}, Wallet.state, r.json); if (freeChoice() === 'parts_prices') store.set('sd_free_prices_used', true); applyLock(); return true; }
-    if (r.status === 402) { store.set('sd_free_prices_used', true); applyLock(); openPayModal('أسعار القطع: اشترِ «أسعار القطع» لمقارنة سعر جديد.', 'prices', 'prices'); return false; }
+    if (r.status === 200 && r.json) { Wallet.state = Object.assign({}, Wallet.state, r.json); applyLock(); return true; }
+    if (r.status === 402) { applyLock(); openPayModal('أسعار القطع: اشترِ «أسعار القطع» لمقارنة سعر جديد.', 'prices', 'prices'); return false; }
     alert(OFFLINE_MSG); return false;
 }
-const freeView = () => !!(lastDiag && lastDiag.title && Wallet.state && !diagUnlocked() && Wallet.state.freeDid && Wallet.state.freeDid === diagId() && freeChoice() === 'parts_prices');
 let _relock = false;
-const BAL_NAMES = [['full', 'الفحص الوافي'], ['diag', 'فحص السيارة + قطع الأعطال'], ['upg', 'ترقية (فحص + قطع → وافي)'], ['prices', 'أسعار القطع'], ['tm', 'أداة أساسية'], ['ts', 'أداة فرعية']];
+const BAL_NAMES = [['full', 'الفحص الوافي'], ['diag', 'تفاصيل الفحص'], ['upg', 'ترقية (فحص + قطع → وافي)'], ['prices', 'أسعار القطع'], ['tm', 'أداة أساسية'], ['ts', 'أداة فرعية']];
 // أيقونة الرصيد أعلى الصفحة: مجموع ما بقي من استخدامات مدفوعة (أو ♾️ إن كان له وصول زمني)
 function updateBalChip() {
     const b = $('bal-chip'); if (!b) return;
@@ -183,23 +149,31 @@ function applyLock() {
     const unlocked = diagUnlocked();
     const hasResult = !!(lastDiag && lastDiag.title);
     $('car-results').classList.toggle('locked', hasResult && !unlocked);
-    $('car-results').classList.toggle('freeview', freeView());
-    $('pw-title').textContent = freeView() ? '🎁 هذا تقريرك المجاني: الفحص وأسعار القطع' : '🔓 افتح عدد القطع وأسعارها وصيغة التفاوض';
+    $('pw-title').textContent = '🔓 افتح القطع وأسعارها وأجرة الفني وصيغة التفاوض';
     $('paywall').classList.toggle('hidden', !hasResult || unlocked);
     const pricesOpen = canUsePrices();
     $('tab-prices').classList.toggle('locked', !pricesOpen);
     $('prices-paywall').classList.toggle('hidden', pricesOpen);
-    $('pw-btn').textContent = '🔓 ' + PRODUCTS.diag.title + ' بـ ' + prodPrice('diag');
-    $('pw-sub').textContent = 'أو الفحص الوافي (مع مدقق القطع والتقرير PDF) بـ ' + prodPrice('full');
+    $('pw-btn').textContent = '🔓 ' + (hasUses() ? 'افتح التفاصيل برصيدك' : PRODUCTS.diag.title + ' بـ ' + prodPrice('diag'));
+    $('pw-sub').textContent = 'أو الفحص الوافي بـ ' + prodPrice('full') + ' (مع مدقق القطع والتقرير PDF وإرساله للورش)';
     const pcp = $('parts-cta-price'), scp = $('sound-cta-price'); if (pcp) pcp.textContent = prodPrice('prices'); if (scp) scp.textContent = prodPrice('toolmain');
     const ppp = $('prices-pw-price'); if (ppp) ppp.textContent = prodPrice('prices');
     const ub = $('upgrade-box'); if (ub) { ub.classList.toggle('hidden', !canUpgrade()); const ut = $('upgrade-btn'); if (ut) ut.textContent = '⬆️ ترقية إلى الفحص الوافي بـ ' + prodPrice('upgrade'); }
     const pb = $('pass-banner'); if (pb) { pb.textContent = passText(); pb.classList.toggle('hidden', !passActive()); }
-    const wf = $('welcome-free'); if (wf) wf.classList.toggle('hidden', !(Wallet.state && Wallet.state.freeAvailable && !passActive()));
+    const wf = $('welcome-free'); if (wf) { const fl = Wallet.state && Wallet.state.freeLeft; wf.textContent = fl === 1 ? '🎁 بقي لك فحص مجاني واحد' : '🎁 أول فحصين مجانيان'; wf.classList.toggle('hidden', !(Wallet.state && Wallet.state.freeAvailable && !passActive())); }
     const al = $('accuracy-line'), acc = Wallet.state && Wallet.state.accuracy;
     if (al && acc && acc.total >= 20) { al.textContent = '✅ ' + Math.round((acc.good !== undefined ? acc.good : acc.yes) / acc.total * 100) + '% من المشتركين قيّموا دقة التشخيص بـ 90% فأعلى (من ' + acc.total + ' تقييم)'; al.classList.remove('hidden'); }
 }
-async function unlockCurrent() { if (diagUnlocked()) return true; openPayModal(null, null, 'diag'); return false; }
+// فتح تفاصيل هذا الفحص: برصيد موجود (يُخصم مرة واحدة)، وإلا نافذة الدفع
+async function unlockCurrent() {
+    if (diagUnlocked()) return true;
+    if (hasUses() && Wallet.state && !Wallet.state.offline) {
+        const r = await payApi({ mode: 'unlock', did: diagId(), level: (credits().diag || 0) > 0 ? 'diag' : 'full' });
+        if (r.status === 200 && r.json && r.json.ok) { Wallet.state = Object.assign({}, Wallet.state, r.json); applyLock(); return true; }
+        if (r.status !== 402) { alert('تعذر فتح التفاصيل الآن، حاول بعد قليل.'); return false; }
+    }
+    openPayModal(null, null, 'diag'); return false;
+}
 function openPayModal(msg, focus, scope) {
     track('pay_open');
     $('pm-msg').textContent = msg || ''; $('pm-msg').classList.toggle('hidden', !msg);
@@ -281,6 +255,7 @@ async function buyWhop(k) {
     if (r.status === 200 && r.json && r.json.url) { location.href = r.json.url; return; }
     store.del('sd_pay_pending');
     const j = r.json || {};
+    if (r.status === 403 && j.error === 'account_required' && typeof acctAsk === 'function') { store.del('sd_acct'); return acctAsk(k); }   // الدفع يتطلب حساب جوجل مربوطاً
     alert('تعذر فتح صفحة الدفع الآن، حاول بعد قليل.' + (j.error ? '\n\n[' + r.status + ' ' + j.error + (j.detail ? ': ' + j.detail : '') + ']' : ''));
 }
 function buyProduct(k) {
