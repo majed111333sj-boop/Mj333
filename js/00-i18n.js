@@ -17,10 +17,9 @@
     const LANGS = { ar: 'العربية', en: 'English', de: 'Deutsch', fr: 'Français', it: 'Italiano', es: 'Español', pt: 'Português' };
     // أسعار الخدمات خارج الشرق الأوسط: بالدولار دائماً (متجر Lemon بالدولار)، والمبلغ الفعلي يحدده رابط الدفع لتلك المنطقة. mena تبقى بالريال من PRODUCTS.
     const P = (full, diag, upgrade, prices, toolmain, toolsub, report, report5) => ({ full, diag, upgrade, prices, toolmain, toolsub, report, report5 });
-    const PRICES = {
-        us: P(8.99, 4.99, 4.49, 1.99, 4.99, 1.99, 19.99, 46.99), eu: P(8.99, 4.99, 4.49, 1.99, 4.99, 1.99, 19.99, 46.99),
-        latam: P(3.99, 2.49, 1.99, 1.99, 1.99, 1.99, 7.99, 18.99)
-    };
+    // Whop يخصم سعراً واحداً بالدولار لكل منتج لكل الدول، فالسعر المعروض يطابقه (رفع سعر منطقة لاحقاً يحتاج خطة Whop منفصلة لها)
+    const W = P(2.40, 1.87, 1.00, 1.33, 2.40, 1.00, 4.00, 12.00);
+    const PRICES = { us: W, eu: W, latam: W };
 
     // اجعلها true لطلب الموافقة على إرسال البيانات من مستخدمي الشرق الأوسط أيضاً (قرار قانوني: راجع نظام حماية البيانات)
     const CONSENT_ALL = false;
