@@ -1,5 +1,5 @@
-// الفاحص الذكي · حساب اختياري بجوجل: يربط رصيدك بحسابك فيبقى معك على أي جهاز أو متصفح
-// بدون حساب كل شيء يعمل كما كان. الحساب لا يُطلب أبداً للاستخدام أو الدفع.
+// الفاحص الذكي · حساب جوجل: يربط رصيدك بحسابك فيبقى معك على أي جهاز أو متصفح
+// الاستخدام المجاني (تشخيصان) بلا حساب، لكن الدفع يتطلب تسجيل جوجل (الخادم يرفض الدفع بدونه).
 const Acct = { user: null, busy: false, msg: '' };
 
 function acctReady() {
@@ -18,8 +18,8 @@ function renderAcct() {
             card.appendChild(el('p', 'text-[10px] text-slate-500 leading-relaxed', 'ادخل بنفس الحساب من أي جوال أو متصفح لتجد رصيدك.'));
             const b = el('button', 'text-[10px] underline text-slate-500', 'تسجيل الخروج'); b.type = 'button'; b.onclick = acctSignOut; card.appendChild(b);
         } else {
-            card.appendChild(el('p', 'font-black text-[11px] text-slate-800', '💾 احفظ رصيدك (اختياري)'));
-            card.appendChild(el('p', 'text-[10px] text-slate-500 leading-relaxed', 'سجّل بحساب جوجل ليبقى رصيدك معك إن غيّرت الجوال أو مسحت المتصفح. لا يلزمك التسجيل للاستخدام.'));
+            card.appendChild(el('p', 'font-black text-[11px] text-slate-800', '💾 احفظ رصيدك'));
+            card.appendChild(el('p', 'text-[10px] text-slate-500 leading-relaxed', 'سجّل بحساب جوجل ليبقى رصيدك معك إن غيّرت الجوال أو مسحت المتصفح. التسجيل مطلوب قبل أي دفع فقط، ولا يلزمك للتجربة المجانية.'));
             const b = el('button', 'w-full min-h-[44px] rounded-lg border border-slate-300 bg-white font-bold text-[12px] flex items-center justify-center gap-2', Acct.busy ? 'جارٍ التسجيل…' : 'التسجيل بحساب جوجل'); b.type = 'button'; b.disabled = Acct.busy;
             b.onclick = acctGoogle; card.appendChild(b);
         }
@@ -91,11 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.renderAcct = renderAcct;
 
 // ---------- عند أول عملية شراء: تسجيل بضغطة واحدة (الاسم والبريد يأتيان من جوجل) ----------
-function acctNeeded() {
-    if (acctEmail()) return false;
-    const sk = store.get('sd_acct_skip', 0);
-    return !(sk && Date.now() - sk < 30 * 864e5);   // من اختار المتابعة بدون حساب لا نسأله شهراً
-}
+function acctNeeded() { return !acctEmail(); }   // الدفع يتطلب حساب جوجل
 function acctPrefill() {   // يُضاف لرابط الدفع فلا يكتب المشتري بياناته مرة ثانية
     const e = store.get('sd_acct', null), n = store.get('sd_acct_name', '');
     if (!e || !/^[^@\s]+@[^@\s]+$/.test(e)) return '';
@@ -112,8 +108,6 @@ function acctAsk(k) {
     const g = el('button', 'w-full min-h-[48px] rounded-xl bg-slate-900 text-white font-black text-[13px]', 'متابعة بحساب جوجل'); g.type = 'button';
     g.onclick = async () => { g.disabled = true; await acctGoogle(); g.disabled = false; if (acctEmail()) { m.remove(); buyProduct(k); } else err.textContent = Acct.msg || ''; };
     c.appendChild(g);
-    const sk = el('button', 'w-full text-[11px] underline text-slate-500 py-1.5', 'متابعة الدفع بدون حساب'); sk.type = 'button';
-    sk.onclick = () => { store.set('sd_acct_skip', Date.now()); m.remove(); buyProduct(k); };
-    c.appendChild(sk);
+    const cl = el('button', 'w-full text-[11px] underline text-slate-500 py-1.5', 'إلغاء'); cl.type = 'button'; cl.onclick = () => m.remove(); c.appendChild(cl);
     document.body.appendChild(m);
 }

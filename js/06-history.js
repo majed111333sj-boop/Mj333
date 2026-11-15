@@ -6,7 +6,7 @@
 function addHistory(r) {
     if (!r || !r.title) return;
     const h = store.get('sd_history', []);
-    h.unshift({ t: Date.now(), title: r.title, car: carLabel(), city: cityName(), sev: r.sev, totalSar: (diagUnlocked() || freeView()) ? (r.totalSar || 0) : 0, code: r.code || '', ai: !!r.ai, did: diagId() });
+    h.unshift({ t: Date.now(), title: r.title, car: carLabel(), city: cityName(), sev: r.sev, totalSar: diagUnlocked() ? (r.totalSar || 0) : 0, code: r.code || '', ai: !!r.ai, did: diagId() });
     store.set('sd_history', h.slice(0, 30));
 }
 // ---------- دقة التشخيص: نسأل المستخدم بعد يومين "وش طلع العطل فعلاً؟" ----------
