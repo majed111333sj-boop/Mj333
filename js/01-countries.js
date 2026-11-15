@@ -109,6 +109,11 @@ async function suggestLocation() {
         const r = await fetch(AI_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctrl.signal, body: JSON.stringify({ mode: 'geo' }) });
         clearTimeout(t); const j = r.ok ? await r.json() : null; if (j && j.supported) cc = j.country;
     } catch (e) {}
+    // خارج الشرق الأوسط: تبدأ الصفحة بلغة بلد المستخدم من أول زيارة (مرة واحدة، ثم تُعاد التحميل لتظهر النافذة مترجمة)
+    if (cc && COUNTRIES[cc] && COUNTRIES[cc].region !== 'mena' && window.SD && location.protocol !== 'file:' && store.get('sd_lang', null) === null) {
+        const l = SD.defaultLang(cc);
+        if (l && l !== SD.lang) { store.set('sd_lang', l); location.reload(); return; }
+    }
     openLocationModal(cc);
 }
 function onLocationChanged() {
