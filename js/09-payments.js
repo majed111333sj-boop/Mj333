@@ -164,9 +164,20 @@ async function consumePricesUse(key) {
 }
 const freeView = () => !!(lastDiag && lastDiag.title && Wallet.state && !diagUnlocked() && Wallet.state.freeDid && Wallet.state.freeDid === diagId() && freeChoice() === 'parts_prices');
 let _relock = false;
+// أيقونة الرصيد أعلى الصفحة: مجموع ما بقي من استخدامات مدفوعة (أو ♾️ إن كان له وصول زمني)
+function updateBalChip() {
+    const b = $('bal-chip'); if (!b) return;
+    const ws = Wallet.state;
+    if (!ws || ws.offline) { b.classList.add('hidden'); return; }
+    const n = Object.values(ws.cr || {}).reduce((t, v) => t + (Number(v) || 0), 0) + (ws.uses || 0) + (ws.reports || 0) + (ws.toolUses || 0);
+    b.textContent = passActive() ? '💼 ♾️' : '💼 ' + n;
+    b.title = 'رصيدك: ' + (passActive() ? 'وصول مفتوح' : n + ' استخدام');
+    b.classList.toggle('hidden', !(n > 0 || passActive()));
+}
 function applyLock() {
     // بعد الشراء أو تغيّر الحالة: أعد رسم النتيجة لتظهر القطع والأسعار (أو تختفي) لأنها لا تُحقن في الصفحة إلا لمن يحق له
     if (!_relock && lastDiag && lastDiag.title && lastRenderedCosts !== null && lastRenderedCosts !== costsVisible()) { _relock = true; try { renderDiagnosis(lastDiag, false); } finally { _relock = false; } return; }
+    updateBalChip();
     const unlocked = diagUnlocked();
     const hasResult = !!(lastDiag && lastDiag.title);
     $('car-results').classList.toggle('locked', hasResult && !unlocked);
