@@ -420,6 +420,12 @@ function deepFindWid(o, d = 0) {
   if (typeof o === 'object') { for (const k of Object.keys(o)) { const r = deepFindWid(o[k], d + 1); if (r) return r; } }
   return null;
 }
+function deepIds(o, d = 0, out = []) {
+  if (d > 6 || o == null) return out;
+  if (typeof o === 'string') { if (/^plan_[A-Za-z0-9]{6,40}$/.test(o)) out.push(o); }
+  else if (typeof o === 'object') for (const k of Object.keys(o)) deepIds(o[k], d + 1, out);
+  return out;
+}
 const whopReady = () => !!(ENV.WHOP_API_KEY && ENV.WHOP_WEBHOOK_SECRET);
 async function whopWebhook(rawBody, h) {
   const secret = ENV.WHOP_WEBHOOK_SECRET;
@@ -439,7 +445,11 @@ async function whopWebhook(rawBody, h) {
     const names = [d.product && (d.product.title || d.product.name), d.plan && (d.plan.title || d.plan.name), d.product_title, d.plan_title, d.description, d.name].filter(x => typeof x === 'string').join(' ').toLowerCase();
     let map = {}; try { map = JSON.parse(ENV.WHOP_PRODUCTS || '{}'); } catch (e) {}   // اختياري: {"plan_xxx":"full"}
     const ids = [d.plan && d.plan.id, d.plan_id, d.product && d.product.id, d.product_id].filter(Boolean);
-    const product = (ids.map(i => map[i]).find(Boolean)) || productFromName(names);
+    // المنتج: 1) ما كتبه خادمنا في metadata عند إنشاء الدفع (موقَّع من Whop)، 2) معرّف الخطة، 3) اسم المنتج
+    const planMap = {}; SELLABLE.forEach(k => { const v = String(ENV['WHOP_PLAN_' + k.toUpperCase()] || '').trim(); if (v) planMap[v] = k; });
+    const foundIds = deepIds(d);
+    const metaProduct = d.metadata && SELLABLE.includes(String(d.metadata.product)) ? String(d.metadata.product) : '';
+    const product = metaProduct || (ids.map(i => map[i]).find(Boolean)) || (foundIds.map(i => planMap[i]).find(Boolean)) || productFromName(names);
     const wid = deepFindWid(d.metadata) || deepFindWid(d);
     if (!product) { await kv(['SET', 'whop:unmapped:' + pid, rawBody.slice(0, 4000), 'EX', 90 * 864e2]); return [200, { ok: true, unmapped: true }]; }
     if (!validWid(wid)) { await kv(['SET', 'whop:nowallet:' + pid, JSON.stringify({ product }), 'EX', 365 * 864e2]); return [200, { ok: true, no_wallet: true }]; }

@@ -354,11 +354,11 @@ test('3.3.0: دمج محفظة الجهاز المدفوعة في محفظة ا�
   assert.equal(again.json.cr.full, 2);   // لا مضاعفة
 });
 
-async function whop(type, data, { secret = 'ws_test', id = 'msg_' + Math.random().toString(36).slice(2), ts = Math.floor(Date.now() / 1000) } = {}) {
+async function whop(type, data, { secret = 'ws_test', id = 'msg_' + Math.random().toString(36).slice(2), ts = Math.floor(Date.now() / 1000), env = {} } = {}) {
   const raw = JSON.stringify({ type, data });
   const sig = 'v1,' + crypto.createHmac('sha256', secret).update(id + '.' + ts + '.' + raw).digest('base64');
   const req = new Request('https://app.test/api/ai?src=whop', { method: 'POST', body: raw, headers: { 'webhook-id': id, 'webhook-timestamp': String(ts), 'webhook-signature': sig } });
-  const res = await onRequest({ env: Object.assign({}, ENV, { WHOP_WEBHOOK_SECRET: 'ws_test' }), request: req, waitUntil: () => {} });
+  const res = await onRequest({ env: Object.assign({}, ENV, { WHOP_WEBHOOK_SECRET: 'ws_test' }, env), request: req, waitUntil: () => {} });
   return { status: res.status, json: await res.json() };
 }
 test('3.3.0 Whop: توقيع خاطئ أو قديم يُرفض', async () => {
@@ -398,4 +398,14 @@ test('3.3.6 Whop: إن رفض حقل الرجوع نكمل إنشاء الجلس
     const r = await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env });
     assert.equal(r.status, 200); assert.equal(globalThis.__whopReq.redirect_url, undefined);
   } finally { globalThis.__whopRejectRedirect = false; }
+});
+
+test('3.3.6 Whop: يتعرف على المنتج من metadata أو من معرّف الخطة حتى بلا اسم', async () => {
+  const w1 = wid(), w2 = wid();
+  assert.equal((await whop('payment.succeeded', { id: 'pay_' + did(), metadata: { wid: w1, product: 'diag' } })).json.ok, true);
+  assert.equal((await api({ mode: 'wallet', wid: w1 })).json.cr.diag, 1);
+  const r = await whop('payment.succeeded', { id: 'pay_' + did(), plan: { id: 'plan_zzTEST12345' }, metadata: { wid: w2 } }, { env: { WHOP_PLAN_TOOLSUB: 'plan_zzTEST12345' } });
+  assert.equal(r.json.ok, true);
+  assert.equal((await api({ mode: 'wallet', wid: w2 })).json.cr.ts, 1);
+  assert.equal((await whop('payment.succeeded', { id: 'pay_' + did(), metadata: { wid: w1, product: 'nope' } })).json.unmapped, true);   // قيمة غريبة لا تُقبل
 });
