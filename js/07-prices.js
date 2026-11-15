@@ -59,7 +59,7 @@ function renderPriceLookup() {
 }
 let _invKey = null;   // قراءة فاتورة واحدة تخصم مرة واحدة مهما كثرت بنودها
 async function runAudit() {
-    if (!canUsePrices()) return blockService('مقارنة الأسعار تحتاج رصيد «أسعار القطع».');
+    if (!canUsePrices()) return blockService('مقارنة الأسعار تحتاج رصيد «أسعار القطع».', 'prices');
     const part = $('audit-part').value;
     const price = parseFloat($('audit-part-price').value), labor = parseFloat($('audit-labor-price').value) || 0;
     const box = $('audit-result');
@@ -112,7 +112,7 @@ function compressImage(file, maxSide = 1400, quality = 0.8) {
     });
 }
 async function readInvoicePhoto(input) {
-    if (!canUsePrices()) { input.value = ''; return blockService('قراءة الفاتورة تحتاج رصيد «أسعار القطع».'); }
+    if (!canUsePrices()) { input.value = ''; return blockService('قراءة الفاتورة تحتاج رصيد «أسعار القطع».', 'prices'); }
     const file = input.files && input.files[0]; input.value = '';
     if (!file) return;
     const st = $('invoice-status'), list = $('invoice-items');

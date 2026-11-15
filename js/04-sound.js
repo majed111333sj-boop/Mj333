@@ -6,7 +6,7 @@
 let soundBusy = false;
 async function startSoundDiagnosis() {
     if (soundBusy) return;
-    if (!isUnlocked() && Wallet.state && !Wallet.state.freeAvailable) return blockService();
+    if (!isUnlocked() && Wallet.state && !Wallet.state.freeAvailable) return blockService('تحليل صوت المحرك: اختر الأداة المناسبة.', 'tools');
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { alert('المتصفح لا يدعم المايكروفون. افتح الموقع عبر https في Chrome أو Safari.'); return; }
     let stream;
     try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); }
