@@ -9,7 +9,7 @@ const PAYWALL_ON = true;
 const PRODUCTS = {
     full:     { sar: 11,   title: 'الفحص الوافي', desc: 'تشخيص + قطع الأعطال وأسعارها + مدقق القطع + التقرير PDF وإرساله للورش', badge: 'الأوفى' },
     diag:     { sar: 9,    title: 'فحص السيارة + قطع الأعطال', desc: 'تشخيص عطل واحد مع القطع المتوقعة وأسعارها وصيغة التفاوض' },
-    upgrade:  { sar: 3,   title: 'ترقية فحص إلى الوافي', desc: 'لفحص سبق أن اشتريته: يضيف مدقق القطع والتقرير PDF وإرساله للورش' },
+    upgrade:  { sar: 3,   title: 'ترقية إلى الفحص الوافي', desc: 'من «فحص السيارة + قطع الأعطال» إلى «الوافي»: يضيف مدقق القطع والتقرير PDF وإرساله للورش' },
     prices:   { sar: 4,  title: 'أسعار القطع', desc: 'سعر عادل لقطعة أو بند فاتورة (قراءة الفاتورة والمقارنة)' },
     toolmain: { sar: 9,    title: 'أداة فحص أساسية', desc: 'استخدام واحد: الفحص بالكاميرا، أو تحليل صوت المحرك، أو قياس الاهتزاز' },
     toolsub:  { sar: 3,  title: 'أداة فحص فرعية', desc: 'استخدام واحد: الكفرات، اللمبات، سماكة الدهان، تواريخ الزجاج…' },
@@ -164,6 +164,7 @@ async function consumePricesUse(key) {
 }
 const freeView = () => !!(lastDiag && lastDiag.title && Wallet.state && !diagUnlocked() && Wallet.state.freeDid && Wallet.state.freeDid === diagId() && freeChoice() === 'parts_prices');
 let _relock = false;
+const BAL_NAMES = [['full', 'الفحص الوافي'], ['diag', 'فحص السيارة + قطع الأعطال'], ['upg', 'ترقية (فحص + قطع → وافي)'], ['prices', 'أسعار القطع'], ['tm', 'أداة أساسية'], ['ts', 'أداة فرعية']];
 // أيقونة الرصيد أعلى الصفحة: مجموع ما بقي من استخدامات مدفوعة (أو ♾️ إن كان له وصول زمني)
 function updateBalChip() {
     const b = $('bal-chip'); if (!b) return;
@@ -171,7 +172,8 @@ function updateBalChip() {
     if (!ws || ws.offline) { b.classList.add('hidden'); return; }
     const n = Object.values(ws.cr || {}).reduce((t, v) => t + (Number(v) || 0), 0) + (ws.uses || 0) + (ws.reports || 0) + (ws.toolUses || 0);
     b.textContent = passActive() ? '💼 ♾️' : '💼 ' + n;
-    b.title = 'رصيدك: ' + (passActive() ? 'وصول مفتوح' : n + ' استخدام');
+    const det = BAL_NAMES.filter(([k]) => (ws.cr || {})[k]).map(([k, nm]) => ws.cr[k] + ' ' + nm);
+    b.title = 'رصيدك: ' + (passActive() ? 'وصول مفتوح' : (det.join('، ') || n + ' استخدام'));
     b.classList.toggle('hidden', !(n > 0 || passActive()));
 }
 function applyLock() {
@@ -191,7 +193,7 @@ function applyLock() {
     $('pw-sub').textContent = 'أو الفحص الوافي (مع مدقق القطع والتقرير PDF) بـ ' + prodPrice('full');
     const pcp = $('parts-cta-price'), scp = $('sound-cta-price'); if (pcp) pcp.textContent = prodPrice('prices'); if (scp) scp.textContent = prodPrice('toolmain');
     const ppp = $('prices-pw-price'); if (ppp) ppp.textContent = prodPrice('prices');
-    const ub = $('upgrade-box'); if (ub) { ub.classList.toggle('hidden', !canUpgrade()); const ut = $('upgrade-btn'); if (ut) ut.textContent = '⬆️ ترقية هذا الفحص إلى الوافي بـ ' + prodPrice('upgrade'); }
+    const ub = $('upgrade-box'); if (ub) { ub.classList.toggle('hidden', !canUpgrade()); const ut = $('upgrade-btn'); if (ut) ut.textContent = '⬆️ ترقية إلى الفحص الوافي بـ ' + prodPrice('upgrade'); }
     const pb = $('pass-banner'); if (pb) { pb.textContent = passText(); pb.classList.toggle('hidden', !passActive()); }
     const wf = $('welcome-free'); if (wf) wf.classList.toggle('hidden', !(Wallet.state && Wallet.state.freeAvailable && !passActive()));
     const al = $('accuracy-line'), acc = Wallet.state && Wallet.state.accuracy;
@@ -202,8 +204,8 @@ function openPayModal(msg, focus, scope) {
     track('pay_open');
     $('pm-msg').textContent = msg || ''; $('pm-msg').classList.toggle('hidden', !msg);
     const ws = Wallet.state || {}, bal = [];
-    const cc = ws.cr || {}, bl = [['full', 'وافي'], ['diag', 'فحص + قطع'], ['upg', 'ترقية'], ['prices', 'أسعار'], ['tm', 'أداة أساسية'], ['ts', 'أداة فرعية']];
-    bl.forEach(([k, n]) => { if (cc[k]) bal.push(cc[k] + ' ' + n); });
+    const cc = ws.cr || {};
+    BAL_NAMES.forEach(([k, n]) => { if (cc[k]) bal.push(cc[k] + ' ' + n); });
     if (ws.uses) bal.push(ws.uses + ' فحوصات (قديم)'); if (ws.reports) bal.push(ws.reports + ' فحص مستعملة'); if (ws.toolUses) bal.push(ws.toolUses + ' أدوات (قديم)');
     $('pm-wallet').textContent = (passActive() ? passText() : '💼 لا يوجد وصول زمني فعّال') + (bal.length ? ' • رصيدك: ' + bal.join('، ') : '');
     $('pm-wid').textContent = walletId();
