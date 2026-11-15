@@ -250,7 +250,7 @@ const QUESTIONS_SYSTEM = `أنت فني سيارات خبير في دول الخ
 // =====================================================================
 // 💳 نظام الدفع: خدمة واحدة مجانية لكل مستخدم، ثم "تذكرة وصول كامل" لمدة يوم (أو أيام/سنة)
 // =====================================================================
-const PAY_MODES = new Set(['wallet', 'use_free', 'redeem', 'codes_create', 'pay_stats', 'pay_webhook', 'tamclaim', 'tam_list', 'tam_decide', 'set_free_choice', 'upgrade', 'use_prices', 'acct_link', 'whop_checkout']);
+const PAY_MODES = new Set(['wallet', 'use_free', 'redeem', 'codes_create', 'pay_stats', 'pay_webhook', 'tamclaim', 'tam_list', 'tam_decide', 'set_free_choice', 'upgrade', 'use_prices', 'acct_link', 'whop_checkout', 'unlock']);
 // uses = فحوصات (باقة 3)، days = وصول زمني، rc = فحص مستعملة، tu = استخدامات أدوات. day3 و annual قديمتان: نحترمهما لمن اشتراهما ولا تُباعان
 // نموذج 3.2.0: رصيد لكل خدمة (cr). full = الفحص الوافي حتى التقرير، diag = فحص السيارة + قطع الأعطال، upgrade = ترقية فحص إلى الوافي،
 // prices = أسعار القطع، toolmain = أداة أساسية (كاميرا/صوت/اهتزاز)، toolsub = أداة فرعية، report = فحص مستعملة، report5 = 5 فحوصات مستعملة (صالحة 6 أشهر)
@@ -279,20 +279,24 @@ const validDid = d => typeof d === 'string' && /^[a-z0-9]{4,40}$/.test(d);
 // الشبكات في الخليج يتشارك فيها كثيرون نفس العنوان، لذلك نحدّ الهدايا لكل عنوان بـ 3 يومياً بدلاً من منعها
 const ipKey = async ip => 'freeipn:' + (await sha256hex(ip)).slice(0, 16);
 let FREE_PER_IP_DAY; // يُضبط في initEnv
+let FREE_DIAGS = 2;   // عدد التشخيصات المجانية لكل محفظة (بلا قطع ولا أسعار ولا أجرة ولا تقرير)
 
 async function getWallet(wid) { try { return JSON.parse((await kv(['GET', 'w:' + wid])) || '{}'); } catch (e) { return {}; } }
 async function setWallet(wid, w) { await kv(['SET', 'w:' + wid, JSON.stringify(w), 'EX', 3 * 365 * 24 * 3600]); }
 const passActive = w => (w.pass || 0) > Date.now();
+// التشخيصات المجانية المستخدمة: القائمة الجديدة fds، والقديمة freeDid (خدمة واحدة) تُحسب منها
+const freeList = w => { const a = Array.isArray(w.fds) ? w.fds.slice() : []; if (w.freeDid && !a.includes(w.freeDid)) a.unshift(w.freeDid); return a; };
 async function freeState(wid, ip, w) {
-  if (w.freeDid) return { used: true, did: w.freeDid };
+  const list = freeList(w);
+  if (list.length >= FREE_DIAGS) return { used: true, did: list[list.length - 1], list };
   const n = Number(await kv(['GET', (await ipKey(ip))])) || 0;
-  return { used: n >= FREE_PER_IP_DAY, did: null };
+  return { used: n >= FREE_PER_IP_DAY, did: list.length ? list[list.length - 1] : null, list };
 }
 async function walletView(wid, ip, w, cc) {
   const f = await freeState(wid, ip, w);
   let acc = null;
   try { const a = (await kv(['MGET', 'stat:fb:yes', 'stat:fb:no', 'stat:fb:partial'])) || []; const y = +a[0] || 0, t = y + (+a[1] || 0) + (+a[2] || 0); if (t >= 20) acc = { yes: y, total: t }; } catch (e) {}
-  return { passUntil: passActive(w) ? w.pass : 0, freeAvailable: !f.used, freeDid: f.did, freeChoice: w.fc || null, paid: !!w.paid, uses: w.uses || 0, toolUses: w.tu || 0, cr: Object.assign({ full: 0, diag: 0, upg: 0, prices: 0, tm: 0, ts: 0 }, w.cr || {}), unlocked: (w.unl || []).slice(-100), fullUnlocked: (w.ful || []).slice(-100), reports: rcValid(w) ? (w.rc || 0) : 0, links: checkoutLinks(cc), whop: whopReady(), tam: tamLinks(), cfg: appConfig(), accuracy: acc };
+  return { passUntil: passActive(w) ? w.pass : 0, freeAvailable: !f.used, freeLeft: f.used ? 0 : Math.max(0, FREE_DIAGS - f.list.length), freeDids: f.list.slice(-10), freeDid: f.did, freeChoice: w.fc || null, paid: !!w.paid, uses: w.uses || 0, toolUses: w.tu || 0, cr: Object.assign({ full: 0, diag: 0, upg: 0, prices: 0, tm: 0, ts: 0 }, w.cr || {}), unlocked: (w.unl || []).slice(-100), fullUnlocked: (w.ful || []).slice(-100), reports: rcValid(w) ? (w.rc || 0) : 0, links: checkoutLinks(cc), whop: whopReady(), tam: tamLinks(), cfg: appConfig(), accuracy: acc };
 }
 // حدود القياس قابلة للضبط من متغير VIB_LIMITS بدون تعديل الكود، مثل: {"idle":[0.02,0.05],"drive":[0.04,0.1],"brake":[1.6,2.5]}
 // حدود الاهتزاز من بيانات حقيقية: الحد الأول أعلى من 90% من السيارات السليمة المؤكدة،
@@ -513,11 +517,11 @@ async function accessGate(body, ip) {
   if (did && (unl.includes(did) || ful.includes(did))) return { ok: true };      // خدمة سبق خصمها من رصيده أو فُتحت له
   const tool = typeof body.tool === 'string' && /^[a-z_]{2,24}$/.test(body.tool) ? body.tool : null;
   const f = await freeState(body.wid, ip, w);
-  if (f.used && f.did === did && did) return { ok: true };         // نفس الخدمة المجانية
-  if (!f.used) {                                                    // الخدمة المجانية الواحدة لم تُستخدم بعد
+  if (did && f.list.includes(did)) return { ok: true };            // نفس التشخيص المجاني
+  if (!f.used && !tool) {                                           // تشخيص مجاني (الأدوات المستقلة ليست مجانية)
     if (!did) return { ok: false };
     if (body.mode === 'questions') return { ok: true };            // الأسئلة تسبق التشخيص في نفس الخدمة
-    w.freeDid = did; await setWallet(body.wid, w);
+    w.fds = f.list.concat(did); if (!w.freeDid) w.freeDid = did; await setWallet(body.wid, w);
     await kv(['INCR', (await ipKey(ip))]); await kv(['EXPIRE', (await ipKey(ip)), 24 * 3600]);
     await kv(['INCR', 'stat:free']);
     return { ok: true };
@@ -589,13 +593,32 @@ async function payHandler(body, ip, res) {
     return res.status(g.ok ? 200 : 402).json(Object.assign({ ok: g.ok }, await walletView(wid, ip, await getWallet(wid), body.cc)));
   }
 
+  // فتح تفاصيل تشخيص مجاني (القطع والأسعار والأجرة) برصيد مدفوع: يخصم رصيد فحص مرة واحدة لكل تشخيص
+  if (body.mode === 'unlock') {
+    if (!validWid(wid) || !validDid(body.did)) return res.status(400).json({ error: 'bad_request' });
+    const w = await getWallet(wid);
+    const ful = Array.isArray(w.ful) ? w.ful : [], unl = Array.isArray(w.unl) ? w.unl : [];
+    if (passActive(w) || unl.includes(body.did) || ful.includes(body.did)) return res.status(200).json(Object.assign({ ok: true, kept: true }, await walletView(wid, ip, w, body.cc)));
+    if (!freeList(w).includes(body.did)) return res.status(404).json({ error: 'unknown_check' });
+    const cr = w.cr = w.cr || {}, wantFull = body.level === 'full'; let full = false;
+    if (wantFull && (cr.full || 0) > 0) { cr.full -= 1; full = true; }
+    else if (!wantFull && (cr.diag || 0) > 0) cr.diag -= 1;
+    else if ((cr.full || 0) > 0) { cr.full -= 1; full = true; }
+    else if ((cr.diag || 0) > 0) cr.diag -= 1;
+    else if ((w.uses || 0) > 0) { w.uses -= 1; full = true; }
+    else return res.status(402).json({ error: 'payment_required', product: wantFull ? 'full' : 'diag' });
+    w.unl = unl.concat(body.did).slice(-100); if (full) w.ful = ful.concat(body.did).slice(-100);
+    await setWallet(wid, w);
+    return res.status(200).json(Object.assign({ ok: true }, await walletView(wid, ip, w, body.cc)));
+  }
+
   // ترقية فحص سيارة (مفتوح عند صاحبه) إلى الفحص الوافي: تخصم رصيد ترقية، ولا تخصم مرتين لنفس الفحص
   if (body.mode === 'upgrade') {
     if (!validWid(wid) || !validDid(body.did)) return res.status(400).json({ error: 'bad_request' });
     const w = await getWallet(wid);
     const ful = Array.isArray(w.ful) ? w.ful : [], unl = Array.isArray(w.unl) ? w.unl : [];
     if (passActive(w) || ful.includes(body.did)) return res.status(200).json(Object.assign({ ok: true, kept: true }, await walletView(wid, ip, w, body.cc)));
-    if (!unl.includes(body.did) && w.freeDid !== body.did) return res.status(404).json({ error: 'unknown_check' });
+    if (!unl.includes(body.did) && !freeList(w).includes(body.did)) return res.status(404).json({ error: 'unknown_check' });
     w.cr = w.cr || {};
     if ((w.cr.upg || 0) < 1) return res.status(402).json({ error: 'payment_required', product: 'upgrade' });
     w.cr.upg -= 1; w.ful = ful.concat(body.did).slice(-100);
@@ -635,6 +658,7 @@ async function payHandler(body, ip, res) {
   if (body.mode === 'whop_checkout') {
     if (!validWid(wid) || !SELLABLE.includes(body.product)) return res.status(400).json({ error: 'bad_request' });
     if (!whopReady()) return res.status(503).json({ error: 'not_configured' });
+    if (!(await kv(['EXISTS', 'wacct:' + wid]))) return res.status(403).json({ error: 'account_required' });   // الدفع بعد التسجيل بجوجل: لا يضيع الرصيد
     const plan = String(ENV['WHOP_PLAN_' + body.product.toUpperCase()] || '').trim();
     if (!/^plan_[A-Za-z0-9]{6,40}$/.test(plan)) return res.status(503).json({ error: 'plan_missing', detail: body.product });
     try {
@@ -972,6 +996,7 @@ function mergeWallets(a, c) {
   a.pass = Math.max(a.pass || 0, c.pass || 0); a.paid = !!(a.paid || c.paid);
   const un = (x, y, n) => Array.from(new Set((x || []).concat(y || []))).slice(-n);
   a.unl = un(a.unl, c.unl, 100); a.ful = un(a.ful, c.ful, 100); a.pu = un(a.pu, c.pu, 50);
+  a.fds = Array.from(new Set(freeList(a).concat(freeList(c)))).slice(-10);
   if (!a.fc && c.fc) { a.fc = c.fc; a.freeDid = a.freeDid || c.freeDid; a.fpu = a.fpu || c.fpu; }
   return a;
 }
@@ -1454,7 +1479,8 @@ function initEnv() {
   CURATE_MIN_USERS = Math.max(2, parseInt(ENV.CURATE_MIN_USERS || '3'));
   KV_URL = ENV.KV_REST_API_URL || ENV.UPSTASH_REDIS_REST_URL || '';
   KV_TOKEN = ENV.KV_REST_API_TOKEN || ENV.UPSTASH_REDIS_REST_TOKEN || '';
-  FREE_PER_IP_DAY = Math.max(1, parseInt(ENV.FREE_PER_IP_DAY || '3'));
+  FREE_PER_IP_DAY = Math.max(1, parseInt(ENV.FREE_PER_IP_DAY || '6'));
+  FREE_DIAGS = Math.max(0, parseInt(ENV.FREE_DIAGS || '2'));
   OWNER = String(ENV.OWNER_EMAIL || '').trim().toLowerCase();   // بريد المالك من متغير البيئة OWNER_EMAIL في Cloudflare (لا يُكتب في الكود)
   FIREBASE_WEB_KEY = ENV.FIREBASE_API_KEY || 'AIzaSyACt18eL1b_k0udQwXNH0dq56DmMXL8iLE';
 }
