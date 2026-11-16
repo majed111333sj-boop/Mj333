@@ -2,7 +2,7 @@
 // جزء من index.html، يُحمَّل بالترتيب: كل الملفات تشترك في نفس النطاق العام
 
 // ---------- الإصدار وتسجيل الأخطاء: أي خطأ عند المستخدم يصل للوحة الإدارة (3 كحد أقصى لكل جلسة) ----------
-const APP_VERSION = '3.3.29';
+const APP_VERSION = '3.3.30';
 const SITE_URL = 'https://alfahis.pages.dev';
 // حذف أرقام الجوال والهوية والبريد من أي نص قبل إرساله أو حفظه
 function noPii(text) {
@@ -17,7 +17,7 @@ function noPii(text) {
     window.reportClientError = send;
     window.addEventListener('error', e => send((e.message || 'error') + ' @' + (e.lineno || 0)));
     window.addEventListener('unhandledrejection', e => send('promise: ' + ((e.reason && e.reason.message) || e.reason)));
-    document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('p'); v.textContent = 'الإصدار ' + APP_VERSION + ' · '; const fl = document.createElement('a'); fl.href = '/faults/index.html'; fl.textContent = 'دليل الأعطال'; fl.style.cssText = 'color:#64748B;text-decoration:underline'; v.appendChild(fl); v.style.cssText = 'text-align:center;font-size:11px;color:#94A3B8;margin:14px 0 90px'; (document.querySelector('main') || document.body).appendChild(v); });
+    document.addEventListener('DOMContentLoaded', () => { const v = document.createElement('p'); v.textContent = 'الإصدار ' + APP_VERSION; v.style.cssText = 'text-align:center;font-size:11px;color:#94A3B8;margin:14px 0 90px'; (document.querySelector('main') || document.body).appendChild(v); });
 })();
 // ---------- نسخة تجريبية + "أبلغ عن مشكلة" ----------
 window.reportIssue = async function (ctx) {
