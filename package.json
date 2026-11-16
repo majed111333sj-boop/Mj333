@@ -1,12 +1,12 @@
 {
   "name": "smart-diag",
-  "version": "3.3.28",
+  "version": "3.3.29",
   "private": true,
   "description": "الفاحص الذكي - تشخيص أعطال السيارات والأسعار العادلة والورش والوكلاء وفحص السيارة المستعملة",
   "scripts": {
-    "build": "if [ -f tests/api.test.mjs ]; then node --test tests/api.test.mjs; fi && tailwindcss -i ./input.css -o ./dist/style.css --minify && node build.mjs",
+    "build": "if [ -f tests/api.test.mjs ]; then node --test tests/*.test.mjs; fi && tailwindcss -i ./input.css -o ./dist/style.css --minify && node build.mjs",
     "dev": "tailwindcss -i ./input.css -o ./dist/style.css --watch",
-    "test": "node --test tests/api.test.mjs"
+    "test": "node --test tests/*.test.mjs"
   },
   "devDependencies": {
     "tailwindcss": "3.4.17"
