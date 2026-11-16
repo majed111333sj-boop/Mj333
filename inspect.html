@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>فحص السيارة قبل الشراء | الفاحص الذكي</title>
-    <meta name="description" content="افحص السيارة المستعملة بنفسك قبل الشراء خطوة بخطوة: 40 نقطة فحص، تقييم من 100، علامات الخطر، تكلفة الإصلاح المتوقعة، ومبلغ التفاوض المقترح.">
+    <meta name="description" content="افحص السيارة المستعملة بنفسك قبل الشراء خطوة بخطوة: 35 نقطة فحص (سريع أو كامل)، تقييم من 100، علامات الخطر، تكلفة الإصلاح المتوقعة، ومبلغ التفاوض المقترح.">
     <meta name="theme-color" content="#0f172a">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -203,7 +203,7 @@ const MODELS = {
 };
 
 // نقاط الفحص: [المعرف، العنوان، كيف تفحص، الوزن، تكلفة الإصلاح بالريال، علامة خطر؟]
-const STAGES = [
+const STAGES0 = [
     { id: 'docs', icon: '📄', title: 'الأوراق والتاريخ', items: [
         ['vin', 'رقم الهيكل (VIN) في الاستمارة يطابق السيارة', 'قارن الرقم في الاستمارة مع الرقم أسفل الزجاج الأمامي وعلى باب السائق. أي اختلاف = توقف.', 10, 0, true],
         ['service', 'سجل صيانة منتظم', 'اطلب فواتير أو سجل الوكالة. الصيانة المنتظمة مؤشر قوي على حالة المحرك والقير.', 4, 0, false],
@@ -253,21 +253,45 @@ const STAGES = [
     ]}
 ];
 const PROBLEM = {"vin": "رقم الهيكل غير مطابق", "service": "لا يوجد سجل صيانة واضح", "accident": "تاريخ حوادث", "periodic": "الفحص الدوري غير ساري", "mileage": "الممشى غير منطقي (احتمال تلاعب بالعداد)", "owners": "إجابات البائع غير واضحة", "paint": "اختلاف في لون الصبغ (صبغ)", "gaps": "فراغات غير متساوية بين القطع", "rust": "صدأ أو فقاعات تحت الصبغ", "glass": "تشقق في الزجاج أو الأنوار", "tires": "تآكل غير متساوٍ في الكفرات", "tireage": "كفرات قديمة", "under": "آثار ضرب أو تسريب تحت السيارة", "lights": "لمبات طبلون غير طبيعية", "ac": "ضعف المكيف", "elec": "أعطال كهربائية في المقصورة", "seats": "تآكل غير متناسب مع الممشى", "flood": "آثار رطوبة أو غرق", "airbag": "لمبة الوسادة الهوائية مضاءة", "cold": "المحرك كان ساخناً قبل الفحص", "oil": "زيت غير طبيعي أو رغوة (احتمال جوان رأس)", "coolant": "ماء الرديتر غير نظيف", "leaks": "تسريب زيت أو ماء", "belts": "سيور متشققة", "start": "صعوبة أو طقة عند التشغيل", "idle": "رجة أو تذبذب والسيارة واقفة", "smoke": "دخان من العادم", "trans": "مشكلة في تبديل القير", "brakes": "ضعف أو سحب أو صوت في الفرامل", "straight": "السيارة تسحب لجهة", "vib": "رجة على السرعة", "noise": "طقطقة في المطبات أو عند اللف", "temp": "ارتفاع حرارة المحرك", "power": "ضعف في التسارع", "codes": "توجد أكواد أعطال"};
+// 6 مراحل تُدمج في 4 (بنفس البنود والأوزان): الأوراق، الهيكل والمقصورة، المحرك، القيادة والأكواد
+const mergeStages = (id, icon, title, ...parts) => ({ id, icon, title, items: parts.flatMap(p => p.items) });
+const S = Object.fromEntries(STAGES0.map(x => [x.id, x]));
+const STAGES = [S.docs, mergeStages('body', '🚗', 'الهيكل والمقصورة', S.ext, S.int), S.eng, mergeStages('drive', '🛣️', 'القيادة والأكواد', S.drive, S.obd)];
+// الفحص السريع: النقاط المهمة وأخطرها (الحوادث والغرق والمحرك والقير والفرامل والحرارة)، والفحص الكامل يضيف الباقي
+const QUICK = new Set(STAGES0.flatMap(x => x.items.filter(i => i[5]).map(i => i[0])).concat(['brakes', 'coolant', 'paint']));
 const ALL = STAGES.flatMap(s => s.items.map(i => ({ stage: s.id, id: i[0], title: i[1], how: i[2], w: i[3], cost: i[4], red: i[5], prob: PROBLEM[i[0]] || i[1] })));
 const ANS = [['ok', '✅ سليم'], ['note', '⚠️ ملاحظة'], ['bad', '❌ مشكلة'], ['skip', '— لم أفحص']];
 
 let state = store.get('sd_inspect', { answers: {}, notes: {}, car: {} });
 let stageIdx = 0;
+if (!state.mode) state.mode = Object.keys(state.answers || {}).length > QUICK.size ? 'full' : 'quick';   // من بدأ فحصاً طويلاً يبقى كاملاً
+const isFull = () => state.mode === 'full';
+const activeItems = () => ALL.filter(it => isFull() || QUICK.has(it.id));
+const stageItems = st => st.items.filter(it => isFull() || QUICK.has(it[0]));
 const photos = {};   // الصور تبقى في الذاكرة فقط (لا تُرفع لأي مكان)
 
 function save() { store.set('sd_inspect', state); updateProgress(); }
 
 // ---------- الواجهة ----------
+function setMode(m) { state.mode = m; save(); render(); }
+function buildModeBar() {
+    let bar = $('mode-bar');
+    if (!bar) { bar = el('div', 'no-print grid grid-cols-2 gap-1.5'); bar.id = 'mode-bar'; $('stage-tabs').parentNode.insertBefore(bar, $('stage-tabs')); }
+    bar.innerHTML = '';
+    [['quick', '⚡ فحص سريع', QUICK.size + ' نقطة مهمة • دقيقتان'], ['full', '📋 فحص كامل', ALL.length + ' نقطة • كل التفاصيل']].forEach(([m, t, d]) => {
+        const on = state.mode === m;
+        const b = el('button', 'rounded-xl border-2 p-2 text-center ' + (on ? 'border-blue-700 bg-blue-50' : 'border-slate-200 bg-white'));
+        b.type = 'button'; b.appendChild(el('span', 'block font-black text-[13px] ' + (on ? 'text-blue-800' : 'text-slate-700'), t)); b.appendChild(el('span', 'block text-[11px] text-slate-500', d));
+        b.onclick = () => { if (!on) setMode(m); };
+        bar.appendChild(b);
+    });
+}
 function buildStageTabs() {
+    buildModeBar();
     const box = $('stage-tabs'); box.innerHTML = '';
     STAGES.forEach((s, i) => {
-        const done = s.items.filter(it => state.answers[it[0]]).length;
-        const b = el('button', 'stage-btn shrink-0 border border-slate-300 bg-white rounded-full px-3 py-1.5 text-[11px] font-bold' + (i === stageIdx ? ' active' : ''), s.icon + ' ' + s.title + ' ' + done + '/' + s.items.length);
+        const vis = stageItems(s), done = vis.filter(it => state.answers[it[0]]).length;
+        const b = el('button', 'stage-btn shrink-0 border border-slate-300 bg-white rounded-full px-3 py-1.5 text-[11px] font-bold' + (i === stageIdx ? ' active' : ''), s.icon + ' ' + s.title + ' ' + done + '/' + vis.length);
         b.onclick = () => { stageIdx = i; render(); };
         box.appendChild(b);
     });
@@ -294,7 +318,14 @@ function toolsBadge() {   // عدد ما قيس بالأدوات
 function render() {
     buildStageTabs();
     const s = STAGES[stageIdx], box = $('stage-box'); box.innerHTML = '';
-    s.items.forEach(([id, title, how, w, cost, red]) => {
+    const stop = ALL.filter(it => it.red && state.answers[it.id] === 'bad');
+    if (stop.length) {   // عيب مهم: نوقف الصفقة حتى تفحصها جهة معتمدة، ويبقى الإكمال متاحاً
+        const bn = el('div', 'rounded-2xl border-2 border-red-300 bg-red-50 p-3 space-y-1');
+        bn.appendChild(el('p', 'font-black text-[13px] text-red-800', '⛔ ظهر عيب مهم: ' + stop[0].prob + (stop.length > 1 ? ' (+' + (stop.length - 1) + ')' : '')));
+        bn.appendChild(el('p', 'text-[12px] text-red-700 leading-relaxed', 'ننصح بإيقاف الصفقة حتى تفحصها ورشة أو جهة معتمدة. تقدر تكمل الفحص إن أردت.'));
+        box.appendChild(bn);
+    }
+    stageItems(s).forEach(([id, title, how, w, cost, red]) => {
         const card = el('div', 'bg-white rounded-2xl p-3 border shadow-sm space-y-2 ' + (red ? 'border-red-200' : 'border-slate-200'));
         const top = el('div', 'flex items-start justify-between gap-2');
         top.appendChild(el('span', 'font-extrabold text-xs leading-snug', title));
@@ -339,6 +370,10 @@ function render() {
         }
         box.appendChild(card);
     });
+    if (!isFull() && stageIdx === STAGES.length - 1) {
+        const more = el('button', 'w-full rounded-xl border-2 border-dashed border-blue-300 text-blue-800 font-bold text-[12px] py-2.5', '📋 أضف باقي النقاط (' + (ALL.length - QUICK.size) + ') لفحص أدق');
+        more.type = 'button'; more.onclick = () => { stageIdx = 0; setMode('full'); window.scrollTo({ top: 0, behavior: 'smooth' }); }; box.appendChild(more);
+    }
     $('prev-btn').disabled = stageIdx === 0; $('prev-btn').classList.toggle('opacity-40', stageIdx === 0);
     $('next-btn').textContent = stageIdx === STAGES.length - 1 ? '📊 النتيجة' : 'التالي ←';
     updateProgress();
@@ -349,9 +384,9 @@ function goStage(d) {
     window.scrollTo({ top: $('stage-tabs').offsetTop - 120, behavior: 'smooth' });
 }
 function updateProgress() {
-    const n = Object.keys(state.answers).length;
-    $('progress-text').textContent = n + ' / ' + ALL.length + ' نقطة';
-    $('progress-bar').style.width = Math.round(n / ALL.length * 100) + '%';
+    const act = activeItems(), n = act.filter(it => state.answers[it.id]).length;
+    $('progress-text').textContent = n + ' / ' + act.length + ' نقطة';
+    $('progress-bar').style.width = Math.round(n / act.length * 100) + '%';
 }
 
 // ---------- الحساب ----------
@@ -370,7 +405,7 @@ function compute() {
     let score = maxPen ? Math.round(100 * (1 - pen / maxPen)) : 0;
     const redBad = ALL.some(it => it.red && state.answers[it.id] === 'bad');
     if (redBad) score = Math.min(score, 55);
-    const coverage = answered / ALL.length;
+    const coverage = answered / activeItems().length;
     let verdict, cls;
     if (!answered) { verdict = 'أجب على بعض نقاط الفحص أولاً'; cls = 'bg-slate-50 border-slate-200 text-slate-600'; }
     else if (redBad || score < 60) { verdict = '❌ ننصح بتجنبها أو فحصها عند جهة معتمدة قبل أي قرار'; cls = 'bg-red-50 border-red-200 text-red-800'; }
@@ -391,7 +426,7 @@ function showResult() {
     $('r-score').className = 'block text-3xl font-black font-mono ' + (r.score >= 80 ? 'text-emerald-600' : r.score >= 60 ? 'text-amber-600' : 'text-red-600');
     $('r-verdict').textContent = r.verdict; $('r-verdict').className = 'rounded-xl p-3 text-sm font-black text-center border ' + r.cls;
     const missingRed = r.redTotal - r.redAnswered;
-    $('r-confidence').textContent = 'فحصت ' + r.answered + ' من ' + ALL.length + ' نقطة' + (missingRed ? ' • لم تفحص ' + missingRed + ' نقاط مهمة' : '') + (r.coverage < 0.6 ? ' — النتيجة تقريبية، أكمل الفحص لدقة أعلى' : '');
+    $('r-confidence').textContent = 'فحصت ' + r.answered + ' من ' + activeItems().length + ' نقطة' + (missingRed ? ' • لم تفحص ' + missingRed + ' نقاط مهمة' : '') + (r.coverage < 0.6 ? ' — النتيجة تقريبية، أكمل الفحص لدقة أعلى' : '');
     const fl = $('r-flags'); fl.innerHTML = '';
     r.flags.forEach(f => fl.appendChild(el('li', null, f)));
     $('r-flags-box').classList.toggle('hidden', !r.flags.length);
