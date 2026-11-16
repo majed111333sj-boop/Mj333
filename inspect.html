@@ -264,7 +264,7 @@ const ANS = [['ok', '✅ سليم'], ['note', '⚠️ ملاحظة'], ['bad', '�
 
 let state = store.get('sd_inspect', { answers: {}, notes: {}, car: {} });
 let stageIdx = 0;
-if (!state.mode) state.mode = Object.keys(state.answers || {}).length > QUICK.size ? 'full' : 'quick';   // من بدأ فحصاً طويلاً يبقى كاملاً
+if (!state.mode) state.mode = 'quick';
 const isFull = () => state.mode === 'full';
 const activeItems = () => ALL.filter(it => isFull() || QUICK.has(it.id));
 const stageItems = st => st.items.filter(it => isFull() || QUICK.has(it[0]));
