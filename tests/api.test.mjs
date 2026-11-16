@@ -41,6 +41,9 @@ globalThis.fetch = async (url, init) => {
   const u = String(url);
   if (u === 'https://kv.test') { const r = redisFull(JSON.parse(init.body)); return new Response(JSON.stringify({ result: r }), { status: 200 }); }
   if (u.includes('generativelanguage.googleapis.com')) {
+    const model = decodeURIComponent(u.split('/models/')[1].split(':')[0]);
+    (globalThis.__gem = globalThis.__gem || []).push({ model, body: String(init.body) });
+    if (globalThis.__geminiFn) return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: globalThis.__geminiFn(model, String(init.body)) }] } }] }), { status: 200 });
     if (geminiText == null) return new Response('no', { status: 500 });
     return new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: geminiText }] } }] }), { status: 200 });
   }
@@ -78,7 +81,7 @@ const diagBody = (w, d, extra) => Object.assign({ mode: 'diagnose', wid: w, did:
 const linked = async () => { const w = wid(); await api({ mode: 'acct_link', wid: w, token: 'tok-g-' + w }); return w; };
 const burnFree = async w => { await api(diagBody(w, did())); await api(diagBody(w, did())); };   // يستهلك التشخيصين المجانيين
 
-test.beforeEach(() => { store.clear(); geminiText = JSON.stringify({ kb_id: 'cv', title: 'تلف جوزة العكس', severity: 'caution', confidence: 'medium', explanation: 'شرح', advice: 'افحص', checks: [], question: null }); });
+test.beforeEach(() => { store.clear(); globalThis.__gem = []; globalThis.__geminiFn = null; geminiText = JSON.stringify({ kb_id: 'cv', title: 'تلف جوزة العكس', severity: 'caution', confidence: 'medium', explanation: 'شرح', advice: 'افحص', checks: [], question: null }); });
 
 test('محفظة جديدة: الخدمة المجانية متاحة والأرصدة صفر', async () => {
   const w = wid(); const r = await api({ mode: 'wallet', wid: w });
@@ -445,4 +448,45 @@ test('3.3.27 رابط مشاركة نتيجة الفحص: يُحفظ منقّح�
   assert.equal((await api({ mode: 'report_del', wid: wid(), id: s.json.id })).status, 403);
   assert.equal((await api({ mode: 'report_del', wid: w, id: s.json.id })).status, 200);
   assert.equal((await api({ mode: 'report_get', id: s.json.id })).status, 404);
+});
+
+test('3.3.30 مرجع الخادم الخاص: الوصف المطابق يمرّر المرجع للنموذج العادي بلا ترقية', async () => {
+  const w = await linked();
+  const r = await api(diagBody(w, did(), { description: 'دواسة الفرامل تنزل لآخرها ' + did() }));
+  assert.equal(r.status, 200);
+  assert.equal(globalThis.__gem[0].model, 'gemini-flash-lite-latest');   // النموذج العادي لأن هناك تشابهاً
+  assert.match(globalThis.__gem[0].body, /مراجع من قاعدة معرفة التطبيق/);
+  assert.match(globalThis.__gem[0].body, /دواسة الفرامل إسفنجية/);
+  assert.ok(!/ريال|[0-9]{3,} ر\.س/.test(globalThis.__gem[0].body.match(/مراجع من قاعدة[\s\S]*?قائمة kb_id/)[0]), 'لا أسعار للنموذج');
+});
+
+test('3.3.30 حالة جديدة لا تشبه أي عطل: النموذج القوي أولاً، ثم تُضاف للقاعدة (غير معتمدة) مع نص المستخدم', async () => {
+  const w = await linked();
+  const desc = 'هناك صرير غريب من سقف السيارة عند الأمطار الغزيرة وبعد غسيلها ' + did() + ' جوال 0551234567';
+  globalThis.__geminiFn = (model, body) => /محرر قاعدة معرفة/.test(body) || /محرر قاعدة معرفة/.test(body)
+    ? JSON.stringify({ title: 'تسرب مياه من جوان فتحة السقف', sev: 'caution', keywords: [{ k: 'صرير من السقف', w: 3 }, { k: 'مطر', w: 2 }], parts: [{ n: 'جوان فتحة السقف', opt: false }], advice: 'افحص مجاري التصريف.' })
+    : JSON.stringify({ kb_id: null, title: 'تسرب مياه من فتحة السقف', severity: 'caution', confidence: 'high', explanation: 'ش', advice: 'ن', checks: [], question: null });
+  const r = await api(diagBody(w, did(), { description: desc }), { env: { GEMINI_ESCALATE_MODELS: 'gemini-pro-test' } });
+  assert.equal(r.status, 200); assert.equal(r.json.model, 'gemini-pro-test');
+  assert.equal(globalThis.__gem[0].model, 'gemini-pro-test');
+  for (let i = 0; i < 40 && ![...store.keys()].some(k => k.startsWith('auto:') && k !== 'auto:index'); i++) await new Promise(x => setTimeout(x, 25));
+  const key = [...store.keys()].find(k => k.startsWith('auto:') && k !== 'auto:index');
+  assert.ok(key, 'لم تُضف الحالة للقاعدة');
+  const row = JSON.parse(store.get(key));
+  assert.equal(row.src, 'novel'); assert.equal(row.auto, true); assert.match(row.title, /فتحة السقف/);
+  assert.ok(row.example.includes('صرير') && !row.example.includes('0551234567'), 'نص المستخدم يُحفظ بلا جوال');
+});
+
+test('3.3.30 حالة جديدة بثقة منخفضة لا تُضاف للقاعدة', async () => {
+  const w = await linked();
+  globalThis.__geminiFn = () => JSON.stringify({ kb_id: null, title: 'غير واضح', severity: 'caution', confidence: 'low', explanation: 'ش', advice: 'ن', checks: [], question: 'متى يحدث؟' });
+  await api(diagBody(w, did(), { description: 'شيء غريب جداً لا أعرف وصفه أبداً ' + did() }));
+  await new Promise(x => setTimeout(x, 150));
+  assert.ok(![...store.keys()].some(k => k.startsWith('auto:') && k !== 'auto:index'));
+});
+
+test('3.3.30 ملف الخادم الخاص مطابق لقاعدة الأعطال في js/02-diagnosis.js', async () => {
+  const { readKb, render } = await import('../scripts/sync-kb.mjs');
+  const fs = await import('node:fs');
+  assert.equal(fs.readFileSync(new URL('../functions/_lib/kb-data.js', import.meta.url), 'utf8'), render(readKb()), 'شغّل: node scripts/sync-kb.mjs');
 });

@@ -13,6 +13,8 @@
 // 3) تخزين مؤقت (اختياري): إذا ربطت Upstash Redis من Vercel يُحفظ التشخيص المتكرر 30 يوماً ويُجاب فوراً بدون ذكاء اصطناعي
 //   KV_REST_API_URL + KV_REST_API_TOKEN  (أو UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN)
 
+import KB_PRIVATE from '../_lib/kb-data.js';   // قاعدة الأعطال الكاملة: ملف خاص بالخادم لا يُرسل للمتصفح
+
 let CLAUDE_MODEL; // يُضبط في initEnv
 const list = v => String(v || '').split(',').map(x => x.trim()).filter(Boolean);
 let MAIN; // يُضبط في initEnv
@@ -171,6 +173,49 @@ async function diagnose(prompt, ctx) {
     }
   }
   return best;
+}
+
+// ---------- 📚 قاعدة المعرفة الخاصة: مطابقة الأعراض في الخادم قبل أي بحث ----------
+const kbNorm = t => String(t || '').toLowerCase().replace(/[\u064B-\u0652\u0640]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/\s+/g, ' ').trim();
+const KB_MIN_SCORE = 3;   // أقل درجة نعدّها تشابهاً حقيقياً مع عطل في القاعدة
+function kbMatch(rows, text, code, car) {
+  const t = kbNorm(text), raw = String(text || '').toUpperCase() + ' ' + String(code || '').toUpperCase(), m = kbNorm(car);
+  const out = [];
+  for (const k of rows) {
+    let sc = 0;
+    if ((k.codes || []).some(c => c && raw.includes(c))) sc += (k.codeW || 10);
+    for (const [w, v] of Object.entries(k.kw || {})) { const n = kbNorm(w); if (n && t.includes(n)) sc += Number(v) || 0; }
+    if (sc > 0 && m && (k.models || []).some(x => { const n = kbNorm(x); return n && m.includes(n); })) sc += 2;
+    if (sc > 0) out.push({ k, score: sc });
+  }
+  return out.sort((a, b) => b.score - a.score);
+}
+// الأعطال التي تعلّمها التطبيق من الاستخدام (تُحفظ في Redis)، مع تخزين مؤقت 5 دقائق داخل النسخة
+let LEARN_CACHE = { at: 0, rows: [] };
+async function learnedRows() {
+  if (Date.now() - LEARN_CACHE.at < 300000) return LEARN_CACHE.rows;
+  const ids = (await kv(['SMEMBERS', 'auto:index'])) || [];
+  let rows = [];
+  if (ids.length) {
+    const vals = (await kv(['MGET'].concat(ids.slice(0, 150).map(i => 'auto:' + i)))) || [];
+    rows = vals.map(v => { try { return JSON.parse(v); } catch (e) { return null; } }).filter(r => r && r.title && r.kw)
+      .map(r => ({ id: r.id, title: r.title, kw: r.kw, codes: r.codes || [], models: r.models || [], parts: (r.parts || []).map(x => [x.n, Number(x.p) || 0]), advice: r.advice || '' }));
+  }
+  LEARN_CACHE = { at: Date.now(), rows };
+  return rows;
+}
+// حالة لا تشبه أي عطل معروف: نبدأ بالنموذج الأقوى مباشرة للحصول على أعلى دقة، ثم نرجع للسلسلة العادية إن فشل
+async function diagnoseStrong(prompt, ctx) {
+  const key = ENV.GEMINI_API_KEY, valid = j => j && typeof j.title === 'string' && j.title.trim();
+  if (key) for (const m of ESCALATE) {
+    if (ctx.left() < 7000) break;
+    try {
+      const text = await callGemini({ name: 'gemini', key, model: m }, DIAG_SYSTEM, prompt, 900, Math.min(12000, ctx.left() - 1000));
+      const data = extractJson(text || '');
+      if (valid(data)) { console.log('ai strong ok:', m, data.confidence); return { data, model: m, strong: true }; }
+    } catch (e) { console.error('ai strong fail:', m, String(e.message || e).slice(0, 200)); }
+  }
+  return diagnose(prompt, ctx);
 }
 
 const DIAG_SYSTEM = `أنت فني سيارات خبير في دول الخليج، تساعد مالك السيارة على فهم العطل قبل الذهاب للورشة.
@@ -914,16 +959,21 @@ async function publishCase(body, out) {
 }
 
 // ---------- التنظيم التلقائي (Gemma أولاً لأن حده اليومي كبير) ----------
-async function curate(body, out, ip, ctx) {
+async function curate(body, out, ip, ctx, opts = {}) {
   if (!KV_URL || !ENV.GEMINI_API_KEY || ctx.left() < 9000) return;
   const make = String(body.car || '').split(' ').slice(0, -1).join(' ');
   const h = (await sha256hex([normKey(make), normKey(body.description), normKey(body.structured)].join('|'))).slice(0, 16);
   if (await kv(['EXISTS', 'auto:' + h]) || await kv(['EXISTS', 'curblock:' + h])) return;
-  const who = (await sha256hex(ip)).slice(0, 12);
-  await kv(['SADD', 'curu:' + h, who]); await kv(['EXPIRE', 'curu:' + h, 30 * 24 * 3600]);
-  const users = Number(await kv(['SCARD', 'curu:' + h])) || 0;
-  if (users < CURATE_MIN_USERS) return;
-  const prompt = ['السيارة: ' + clip(body.car, 80), 'وصف المالك: ' + clip(body.description, 500),
+  let users = 1;
+  if (opts.force) {   // حالة جديدة حلّلها النموذج القوي: نضيفها فوراً (غير معتمدة) بشرط ألا تمتلئ القائمة
+    if ((Number(await kv(['SCARD', 'auto:index'])) || 0) >= 400) return;
+  } else {
+    const who = (await sha256hex(ip)).slice(0, 12);
+    await kv(['SADD', 'curu:' + h, who]); await kv(['EXPIRE', 'curu:' + h, 30 * 24 * 3600]);
+    users = Number(await kv(['SCARD', 'curu:' + h])) || 0;
+    if (users < CURATE_MIN_USERS) return;
+  }
+  const prompt = ['السيارة: ' + clip(body.car, 80), 'وصف المالك: ' + clip(noPii(body.description || body.sound || ''), 500),
     body.structured ? 'معلومات اختارها: ' + clip(body.structured, 300) : '',
     'تشخيص الذكاء الاصطناعي: ' + out.title + ' | الخطورة: ' + out.severity + ' | ' + clip(out.explanation, 300) + ' | نصيحة: ' + clip(out.advice, 200)].filter(Boolean).join('\n');
   const chain = [...new Set(GEMMA.concat(LIGHT, MAIN))].map(m => ({ name: 'gemini', key: ENV.GEMINI_API_KEY, model: m }));
@@ -937,7 +987,7 @@ async function curate(body, out, ip, ctx) {
     questions: (d.questions || []).slice(0, 3).map(q => q && q.type === 'choice'
       ? { q: clip(q.q, 140), type: 'choice', options: (q.options || []).slice(0, 5).map(o => ({ l: clip(o && o.l, 40), kw: clip(o && o.kw, 40) })) }
       : { q: clip(q && q.q, 140), type: 'yesno', kw: clip(q && q.kw, 40) }).filter(q => q.q),
-    users, example: clip(body.description, 200), car: clip(body.car, 60), model, at: Date.now()
+    users, example: clip(noPii(body.description || body.sound || ''), 200), src: opts.force ? 'novel' : 'repeat', car: clip(body.car, 60), model, at: Date.now()
   };
   if (!Object.keys(row.kw).length) return;
   await kv(['SET', 'auto:' + h, JSON.stringify(row), 'EX', 120 * 24 * 3600]);
@@ -1160,6 +1210,14 @@ async function handle(req, res) {
     if (body.mode === 'diagnose') {
       const catalog = Array.isArray(body.catalog) ? body.catalog.slice(0, 40).map(c => ({ id: clip(c.id, 20), title: clip(c.title, 80) })) : [];
       const ids = new Set(catalog.map(c => c.id));
+      // مرجع الخادم الخاص: نبحث أولاً في قاعدتنا (المدمجة + المتعلَّمة)، فإن وُجد تشابه نمرّره للنموذج توفيراً للبحث
+      let refs = Array.isArray(body.reference) ? body.reference.slice(0, 3) : [], novel = false;
+      if (!refs.length) {
+        const text = [body.description, body.structured, body.sound, body.code].filter(Boolean).join(' ');
+        const hits = kbMatch(KB_PRIVATE.concat(await learnedRows()), text, body.code, body.car);
+        refs = hits.filter(h => h.score >= KB_MIN_SCORE).slice(0, 3).map(h => ({ title: h.k.title, models: (h.k.models || []).join('، '), parts: (h.k.parts || []).map(x => x[0]).join('، '), advice: h.k.advice }));
+        novel = !refs.length && (String(body.description || '').trim().length >= 8 || !!body.sound);   // لا تشابه مع أي عطل معروف
+      }
       const prompt = [
         'السيارة: ' + clip(body.car, 60),
         'الموقع: ' + clip(body.country, 30) + ' - ' + clip(body.city, 30),
@@ -1170,10 +1228,11 @@ async function handle(req, res) {
         body.sound ? 'تحليل صوت مسجّل من الجوال: ' + clip(body.sound, 300) : '',
         body.context ? 'متى يظهر الصوت: ' + clip(body.context, 60) : '',
         body.localGuess ? 'ترجيح أولي من نظام بسيط: ' + clip(body.localGuess, 20) : '',
-        Array.isArray(body.reference) && body.reference.length
-          ? 'مراجع من قاعدة معرفة التطبيق (راجعها المالك؛ اعتمد عليها إن طابقت الأعراض):\n' + body.reference.slice(0, 3).map(r => '- ' + clip(r && r.title, 90) + (r.models ? ' [شائع في: ' + clip(r.models, 80) + ']' : '') + ' | القطع: ' + clip(r && r.parts, 160) + ' | ' + clip(r && r.advice, 200)).join('\n') : '',
+        refs.length
+          ? 'مراجع من قاعدة معرفة التطبيق (راجعها المالك؛ اعتمد عليها إن طابقت الأعراض):\n' + refs.map(r => '- ' + clip(r && r.title, 90) + (r.models ? ' [شائع في: ' + clip(r.models, 80) + ']' : '') + ' | القطع: ' + clip(r && r.parts, 160) + ' | ' + clip(r && r.advice, 200)).join('\n') : '',
         Array.isArray(body.followups) && body.followups.length
           ? 'أسئلة سابقة وإجابات المالك:\n' + body.followups.slice(-6).map(f => '- س: ' + clip(f && f.q, 200) + '\n  ج: ' + clip(f && f.a, 200)).join('\n') : '',
+        novel ? 'ملاحظة: لا يوجد تطابق مع أي عطل في قاعدة معرفة التطبيق، فحلّل الأعراض بأقصى دقة، وفكّر في الأعطال الشائعة لهذا الموديل والسنة، ولا تخترع أسعاراً.' : '',
         'قائمة kb_id المتاحة: ' + JSON.stringify(catalog)
       ].filter(Boolean).join('\n');
       if (!body.description && !body.code && !body.sound && !body.structured) return res.status(400).json({ error: 'empty' });
@@ -1188,7 +1247,7 @@ async function handle(req, res) {
         }
       }
 
-      const { data: j, model } = await diagnose(prompt, ctx);
+      const { data: j, model } = novel ? await diagnoseStrong(prompt, ctx) : await diagnose(prompt, ctx);
       const out = {
         kb_id: ids.has(j.kb_id) ? j.kb_id : null,
         title: clip(j.title, 120),
@@ -1204,8 +1263,12 @@ async function handle(req, res) {
       if (key && out.confidence !== 'low') BG(kv(['SET', key, JSON.stringify(out), 'EX', CACHE_TTL]));
       if (key && out.confidence === 'high') BG(publishCase(body, out).catch(() => {}));
       // 🤖 التعلّم التلقائي: إذا تكررت الحالة من عدة مستخدمين بثقة عالية نُنشئ صفاً "تلقائياً – غير معتمد"
-      if (key && out.confidence === 'high' && !(body.reference || []).length) {
+      if (key && out.confidence === 'high' && !(body.reference || []).length && !novel) {
         try { await curate(body, out, ip, ctx); } catch (e) { console.error('curate', String(e.message || e).slice(0, 150)); }
+      }
+      // 🧠 حالة جديدة حلّلها النموذج القوي بثقة جيدة: تُضاف لقاعدتنا (غير معتمدة) مع نص المستخدم، ويراجعها المالك
+      if (novel && out.confidence !== 'low' && KV_URL && ENV.GEMINI_API_KEY) {
+        BG(curate(body, out, ip, { left: () => 14000 }, { force: true }).then(() => { LEARN_CACHE.at = 0; }).catch(e => console.error('learn', String(e.message || e).slice(0, 150))));
       }
       return res.status(200).json(out);
     }
