@@ -258,7 +258,7 @@ const mergeStages = (id, icon, title, ...parts) => ({ id, icon, title, items: pa
 const S = Object.fromEntries(STAGES0.map(x => [x.id, x]));
 const STAGES = [S.docs, mergeStages('body', '🚗', 'الهيكل والمقصورة', S.ext, S.int), S.eng, mergeStages('drive', '🛣️', 'القيادة والأكواد', S.drive, S.obd)];
 // الفحص السريع: النقاط المهمة وأخطرها (الحوادث والغرق والمحرك والقير والفرامل والحرارة)، والفحص الكامل يضيف الباقي
-const QUICK = new Set(STAGES0.flatMap(x => x.items.filter(i => i[5]).map(i => i[0])).concat(['brakes', 'coolant', 'paint']));
+const QUICK = new Set(STAGES0.flatMap(x => x.items.filter(i => i[5]).map(i => i[0])).concat(['brakes', 'coolant', 'paint', 'start', 'vib', 'tires']));   // + الفرامل والرديتر والدهان، وما يفتح أدوات الصوت والاهتزاز والكفرات
 const ALL = STAGES.flatMap(s => s.items.map(i => ({ stage: s.id, id: i[0], title: i[1], how: i[2], w: i[3], cost: i[4], red: i[5], prob: PROBLEM[i[0]] || i[1] })));
 const ANS = [['ok', '✅ سليم'], ['note', '⚠️ ملاحظة'], ['bad', '❌ مشكلة'], ['skip', '— لم أفحص']];
 
@@ -306,6 +306,12 @@ const TOOLMAP = {
     oil: ['oil', ['oil'], '📷 صوّر الزيت'], glass: ['glass', ['glass'], '📷 صوّر تواريخ الزجاج'], vin: ['vin', ['vin'], '📷 صوّر رقم الهيكل'],
     leaks: ['engine', ['engine'], '📷 صوّر المحرك'], belts: ['engine', ['engine'], '📷 صوّر المحرك']
 };
+// الترتيب: ما يحتاج الأدوات الأساسية (صوت واهتزاز) أولاً، ثم الأهم فالأهم (النقاط المهمة ثم الأعلى وزناً)
+const MAIN_TOOLS = new Set(['sound', 'vibration']);
+const itemTier = id => (TOOLMAP[id] ? (MAIN_TOOLS.has(TOOLMAP[id][0]) ? 0 : 1) : 2);
+STAGES.forEach(st => st.items.sort((a, b) => itemTier(a[0]) - itemTier(b[0]) || (b[5] ? 1 : 0) - (a[5] ? 1 : 0) || b[3] - a[3]));
+const stageRank = st => [-st.items.filter(i => itemTier(i[0]) === 0).length, -Math.max(...st.items.map(i => i[3]))];
+STAGES.sort((a, b) => { const x = stageRank(a), y = stageRank(b); return x[0] - y[0] || x[1] - y[1]; });
 const VMAP = { good: ['ok', '✅ جيد'], attention: ['note', '⚠️ يحتاج انتباه'], problem: ['bad', '❌ مشكلة'] };
 function toolResult(keys) {
     const all = store.get('sd_inspect_tools', {}); let best = null;
