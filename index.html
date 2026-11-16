@@ -64,7 +64,7 @@
         .hs-end b { left: -4px; transform: none; }
         .hs:active i { background: #1D4ED8; }
         .hero-hint { font-size: 12.5px; color: #BFDBFE; margin: 4px 0 12px; }
-        .hero-cta { display: block; width: 100%; min-height: 54px; border: 0; border-radius: 0; background: linear-gradient(180deg, #FBBF24 0%, #F59E0B 70%, #D97706 100%); color: #0F172A; font: inherit; font-size: 17px; font-weight: 900; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px)); cursor: pointer; transition: filter .1s ease, transform .1s ease; }
+        .hero-cta { margin-top: 14px; display: block; width: 100%; min-height: 54px; border: 0; border-radius: 0; background: linear-gradient(180deg, #FBBF24 0%, #F59E0B 70%, #D97706 100%); color: #0F172A; font: inherit; font-size: 17px; font-weight: 900; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px)); cursor: pointer; transition: filter .1s ease, transform .1s ease; }
         .hero-cta:active { filter: brightness(.92); transform: translateY(2px); }
         .hero-trust { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
         .hero-pill { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 6px; background: #fff; border: 1px solid #BFDBFE; color: #1E3A8A; }
@@ -155,26 +155,6 @@
             <div id="welcome-card" class="no-print hero">
                 <h2 class="hero-title">اعرف العطل والسعر العادل قبل ما تدخل الورشة</h2>
                 <p class="hero-sub">صف المشكلة بكلامك، وتصلك الخطورة والأسباب والتكلفة المتوقعة خلال دقيقة.</p>
-                <div class="car-art" dir="ltr">
-                    <svg viewBox="0 0 360 152" role="img" aria-label="رسم تخطيطي لسيارة" preserveAspectRatio="xMidYMid meet">
-                        <line x1="0" y1="129" x2="360" y2="129" stroke="#9FB0C8" stroke-width="1.5" stroke-dasharray="5 5"/>
-                        <path d="M18 106 C18 92 30 88 50 84 L90 64 C104 55 122 49 146 48 L214 48 C238 48 254 60 268 72 L304 80 C326 84 342 90 342 102 L342 110 L18 110 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2" stroke-linejoin="round"/>
-                        <path d="M104 66 C114 58 128 54 148 54 L170 54 L170 78 L92 78 Z" fill="#E1EAF7" stroke="#0F172A" stroke-width="1.8" stroke-linejoin="round"/>
-                        <path d="M178 54 L212 54 C228 54 240 62 252 74 L252 78 L178 78 Z" fill="#E1EAF7" stroke="#0F172A" stroke-width="1.8" stroke-linejoin="round"/>
-                        <path d="M174 54 L174 106 M256 80 L256 106" stroke="#0F172A" stroke-width="1.4" fill="none"/>
-                        <rect x="326" y="88" width="14" height="7" rx="2" fill="#F59E0B" stroke="#0F172A" stroke-width="1.4"/>
-                        <rect x="18" y="88" width="9" height="8" rx="2" fill="#DC2626" stroke="#0F172A" stroke-width="1.4"/>
-                        <path d="M282 110 a26 26 0 0 0 -52 0 M110 110 a26 26 0 0 0 -52 0" fill="none" stroke="#0F172A" stroke-width="2"/>
-                        <g fill="#0F172A"><circle cx="256" cy="110" r="21"/><circle cx="84" cy="110" r="21"/></g>
-                        <g fill="#FFFFFF" stroke="#9FB0C8" stroke-width="1.5"><circle cx="256" cy="110" r="11"/><circle cx="84" cy="110" r="11"/></g>
-                        <g fill="#0F172A"><circle cx="256" cy="110" r="3.2"/><circle cx="84" cy="110" r="3.2"/></g>
-                    </svg>
-                    <a class="hs hs-up" href="tools.html?t=sound" style="left:80.5%;top:50%"><i></i><b>المحرك</b></a>
-                    <a class="hs hs-up" href="tools.html?t=paint" style="left:59.5%;top:37%"><i></i><b>الهيكل والدهان</b></a>
-                    <a class="hs" href="tools.html?t=tires" style="left:23.3%;top:72.4%"><i></i><b>الكفرات</b></a>
-                    <a class="hs hs-up hs-end" href="tools.html?t=lights" style="left:6%;top:60.5%"><i></i><b>اللمبات</b></a>
-                </div>
-                <p class="hero-hint">اضغط أي جزء من السيارة لفحصه بأداته</p>
                 <button type="button" onclick="document.getElementById('diag-form').scrollIntoView({ behavior: 'smooth', block: 'start' })" class="hero-cta">ابدأ فحصاً مجانياً</button>
                 <div class="hero-trust">
                     <span id="welcome-free" class="hero-pill hero-pill-free">أول فحصين مجانيان</span>
@@ -872,20 +852,20 @@
     </div>
 </div>
 
-<script src="js/00-i18n.js?v=3.3.31"></script>
-<script src="js/00-core.js?v=3.3.31"></script>
-<script src="js/01-countries.js?v=3.3.31"></script>
-<script src="js/02-diagnosis.js?v=3.3.31"></script>
-<script src="js/03-interview.js?v=3.3.31"></script>
-<script src="js/04-sound.js?v=3.3.31"></script>
-<script src="js/05-codes.js?v=3.3.31"></script>
-<script src="js/06-history.js?v=3.3.31"></script>
-<script src="js/07-prices.js?v=3.3.31"></script>
-<script src="js/08-providers.js?v=3.3.31"></script>
-<script src="js/09-payments.js?v=3.3.31"></script>
-<script src="js/10-kb-admin.js?v=3.3.31"></script>
-<script src="js/11-learning.js?v=3.3.31"></script>
-<script src="js/12-account.js?v=3.3.31"></script>
-<script src="js/99-main.js?v=3.3.31"></script>
+<script src="js/00-i18n.js?v=3.3.32"></script>
+<script src="js/00-core.js?v=3.3.32"></script>
+<script src="js/01-countries.js?v=3.3.32"></script>
+<script src="js/02-diagnosis.js?v=3.3.32"></script>
+<script src="js/03-interview.js?v=3.3.32"></script>
+<script src="js/04-sound.js?v=3.3.32"></script>
+<script src="js/05-codes.js?v=3.3.32"></script>
+<script src="js/06-history.js?v=3.3.32"></script>
+<script src="js/07-prices.js?v=3.3.32"></script>
+<script src="js/08-providers.js?v=3.3.32"></script>
+<script src="js/09-payments.js?v=3.3.32"></script>
+<script src="js/10-kb-admin.js?v=3.3.32"></script>
+<script src="js/11-learning.js?v=3.3.32"></script>
+<script src="js/12-account.js?v=3.3.32"></script>
+<script src="js/99-main.js?v=3.3.32"></script>
 </body>
 </html>
