@@ -613,7 +613,9 @@ async function pricesAccess(body, w) {
   return { ok: true };
 }
 
-async function payHandler(body, ip, res) {
+// الدومينات المعتمدة للموقع: يعود العميل بعد الدفع إلى نفس الدومين الذي بدأ منه (المحفظة محفوظة لكل دومين في المتصفح)
+const SITE_HOSTS = ['alfahis.pages.dev', 'afhasnow.com', 'www.afhasnow.com'];
+async function payHandler(body, ip, res, host) {
   if (!KV_URL || !KV_TOKEN) return res.status(503).json({ error: 'not_configured' });
   const wid = body.wid;
 
@@ -709,7 +711,7 @@ async function payHandler(body, ip, res) {
     try {
       const hdr = { 'content-type': 'application/json', authorization: 'Bearer ' + ENV.WHOP_API_KEY }, base = { variant_id: plan, mode: 'payment', metadata: { wid, product: body.product } };
       let r;
-      try { r = await post('https://api.whop.com/api/v1/checkout_configurations', hdr, Object.assign({ redirect_url: 'https://alfahis.pages.dev/?paid=1' }, base), 8000); }   // يعيد الزبون للتطبيق بعد الدفع
+      try { r = await post('https://api.whop.com/api/v1/checkout_configurations', hdr, Object.assign({ redirect_url: 'https://' + (SITE_HOSTS.includes(String(host || '').toLowerCase()) ? String(host).toLowerCase() : SITE_HOSTS[0]) + '/?paid=1' }, base), 8000); }   // يعيد الزبون للتطبيق بعد الدفع
       catch (e1) { r = await post('https://api.whop.com/api/v1/checkout_configurations', hdr, base, 8000); }   // إن رفض Whop حقل الرجوع نكمل بدونه
       const url = String(r.purchase_url || '');
       const link = /^https:\/\/([a-z0-9-]+\.)*whop\.com\//i.test(url) ? url : (/^ch_[A-Za-z0-9]+$/.test(String(r.id || '')) ? 'https://whop.com/checkout/' + r.id : '');
@@ -1173,7 +1175,7 @@ async function handle(req, res) {
   }
 
   // 💳 المحفظة والدفع: لا تحتاج مفاتيح ذكاء اصطناعي
-  if (PAY_MODES.has(body.mode)) return payHandler(body, ip, res);
+  if (PAY_MODES.has(body.mode)) return payHandler(body, ip, res, host);
   if (APP_MODES.has(body.mode)) return appHandler(body, ip, res);
   // حدود يومية لكل محفظة (تُعدَّل بـ AI_DAILY_LIMITS مثل {"vision":40,"text":120,"report":10})
   const QCLASS = { vision: 'vision', inspect2: 'report', diagnose: 'text', questions: 'text', measure: 'text', partcheck: 'text', invoice: 'vision', parts_sheet: 'vision', inspect: 'text' }[body.mode];
