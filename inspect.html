@@ -428,7 +428,7 @@ function render() {
         const tm = TOOLMAP[id];
         if (tm) {
             const tr = toolResult(tm[1]);
-            const link = el('a', 'block text-center text-[12px] font-extrabold rounded-xl py-2 ' + (tr ? 'bg-slate-100 text-slate-700' : 'bg-blue-700 text-white'), tr ? '🔁 أعد القياس' : tm[2]);
+            const link = el('a', 'block text-center text-[12px] font-extrabold rounded-xl py-2 ' + (tr ? 'bg-slate-100 text-slate-700' : 'bg-blue-700 text-amber-300'), tr ? '🔁 أعد القياس' : tm[2]);
             link.href = 'tools.html?t=' + tm[0] + '&stage=' + (stageIdx + 1) + '&insp=' + inspectId().slice(1).toLowerCase().replace(/[^a-z0-9]/g, '').padEnd(4, '0').slice(0, 40) + '&tk=' + (state.tk || (state.tk = Math.random().toString(36).slice(2) + Date.now().toString(36)));
             link.onclick = () => save();
             if (tr) {
