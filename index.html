@@ -51,8 +51,19 @@
         header.sticky .bg-blue-600 { background: linear-gradient(135deg, #2563EB, #1D4ED8) !important; box-shadow: 0 4px 12px rgba(29,78,216,.45); }
         header.sticky h1 { letter-spacing: .2px; }
         main .bg-white.rounded-2xl { border-color: #DDE6F2 !important; box-shadow: 0 1px 2px rgba(15,23,42,.05), 0 8px 22px rgba(30,58,138,.07); }
-        #welcome-card { background: linear-gradient(135deg, #FFFFFF 0%, #EAF2FF 100%) !important; border: 1px solid #BFD3F5 !important; border-inline-start: 5px solid #1D4ED8 !important; }
-        #welcome-card > span:first-child { background: linear-gradient(135deg, #DBEAFE, #BFDBFE) !important; }
+        .hero { position: relative; overflow: hidden; border-radius: 22px; padding: 20px 16px 16px; color: #fff; text-align: center; background: radial-gradient(90% 120% at 0% 0%, rgba(245,158,11,.22) 0%, rgba(245,158,11,0) 55%), radial-gradient(120% 140% at 100% 0%, rgba(59,130,246,.5) 0%, rgba(59,130,246,0) 60%), linear-gradient(145deg, #0B1530 0%, #0F172A 45%, #1E3A8A 100%); box-shadow: 0 14px 34px rgba(15,23,42,.30); animation: heroIn .5s ease both; }
+        .hero-title { font-size: 22px; line-height: 1.5; font-weight: 900; margin: 0 0 6px; }
+        .hero-sub { font-size: 14px; line-height: 1.8; color: #CBD5E1; margin: 0 0 14px; }
+        .hero-cta { display: block; width: 100%; min-height: 52px; border: 0; border-radius: 16px; background: linear-gradient(135deg, #FBBF24, #F59E0B); color: #0F172A; font: inherit; font-size: 17px; font-weight: 900; box-shadow: 0 8px 20px rgba(245,158,11,.4); cursor: pointer; transition: transform .12s ease, box-shadow .12s ease; }
+        .hero-cta:active { transform: translateY(2px) scale(.99); box-shadow: 0 3px 10px rgba(245,158,11,.4); }
+        .hero-link { display: block; margin-top: 10px; padding: 10px 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,.22); color: #E2E8F0; font-size: 13.5px; font-weight: 700; text-decoration: none; background: rgba(255,255,255,.06); }
+        .hero-trust { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
+        .hero-pill { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.12); color: #E2E8F0; }
+        .hero-pill-free { background: rgba(245,158,11,.2); color: #FDE68A; }
+        @keyframes heroIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        @keyframes cardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+        #diag-form, #used-car-cta, .tool-tile { animation: cardIn .45s ease both; }
+        @media (prefers-reduced-motion: reduce) { .hero, #diag-form, #used-car-cta, .tool-tile { animation: none; } }
         main .bg-blue-700 { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important; box-shadow: 0 6px 16px rgba(29,78,216,.28); }
         main .bg-blue-700:active { transform: translateY(1px); box-shadow: 0 2px 8px rgba(29,78,216,.28); }
         .tool-tile { border-color: #DDE6F2; box-shadow: 0 1px 2px rgba(15,23,42,.05), 0 6px 16px rgba(30,58,138,.06); }
@@ -78,7 +89,7 @@
     <header class="bg-slate-950 text-white px-4 pb-3 sticky top-0 z-40" style="padding-top:max(0.875rem, env(safe-area-inset-top))">
         <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-w-0">
-                <span class="w-9 h-9 shrink-0 rounded-xl bg-blue-600 flex items-center justify-center text-lg">🩺</span>
+                <span class="w-9 h-9 shrink-0 rounded-xl bg-blue-600 flex items-center justify-center" aria-hidden="true"><svg viewBox="0 0 32 32" width="24" height="24" fill="none"><circle cx="16" cy="16" r="5.2" stroke="#fff" stroke-width="2.4"/><path d="M16 3v4.2M16 24.8V29M3 16h4.2M24.8 16H29M6.8 6.8l3 3M22.2 22.2l3 3M25.2 6.8l-3 3M9.8 22.2l-3 3" stroke="#F59E0B" stroke-width="2.6" stroke-linecap="round"/><path d="M12.6 16.2l2.4 2.4 4.6-4.9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                 <div class="min-w-0">
                     <h1 class="font-black text-sm leading-tight">الفاحص الذكي</h1>
                     <p class="text-[10px] text-slate-400 truncate">شخّص العطل واعرف السعر العادل</p>
@@ -97,13 +108,16 @@
         <!-- ================= TAB: DIAGNOSE ================= -->
         <section id="tab-diagnose" class="space-y-3.5">
             <p id="pass-banner" class="hidden text-center text-[11px] font-black bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl py-1.5"></p>
-            <div id="welcome-card" class="no-print flex items-start gap-3 bg-white border border-blue-200 rounded-2xl p-3.5">
-                <span class="shrink-0 w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center text-xl">👋</span>
-                <span class="flex-1 min-w-0 space-y-1">
-                    <span class="block font-black text-[15px] text-slate-900">أهلاً بك في الفاحص الذكي</span>
-                    <span class="block text-[14px] leading-relaxed text-slate-600">صف المشكلة، أجب على أسئلة سريعة، واعرف العطل والخطورة والسعر العادل خلال دقيقة.</span>
-                    <span id="welcome-free" class="inline-block text-[12px] font-black text-emerald-800 bg-emerald-50 rounded-lg px-2.5 py-0.5">أول فحصين مجانيان</span>
-                </span>
+            <div id="welcome-card" class="no-print hero">
+                <h2 class="hero-title">اعرف عطل سيارتك وسعر الإصلاح العادل في دقيقة</h2>
+                <p class="hero-sub">صف المشكلة بكلامك وأجب أسئلة سريعة، فيصلك العطل والخطورة والتكلفة المتوقعة.</p>
+                <button type="button" onclick="document.getElementById('diag-form').scrollIntoView({ behavior: 'smooth', block: 'start' })" class="hero-cta">ابدأ فحصاً مجانياً ←</button>
+                <a href="inspect.html" class="hero-link">🔍 أنوي شراء سيارة مستعملة؟ افحصها قبل الدفع</a>
+                <div class="hero-trust">
+                    <span id="welcome-free" class="hero-pill hero-pill-free">أول فحصين مجانيان</span>
+                    <span class="hero-pill">🔒 دفع آمن</span>
+                    <span class="hero-pill">♾️ بدون اشتراك</span>
+                </div>
             </div>
             <div id="fb-card" class="hidden no-print bg-white border border-emerald-200 rounded-2xl p-3.5 space-y-2">
                 <p class="font-black text-[15px] text-slate-900">ساعدنا نكون أدق 🙏</p>
@@ -115,30 +129,7 @@
                     <button onclick="sendFeedback('later')" class="bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl text-[13px]">لم أصلحه بعد</button>
                 </div>
             </div>
-            <a href="inspect.html" id="used-car-cta" class="block rounded-2xl p-3.5 border-2 border-amber-400 bg-gradient-to-l from-amber-50 to-white shadow-sm no-underline">
-                <span class="flex items-center justify-between gap-2">
-                    <span class="min-w-0">
-                        <span class="block font-black text-[15px] text-slate-900">🔍 فحص السيارات المستعملة الشامل</span>
-                        <span class="block text-[12px] text-slate-600 leading-relaxed mt-0.5">قبل ما تشتري: صوّر وسجّل واكتشف الحوادث والعيوب، واعرف السعر العادل وكيف تتفاوض. حتى عن بعد.</span>
-                    </span>
-                    <span class="shrink-0 bg-amber-500 text-slate-950 font-black text-[12px] rounded-xl px-3 py-2">ابدأ الفحص</span>
-                </span>
-            </a>
-            <div class="grid grid-cols-2 gap-2">
-                <a href="tools.html?t=parts" id="parts-cta" class="block rounded-2xl p-3 border-2 border-blue-200 bg-white shadow-sm no-underline text-center">
-                    <span class="block text-2xl">🧾</span>
-                    <span class="block font-black text-[14px] text-slate-900">أسعار القطع</span>
-                    <span class="block text-[11px] text-slate-500 leading-snug">حمّل صورة ورقة القطع واعرف الأسعار</span>
-                    <span id="parts-cta-price" class="inline-block mt-1.5 bg-amber-500 text-slate-950 font-black text-[12px] rounded-lg px-2.5 py-1">5 ر.س</span>
-                </a>
-                <a href="tools.html?t=sound" id="sound-cta" class="block rounded-2xl p-3 border-2 border-blue-200 bg-white shadow-sm no-underline text-center">
-                    <span class="block text-2xl">🎙️</span>
-                    <span class="block font-black text-[14px] text-slate-900">فحص صوت المحرك</span>
-                    <span class="block text-[11px] text-slate-500 leading-snug">سجّل صوت المحرك ونحلله</span>
-                    <span id="sound-cta-price" class="inline-block mt-1.5 bg-amber-500 text-slate-950 font-black text-[12px] rounded-lg px-2.5 py-1">9 ر.س</span>
-                </a>
-            </div>
-            <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-3">
+            <div id="diag-form" class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-3" style="scroll-margin-top:84px">
                 <h2 class="font-extrabold text-sm text-slate-900">🚗 افحص سيارتك</h2>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -365,6 +356,29 @@
                 <p class="text-[10px] text-slate-400 leading-relaxed">تشخيص مبدئي يساعدك تفهم المشكلة وتتفاوض على السعر، ولا يغني عن فحص الفني.</p>
             </div>
 
+            <a href="inspect.html" id="used-car-cta" class="block rounded-2xl p-3.5 border-2 border-amber-400 bg-gradient-to-l from-amber-50 to-white shadow-sm no-underline">
+                <span class="flex items-center justify-between gap-2">
+                    <span class="min-w-0">
+                        <span class="block font-black text-[15px] text-slate-900">🔍 فحص السيارات المستعملة الشامل</span>
+                        <span class="block text-[12px] text-slate-600 leading-relaxed mt-0.5">قبل ما تشتري: صوّر وسجّل واكتشف الحوادث والعيوب، واعرف السعر العادل وكيف تتفاوض. حتى عن بعد.</span>
+                    </span>
+                    <span class="shrink-0 bg-amber-500 text-slate-950 font-black text-[12px] rounded-xl px-3 py-2">ابدأ الفحص</span>
+                </span>
+            </a>
+            <div class="grid grid-cols-2 gap-2">
+                <a href="tools.html?t=parts" id="parts-cta" class="block rounded-2xl p-3 border-2 border-blue-200 bg-white shadow-sm no-underline text-center">
+                    <span class="block text-2xl">🧾</span>
+                    <span class="block font-black text-[14px] text-slate-900">أسعار القطع</span>
+                    <span class="block text-[11px] text-slate-500 leading-snug">حمّل صورة ورقة القطع واعرف الأسعار</span>
+                    <span id="parts-cta-price" class="inline-block mt-1.5 bg-amber-500 text-slate-950 font-black text-[12px] rounded-lg px-2.5 py-1">5 ر.س</span>
+                </a>
+                <a href="tools.html?t=sound" id="sound-cta" class="block rounded-2xl p-3 border-2 border-blue-200 bg-white shadow-sm no-underline text-center">
+                    <span class="block text-2xl">🎙️</span>
+                    <span class="block font-black text-[14px] text-slate-900">فحص صوت المحرك</span>
+                    <span class="block text-[11px] text-slate-500 leading-snug">سجّل صوت المحرك ونحلله</span>
+                    <span id="sound-cta-price" class="inline-block mt-1.5 bg-amber-500 text-slate-950 font-black text-[12px] rounded-lg px-2.5 py-1">9 ر.س</span>
+                </a>
+            </div>
             <section class="no-print space-y-2.5" aria-label="أدوات الفحص المستقلة">
                 <div>
                     <h2 class="font-extrabold text-[16px] text-slate-900">🧰 أدوات الفحص</h2>
@@ -790,20 +804,20 @@
     </div>
 </div>
 
-<script src="js/00-i18n.js?v=3.3.13"></script>
-<script src="js/00-core.js?v=3.3.13"></script>
-<script src="js/01-countries.js?v=3.3.13"></script>
-<script src="js/02-diagnosis.js?v=3.3.13"></script>
-<script src="js/03-interview.js?v=3.3.13"></script>
-<script src="js/04-sound.js?v=3.3.13"></script>
-<script src="js/05-codes.js?v=3.3.13"></script>
-<script src="js/06-history.js?v=3.3.13"></script>
-<script src="js/07-prices.js?v=3.3.13"></script>
-<script src="js/08-providers.js?v=3.3.13"></script>
-<script src="js/09-payments.js?v=3.3.13"></script>
-<script src="js/10-kb-admin.js?v=3.3.13"></script>
-<script src="js/11-learning.js?v=3.3.13"></script>
-<script src="js/12-account.js?v=3.3.13"></script>
-<script src="js/99-main.js?v=3.3.13"></script>
+<script src="js/00-i18n.js?v=3.3.14"></script>
+<script src="js/00-core.js?v=3.3.14"></script>
+<script src="js/01-countries.js?v=3.3.14"></script>
+<script src="js/02-diagnosis.js?v=3.3.14"></script>
+<script src="js/03-interview.js?v=3.3.14"></script>
+<script src="js/04-sound.js?v=3.3.14"></script>
+<script src="js/05-codes.js?v=3.3.14"></script>
+<script src="js/06-history.js?v=3.3.14"></script>
+<script src="js/07-prices.js?v=3.3.14"></script>
+<script src="js/08-providers.js?v=3.3.14"></script>
+<script src="js/09-payments.js?v=3.3.14"></script>
+<script src="js/10-kb-admin.js?v=3.3.14"></script>
+<script src="js/11-learning.js?v=3.3.14"></script>
+<script src="js/12-account.js?v=3.3.14"></script>
+<script src="js/99-main.js?v=3.3.14"></script>
 </body>
 </html>
