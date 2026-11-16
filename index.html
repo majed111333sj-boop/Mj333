@@ -31,7 +31,7 @@
         .text-\[11px\] { font-size: 13px !important; }
         .text-xs { font-size: 13.5px !important; }
         .tool-tile { min-height: 92px; background: #fff; border: 1px solid #E2E8F0; border-radius: 16px; padding: 12px; text-decoration: none; color: #0F172A; display: flex; flex-direction: column; gap: 8px; text-align: right; font-family: inherit; }
-        .tool-tile .ico { border: 1.5px solid #BFDBFE; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .tool-tile .ico { border: 2px solid #FCD34D; box-shadow: 0 0 0 3px rgba(245,158,11,.14); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
         .tool-tile b { font-size: 15px; } .tool-tile small { font-size: 12.5px; color: #475569; line-height: 1.5; }
         .nav-btn.active { color: #1d4ed8; }
         .nav-btn.active .nav-ico { background: #dbeafe; }
@@ -79,6 +79,14 @@
         #used-car-cta { background: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 100%) !important; border: 1.5px solid #1E3A8A !important; border-radius: 14px !important; box-shadow: none !important; }
         #used-car-cta .text-slate-900 { color: #fff !important; }
         #used-car-cta .text-slate-600 { color: #DBEAFE !important; }
+        /* حواف فاتحة موحّدة لكل الأيقونات: كهرماني ذهبي على الأدوات (يلفت للاستخدام)، وأزرق فاتح في التنقل والرأس */
+        #parts-cta > span:first-child, #sound-cta > span:first-child { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; margin: 0 auto 6px; border-radius: 14px; border: 2px solid #FCD34D; background: #FFFBEB; box-shadow: 0 0 0 3px rgba(245,158,11,.14); }
+        .nav-btn .nav-ico { border: 1.5px solid #BFDBFE; }
+        .nav-btn.active .nav-ico { border-color: #60A5FA; box-shadow: 0 0 0 3px rgba(96,165,250,.2); }
+        header.sticky .bg-blue-600 { border: 1.5px solid #93C5FD; }
+        header.sticky .bg-red-600 { border: 1.5px solid #FCA5A5; }
+        header.sticky .bg-amber-500 { border: 1.5px solid #FDE68A; }
+        header.sticky #loc-chip { border-color: #93C5FD !important; }
         @keyframes heroIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes hsPulse { 0% { box-shadow: 0 0 0 1.5px #BFDBFE, 0 0 0 0 rgba(245,158,11,.7); } 100% { box-shadow: 0 0 0 1.5px #BFDBFE, 0 0 0 14px rgba(245,158,11,0); } }
         @media (prefers-reduced-motion: reduce) { .hero, .hs i { animation: none; } }
@@ -846,20 +854,20 @@
     </div>
 </div>
 
-<script src="js/00-i18n.js?v=3.3.19"></script>
-<script src="js/00-core.js?v=3.3.19"></script>
-<script src="js/01-countries.js?v=3.3.19"></script>
-<script src="js/02-diagnosis.js?v=3.3.19"></script>
-<script src="js/03-interview.js?v=3.3.19"></script>
-<script src="js/04-sound.js?v=3.3.19"></script>
-<script src="js/05-codes.js?v=3.3.19"></script>
-<script src="js/06-history.js?v=3.3.19"></script>
-<script src="js/07-prices.js?v=3.3.19"></script>
-<script src="js/08-providers.js?v=3.3.19"></script>
-<script src="js/09-payments.js?v=3.3.19"></script>
-<script src="js/10-kb-admin.js?v=3.3.19"></script>
-<script src="js/11-learning.js?v=3.3.19"></script>
-<script src="js/12-account.js?v=3.3.19"></script>
-<script src="js/99-main.js?v=3.3.19"></script>
+<script src="js/00-i18n.js?v=3.3.20"></script>
+<script src="js/00-core.js?v=3.3.20"></script>
+<script src="js/01-countries.js?v=3.3.20"></script>
+<script src="js/02-diagnosis.js?v=3.3.20"></script>
+<script src="js/03-interview.js?v=3.3.20"></script>
+<script src="js/04-sound.js?v=3.3.20"></script>
+<script src="js/05-codes.js?v=3.3.20"></script>
+<script src="js/06-history.js?v=3.3.20"></script>
+<script src="js/07-prices.js?v=3.3.20"></script>
+<script src="js/08-providers.js?v=3.3.20"></script>
+<script src="js/09-payments.js?v=3.3.20"></script>
+<script src="js/10-kb-admin.js?v=3.3.20"></script>
+<script src="js/11-learning.js?v=3.3.20"></script>
+<script src="js/12-account.js?v=3.3.20"></script>
+<script src="js/99-main.js?v=3.3.20"></script>
 </body>
 </html>
