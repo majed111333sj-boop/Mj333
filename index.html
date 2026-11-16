@@ -31,7 +31,7 @@
         .text-\[11px\] { font-size: 13px !important; }
         .text-xs { font-size: 13.5px !important; }
         .tool-tile { min-height: 92px; background: #fff; border: 1px solid #E2E8F0; border-radius: 16px; padding: 12px; text-decoration: none; color: #0F172A; display: flex; flex-direction: column; gap: 8px; text-align: right; font-family: inherit; }
-        .tool-tile .ico { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .tool-tile .ico { border: 1.5px solid #BFDBFE; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
         .tool-tile b { font-size: 15px; } .tool-tile small { font-size: 12.5px; color: #475569; line-height: 1.5; }
         .nav-btn.active { color: #1d4ed8; }
         .nav-btn.active .nav-ico { background: #dbeafe; }
@@ -52,24 +52,24 @@
         header.sticky .bg-blue-600 { background: linear-gradient(135deg, #2563EB, #1D4ED8) !important; box-shadow: 0 4px 12px rgba(29,78,216,.45); }
         header.sticky h1 { letter-spacing: .2px; }
         main .bg-white.rounded-2xl { border: 1px solid #CBD6E6 !important; border-radius: 14px !important; box-shadow: none !important; }
-        .hero { position: relative; border-radius: 14px; padding: 18px 14px 14px; color: #0F172A; text-align: center; border: 1px solid #C3D0E2; background-color: #EEF2F7; background-image: linear-gradient(#D9E1ED 1px, transparent 1px), linear-gradient(90deg, #D9E1ED 1px, transparent 1px); background-size: 22px 22px; animation: heroIn .5s ease both; }
-        .hero-title { font-size: 23px; line-height: 1.55; font-weight: 900; margin: 0 0 6px; color: #0F172A; }
-        .hero-sub { font-size: 14px; line-height: 1.8; color: #475569; margin: 0 auto 10px; max-width: 30em; }
+        .hero { position: relative; border-radius: 14px; padding: 18px 14px 14px; color: #fff; text-align: center; border: 1px solid #3B6FE0; background-color: #1E40AF; background-image: radial-gradient(90% 70% at 50% 45%, rgba(96,165,250,.35) 0%, rgba(96,165,250,0) 70%), linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px); background-size: auto, 22px 22px, 22px 22px; animation: heroIn .5s ease both; }
+        .hero-title { font-size: 23px; line-height: 1.55; font-weight: 900; margin: 0 0 6px; color: #fff; }
+        .hero-sub { font-size: 14px; line-height: 1.8; color: #DBEAFE; margin: 0 auto 10px; max-width: 30em; }
         .car-art { position: relative; margin: 2px auto 0; max-width: 360px; }
         .car-art svg { display: block; width: 100%; height: auto; }
         .hs { position: absolute; width: 18px; height: 18px; transform: translate(-50%, -50%); text-decoration: none; -webkit-tap-highlight-color: transparent; }
-        .hs i { display: block; width: 18px; height: 18px; border-radius: 50%; background: #F59E0B; border: 3px solid #fff; box-shadow: 0 0 0 1.5px #0F172A; animation: hsPulse 2.4s ease-out 3; }
-        .hs b { position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%); font-size: 12px; font-weight: 800; color: #0F172A; background: #fff; border: 1px solid #0F172A; border-radius: 6px; padding: 1px 7px; white-space: nowrap; line-height: 1.6; }
+        .hs i { display: block; width: 18px; height: 18px; border-radius: 50%; background: #F59E0B; border: 3px solid #EFF6FF; box-shadow: 0 0 0 1.5px #BFDBFE; animation: hsPulse 2.4s ease-out 3; }
+        .hs b { position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%); font-size: 12px; font-weight: 800; color: #0F172A; background: #fff; border: 1.5px solid #BFDBFE; border-radius: 6px; padding: 1px 7px; white-space: nowrap; line-height: 1.6; }
         .hs-up b { top: auto; bottom: calc(100% + 4px); }
         .hs-end b { left: -4px; transform: none; }
         .hs:active i { background: #1D4ED8; }
-        .hero-hint { font-size: 12.5px; color: #64748B; margin: 4px 0 12px; }
+        .hero-hint { font-size: 12.5px; color: #BFDBFE; margin: 4px 0 12px; }
         .hero-cta { display: block; width: 100%; min-height: 54px; border: 0; border-radius: 0; background: linear-gradient(180deg, #FBBF24 0%, #F59E0B 70%, #D97706 100%); color: #0F172A; font: inherit; font-size: 17px; font-weight: 900; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px)); cursor: pointer; transition: filter .1s ease, transform .1s ease; }
         .hero-cta:active { filter: brightness(.92); transform: translateY(2px); }
-        .hero-link { display: block; margin-top: 12px; padding: 12px 8px; border-radius: 10px; border: 1.5px solid #1E3A8A; color: #fff; font-size: 14px; font-weight: 800; text-decoration: none; background: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 100%); }
+        .hero-link { display: block; margin-top: 12px; padding: 12px 8px; border-radius: 10px; border: 1.5px solid #93C5FD; color: #fff; font-size: 14px; font-weight: 800; text-decoration: none; background: #172554; }
         .hero-trust { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
-        .hero-pill { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 6px; background: #fff; border: 1px solid #C3D0E2; color: #334155; }
-        .hero-pill-free { background: #0F172A; border-color: #0F172A; color: #FCD34D; }
+        .hero-pill { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 6px; background: #fff; border: 1px solid #BFDBFE; color: #1E3A8A; }
+        .hero-pill-free { background: #172554; border-color: #93C5FD; color: #FDE68A; }
         .stats { display: grid; grid-template-columns: repeat(3, 1fr); background: #070D1F; border-radius: 14px; border: 1px solid #1E293B; overflow: hidden; }
         .stats > div { text-align: center; padding: 12px 4px 10px; }
         .stats > div + div { border-inline-start: 1px solid #1E293B; }
@@ -80,7 +80,7 @@
         #used-car-cta .text-slate-900 { color: #fff !important; }
         #used-car-cta .text-slate-600 { color: #DBEAFE !important; }
         @keyframes heroIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes hsPulse { 0% { box-shadow: 0 0 0 1.5px #0F172A, 0 0 0 0 rgba(245,158,11,.7); } 100% { box-shadow: 0 0 0 1.5px #0F172A, 0 0 0 14px rgba(245,158,11,0); } }
+        @keyframes hsPulse { 0% { box-shadow: 0 0 0 1.5px #BFDBFE, 0 0 0 0 rgba(245,158,11,.7); } 100% { box-shadow: 0 0 0 1.5px #BFDBFE, 0 0 0 14px rgba(245,158,11,0); } }
         @media (prefers-reduced-motion: reduce) { .hero, .hs i { animation: none; } }
         main .bg-blue-700 { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important; box-shadow: 0 6px 16px rgba(29,78,216,.28); }
         main .bg-blue-700:active { transform: translateY(1px); box-shadow: 0 2px 8px rgba(29,78,216,.28); }
@@ -847,20 +847,20 @@
     </div>
 </div>
 
-<script src="js/00-i18n.js?v=3.3.17"></script>
-<script src="js/00-core.js?v=3.3.17"></script>
-<script src="js/01-countries.js?v=3.3.17"></script>
-<script src="js/02-diagnosis.js?v=3.3.17"></script>
-<script src="js/03-interview.js?v=3.3.17"></script>
-<script src="js/04-sound.js?v=3.3.17"></script>
-<script src="js/05-codes.js?v=3.3.17"></script>
-<script src="js/06-history.js?v=3.3.17"></script>
-<script src="js/07-prices.js?v=3.3.17"></script>
-<script src="js/08-providers.js?v=3.3.17"></script>
-<script src="js/09-payments.js?v=3.3.17"></script>
-<script src="js/10-kb-admin.js?v=3.3.17"></script>
-<script src="js/11-learning.js?v=3.3.17"></script>
-<script src="js/12-account.js?v=3.3.17"></script>
-<script src="js/99-main.js?v=3.3.17"></script>
+<script src="js/00-i18n.js?v=3.3.18"></script>
+<script src="js/00-core.js?v=3.3.18"></script>
+<script src="js/01-countries.js?v=3.3.18"></script>
+<script src="js/02-diagnosis.js?v=3.3.18"></script>
+<script src="js/03-interview.js?v=3.3.18"></script>
+<script src="js/04-sound.js?v=3.3.18"></script>
+<script src="js/05-codes.js?v=3.3.18"></script>
+<script src="js/06-history.js?v=3.3.18"></script>
+<script src="js/07-prices.js?v=3.3.18"></script>
+<script src="js/08-providers.js?v=3.3.18"></script>
+<script src="js/09-payments.js?v=3.3.18"></script>
+<script src="js/10-kb-admin.js?v=3.3.18"></script>
+<script src="js/11-learning.js?v=3.3.18"></script>
+<script src="js/12-account.js?v=3.3.18"></script>
+<script src="js/99-main.js?v=3.3.18"></script>
 </body>
 </html>
