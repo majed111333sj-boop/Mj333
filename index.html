@@ -50,23 +50,31 @@
         header.sticky { background: radial-gradient(120% 140% at 100% 0%, rgba(37,99,235,.45) 0%, rgba(37,99,235,0) 55%), linear-gradient(135deg, #0A1228 0%, #0F172A 50%, #172554 100%) !important; box-shadow: 0 6px 20px rgba(15,23,42,.28); border-bottom: 2px solid rgba(245,158,11,.55); }
         header.sticky .bg-blue-600 { background: linear-gradient(135deg, #2563EB, #1D4ED8) !important; box-shadow: 0 4px 12px rgba(29,78,216,.45); }
         header.sticky h1 { letter-spacing: .2px; }
-        main .bg-white.rounded-2xl { border-color: #DDE6F2 !important; box-shadow: 0 1px 2px rgba(15,23,42,.05), 0 8px 22px rgba(30,58,138,.07); }
-        .hero { position: relative; overflow: hidden; border-radius: 22px; padding: 20px 16px 16px; color: #fff; text-align: center; background: radial-gradient(90% 120% at 0% 0%, rgba(245,158,11,.22) 0%, rgba(245,158,11,0) 55%), radial-gradient(120% 140% at 100% 0%, rgba(59,130,246,.5) 0%, rgba(59,130,246,0) 60%), linear-gradient(145deg, #0B1530 0%, #0F172A 45%, #1E3A8A 100%); box-shadow: 0 14px 34px rgba(15,23,42,.30); animation: heroIn .5s ease both; }
-        .hero-title { font-size: 22px; line-height: 1.5; font-weight: 900; margin: 0 0 6px; }
-        .hero-sub { font-size: 14px; line-height: 1.8; color: #CBD5E1; margin: 0 0 14px; }
-        .hero-cta { display: block; width: 100%; min-height: 52px; border: 0; border-radius: 16px; background: linear-gradient(135deg, #FBBF24, #F59E0B); color: #0F172A; font: inherit; font-size: 17px; font-weight: 900; box-shadow: 0 8px 20px rgba(245,158,11,.4); cursor: pointer; transition: transform .12s ease, box-shadow .12s ease; }
-        .hero-cta:active { transform: translateY(2px) scale(.99); box-shadow: 0 3px 10px rgba(245,158,11,.4); }
-        .hero-link { display: block; margin-top: 10px; padding: 10px 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,.22); color: #E2E8F0; font-size: 13.5px; font-weight: 700; text-decoration: none; background: rgba(255,255,255,.06); }
+        main .bg-white.rounded-2xl { border: 1px solid #CBD6E6 !important; border-radius: 14px !important; box-shadow: none !important; }
+        .hero { position: relative; border-radius: 14px; padding: 18px 14px 14px; color: #0F172A; text-align: center; border: 1px solid #C3D0E2; background-color: #EEF2F7; background-image: linear-gradient(#D9E1ED 1px, transparent 1px), linear-gradient(90deg, #D9E1ED 1px, transparent 1px); background-size: 22px 22px; animation: heroIn .5s ease both; }
+        .hero-title { font-size: 23px; line-height: 1.55; font-weight: 900; margin: 0 0 6px; color: #0F172A; }
+        .hero-sub { font-size: 14px; line-height: 1.8; color: #475569; margin: 0 auto 10px; max-width: 30em; }
+        .car-art { position: relative; margin: 2px auto 0; max-width: 360px; }
+        .car-art svg { display: block; width: 100%; height: auto; }
+        .hs { position: absolute; width: 18px; height: 18px; transform: translate(-50%, -50%); text-decoration: none; -webkit-tap-highlight-color: transparent; }
+        .hs i { display: block; width: 18px; height: 18px; border-radius: 50%; background: #F59E0B; border: 3px solid #fff; box-shadow: 0 0 0 1.5px #0F172A; animation: hsPulse 2.4s ease-out 3; }
+        .hs b { position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%); font-size: 12px; font-weight: 800; color: #0F172A; background: #fff; border: 1px solid #0F172A; border-radius: 6px; padding: 1px 7px; white-space: nowrap; line-height: 1.6; }
+        .hs-up b { top: auto; bottom: calc(100% + 4px); }
+        .hs-end b { left: -4px; transform: none; }
+        .hs:active i { background: #1D4ED8; }
+        .hero-hint { font-size: 12.5px; color: #64748B; margin: 4px 0 12px; }
+        .hero-cta { display: block; width: 100%; min-height: 52px; border: 0; border-radius: 10px; background: #F59E0B; color: #0F172A; font: inherit; font-size: 17px; font-weight: 900; box-shadow: 0 3px 0 #B45309; cursor: pointer; transition: transform .1s ease, box-shadow .1s ease; }
+        .hero-cta:active { transform: translateY(3px); box-shadow: 0 0 0 #B45309; }
+        .hero-link { display: block; margin-top: 12px; padding: 11px 8px; border-radius: 10px; border: 1.5px solid #0F172A; color: #0F172A; font-size: 14px; font-weight: 800; text-decoration: none; background: #fff; }
         .hero-trust { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
-        .hero-pill { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.12); color: #E2E8F0; }
-        .hero-pill-free { background: rgba(245,158,11,.2); color: #FDE68A; }
-        @keyframes heroIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-        @keyframes cardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-        #diag-form, #used-car-cta, .tool-tile { animation: cardIn .45s ease both; }
-        @media (prefers-reduced-motion: reduce) { .hero, #diag-form, #used-car-cta, .tool-tile { animation: none; } }
+        .hero-pill { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 6px; background: #fff; border: 1px solid #C3D0E2; color: #334155; }
+        .hero-pill-free { background: #0F172A; border-color: #0F172A; color: #FCD34D; }
+        @keyframes heroIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes hsPulse { 0% { box-shadow: 0 0 0 1.5px #0F172A, 0 0 0 0 rgba(245,158,11,.7); } 100% { box-shadow: 0 0 0 1.5px #0F172A, 0 0 0 14px rgba(245,158,11,0); } }
+        @media (prefers-reduced-motion: reduce) { .hero, .hs i { animation: none; } }
         main .bg-blue-700 { background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%) !important; box-shadow: 0 6px 16px rgba(29,78,216,.28); }
         main .bg-blue-700:active { transform: translateY(1px); box-shadow: 0 2px 8px rgba(29,78,216,.28); }
-        .tool-tile { border-color: #DDE6F2; box-shadow: 0 1px 2px rgba(15,23,42,.05), 0 6px 16px rgba(30,58,138,.06); }
+        .tool-tile { border: 1px solid #CBD6E6 !important; border-radius: 14px !important; box-shadow: none !important; }
         nav.fixed { box-shadow: 0 -6px 18px rgba(15,23,42,.08); }
         .chip { background: #fff; border-color: #D5E0F0; }
         .chip.on { background: linear-gradient(135deg, #2563EB, #1D4ED8); }
@@ -109,14 +117,34 @@
         <section id="tab-diagnose" class="space-y-3.5">
             <p id="pass-banner" class="hidden text-center text-[11px] font-black bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl py-1.5"></p>
             <div id="welcome-card" class="no-print hero">
-                <h2 class="hero-title">اعرف عطل سيارتك وسعر الإصلاح العادل في دقيقة</h2>
-                <p class="hero-sub">صف المشكلة بكلامك وأجب أسئلة سريعة، فيصلك العطل والخطورة والتكلفة المتوقعة.</p>
-                <button type="button" onclick="document.getElementById('diag-form').scrollIntoView({ behavior: 'smooth', block: 'start' })" class="hero-cta">ابدأ فحصاً مجانياً ←</button>
-                <a href="inspect.html" class="hero-link">🔍 أنوي شراء سيارة مستعملة؟ افحصها قبل الدفع</a>
+                <h2 class="hero-title">اعرف العطل والسعر العادل قبل ما تدخل الورشة</h2>
+                <p class="hero-sub">صف المشكلة بكلامك، وتصلك الخطورة والأسباب والتكلفة المتوقعة خلال دقيقة.</p>
+                <div class="car-art" dir="ltr">
+                    <svg viewBox="0 0 360 152" role="img" aria-label="رسم تخطيطي لسيارة" preserveAspectRatio="xMidYMid meet">
+                        <line x1="0" y1="129" x2="360" y2="129" stroke="#9FB0C8" stroke-width="1.5" stroke-dasharray="5 5"/>
+                        <path d="M18 106 C18 92 30 88 50 84 L90 64 C104 55 122 49 146 48 L214 48 C238 48 254 60 268 72 L304 80 C326 84 342 90 342 102 L342 110 L18 110 Z" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2" stroke-linejoin="round"/>
+                        <path d="M104 66 C114 58 128 54 148 54 L170 54 L170 78 L92 78 Z" fill="#E1EAF7" stroke="#0F172A" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M178 54 L212 54 C228 54 240 62 252 74 L252 78 L178 78 Z" fill="#E1EAF7" stroke="#0F172A" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M174 54 L174 106 M256 80 L256 106" stroke="#0F172A" stroke-width="1.4" fill="none"/>
+                        <rect x="326" y="88" width="14" height="7" rx="2" fill="#F59E0B" stroke="#0F172A" stroke-width="1.4"/>
+                        <rect x="18" y="88" width="9" height="8" rx="2" fill="#DC2626" stroke="#0F172A" stroke-width="1.4"/>
+                        <path d="M282 110 a26 26 0 0 0 -52 0 M110 110 a26 26 0 0 0 -52 0" fill="none" stroke="#0F172A" stroke-width="2"/>
+                        <g fill="#0F172A"><circle cx="256" cy="110" r="21"/><circle cx="84" cy="110" r="21"/></g>
+                        <g fill="#FFFFFF" stroke="#9FB0C8" stroke-width="1.5"><circle cx="256" cy="110" r="11"/><circle cx="84" cy="110" r="11"/></g>
+                        <g fill="#0F172A"><circle cx="256" cy="110" r="3.2"/><circle cx="84" cy="110" r="3.2"/></g>
+                    </svg>
+                    <a class="hs hs-up" href="tools.html?t=sound" style="left:80.5%;top:50%"><i></i><b>المحرك</b></a>
+                    <a class="hs hs-up" href="tools.html?t=paint" style="left:59.5%;top:37%"><i></i><b>الهيكل والدهان</b></a>
+                    <a class="hs" href="tools.html?t=tires" style="left:23.3%;top:72.4%"><i></i><b>الكفرات</b></a>
+                    <a class="hs hs-up hs-end" href="tools.html?t=lights" style="left:6%;top:60.5%"><i></i><b>اللمبات</b></a>
+                </div>
+                <p class="hero-hint">اضغط أي جزء من السيارة لفحصه بأداته</p>
+                <button type="button" onclick="document.getElementById('diag-form').scrollIntoView({ behavior: 'smooth', block: 'start' })" class="hero-cta">ابدأ فحصاً مجانياً</button>
+                <a href="inspect.html" class="hero-link">أنوي شراء سيارة مستعملة؟ افحصها قبل الدفع</a>
                 <div class="hero-trust">
                     <span id="welcome-free" class="hero-pill hero-pill-free">أول فحصين مجانيان</span>
-                    <span class="hero-pill">🔒 دفع آمن</span>
-                    <span class="hero-pill">♾️ بدون اشتراك</span>
+                    <span class="hero-pill">دفع آمن</span>
+                    <span class="hero-pill">بدون اشتراك</span>
                 </div>
             </div>
             <div id="fb-card" class="hidden no-print bg-white border border-emerald-200 rounded-2xl p-3.5 space-y-2">
@@ -804,20 +832,20 @@
     </div>
 </div>
 
-<script src="js/00-i18n.js?v=3.3.14"></script>
-<script src="js/00-core.js?v=3.3.14"></script>
-<script src="js/01-countries.js?v=3.3.14"></script>
-<script src="js/02-diagnosis.js?v=3.3.14"></script>
-<script src="js/03-interview.js?v=3.3.14"></script>
-<script src="js/04-sound.js?v=3.3.14"></script>
-<script src="js/05-codes.js?v=3.3.14"></script>
-<script src="js/06-history.js?v=3.3.14"></script>
-<script src="js/07-prices.js?v=3.3.14"></script>
-<script src="js/08-providers.js?v=3.3.14"></script>
-<script src="js/09-payments.js?v=3.3.14"></script>
-<script src="js/10-kb-admin.js?v=3.3.14"></script>
-<script src="js/11-learning.js?v=3.3.14"></script>
-<script src="js/12-account.js?v=3.3.14"></script>
-<script src="js/99-main.js?v=3.3.14"></script>
+<script src="js/00-i18n.js?v=3.3.15"></script>
+<script src="js/00-core.js?v=3.3.15"></script>
+<script src="js/01-countries.js?v=3.3.15"></script>
+<script src="js/02-diagnosis.js?v=3.3.15"></script>
+<script src="js/03-interview.js?v=3.3.15"></script>
+<script src="js/04-sound.js?v=3.3.15"></script>
+<script src="js/05-codes.js?v=3.3.15"></script>
+<script src="js/06-history.js?v=3.3.15"></script>
+<script src="js/07-prices.js?v=3.3.15"></script>
+<script src="js/08-providers.js?v=3.3.15"></script>
+<script src="js/09-payments.js?v=3.3.15"></script>
+<script src="js/10-kb-admin.js?v=3.3.15"></script>
+<script src="js/11-learning.js?v=3.3.15"></script>
+<script src="js/12-account.js?v=3.3.15"></script>
+<script src="js/99-main.js?v=3.3.15"></script>
 </body>
 </html>
