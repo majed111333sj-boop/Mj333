@@ -829,9 +829,9 @@ async function appHandler(body, ip, res) {
       car: clip(body.car, 60), km: clip(body.km, 12), price: clip(body.price, 12), at: Date.now(),
       score: Math.max(0, Math.min(100, Math.round(rp.score))), verdict: ['good', 'attention', 'problem'].includes(rp.verdict) ? rp.verdict : 'attention',
       verdict_label: clip(rp.verdict_label, 40), confidence: clip(rp.confidence, 10), summary: noPii(noVin(rp.summary)),
-      red_flags: (Array.isArray(rp.red_flags) ? rp.red_flags : []).slice(0, 8).map(f => ({ title: noVin(f && f.title).slice(0, 100), stage: clip(f && f.stage, 40), advice: noVin(f && f.advice).slice(0, 200) })),
+      red_flags: (Array.isArray(rp.red_flags) ? rp.red_flags : []).slice(0, 8).map(f => ({ title: noPii(noVin(f && f.title)).slice(0, 100), stage: clip(f && f.stage, 40), advice: noPii(noVin(f && f.advice)).slice(0, 200) })),
       stages: (Array.isArray(body.stages) ? body.stages : []).slice(0, 8).map(x => ({ name: clip(x && x.name, 50), verdict: clip(x && x.verdict, 12) })),
-      common_issues: (Array.isArray(rp.common_issues) ? rp.common_issues : []).slice(0, 6).map(x => clip(x, 160)),
+      common_issues: (Array.isArray(rp.common_issues) ? rp.common_issues : []).slice(0, 6).map(x => noPii(noVin(x)).slice(0, 160)),
       repair_cost_sar: Math.round(Number(rp.repair_cost_sar) || 0), offer_price_sar: Math.round(Number(rp.offer_price_sar) || 0)
     };
     const id = rid(10);

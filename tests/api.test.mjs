@@ -430,3 +430,19 @@ test('3.3.6 Whop: يتعرف على المنتج من metadata أو من معر�
   assert.equal((await api({ mode: 'wallet', wid: w2 })).json.cr.ts, 1);
   assert.equal((await whop('payment.succeeded', { id: 'pay_' + did(), metadata: { wid: w1, product: 'nope' } })).json.unmapped, true);   // قيمة غريبة لا تُقبل
 });
+
+test('3.3.27 رابط مشاركة نتيجة الفحص: يُحفظ منقّحاً (بلا السعر والهيكل والأرقام) ويُقرأ، وصاحبه فقط يحذفه', async () => {
+  const w = wid();
+  const rep = { score: 72, verdict: 'attention', confidence: '60%', summary: 'فحص 10 من 17 نقطة', red_flags: [{ title: 'تاريخ حوادث', stage: 'الأوراق', advice: 'اتصل 0551234567 رقم الهيكل JTDKN3DU5A0123456' }], common_issues: ['ضعف المكيف'], repair_cost_sar: 1800.4 };
+  const s = await api({ mode: 'report_save', wid: w, car: 'تويوتا كامري 2018', km: '120000', price: '45000', report: rep, stages: [{ name: 'المحرك', verdict: 'ok' }] });
+  assert.equal(s.status, 200); assert.match(s.json.id, /^[a-z0-9]{6,12}$/);
+  const g = await api({ mode: 'report_get', id: s.json.id });
+  assert.equal(g.status, 200); assert.equal(g.json.score, 72); assert.equal(g.json.repair_cost_sar, 1800); assert.equal(g.json.stages[0].verdict, 'ok');
+  const raw = JSON.stringify(g.json);
+  assert.ok(!raw.includes('0551234567') && !raw.includes('JTDKN3DU5A0123456'));
+  assert.equal(g.json.price, '45000');   // الخادم يحفظ ما يصله، والعميل لا يرسل السعر أصلاً
+  assert.equal((await api({ mode: 'report_get', id: 'nope123' })).status, 404);
+  assert.equal((await api({ mode: 'report_del', wid: wid(), id: s.json.id })).status, 403);
+  assert.equal((await api({ mode: 'report_del', wid: w, id: s.json.id })).status, 200);
+  assert.equal((await api({ mode: 'report_get', id: s.json.id })).status, 404);
+});

@@ -116,14 +116,19 @@
                     <label for="i-year" class="text-[10px] text-slate-500 font-bold block mb-1">سنة الصنع</label>
                     <select id="i-year" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold"></select>
                 </div>
-                <div>
-                    <label for="i-km" class="text-[10px] text-slate-500 font-bold block mb-1">الممشى (كم)</label>
-                    <input id="i-km" type="number" inputmode="numeric" placeholder="مثل: 120000" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono">
-                </div>
-                <div class="col-span-2">
-                    <label for="i-price" class="text-[10px] text-slate-500 font-bold block mb-1">السعر المطلوب (<span class="cur"></span>)</label>
-                    <input id="i-price" type="number" inputmode="decimal" placeholder="مثل: 45000" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono">
-                </div>
+                <details id="car-more" class="col-span-2">
+                    <summary class="cursor-pointer text-[12px] font-bold text-blue-700 py-1">➕ الممشى والسعر (اختياري، لتنبيهات أدق وسعر تفاوض)</summary>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <div>
+                            <label for="i-km" class="text-[10px] text-slate-500 font-bold block mb-1">الممشى (كم)</label>
+                            <input id="i-km" type="number" inputmode="numeric" placeholder="مثل: 120000" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono">
+                        </div>
+                        <div>
+                            <label for="i-price" class="text-[10px] text-slate-500 font-bold block mb-1">السعر المطلوب (<span class="cur"></span>)</label>
+                            <input id="i-price" type="number" inputmode="decimal" placeholder="مثل: 45000" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono">
+                        </div>
+                    </div>
+                </details>
             </div>
             <p id="km-hint" class="hidden text-[10px] rounded-lg p-2 leading-relaxed"></p>
         </section>
@@ -202,7 +207,7 @@
 
             <div class="paid no-print grid grid-cols-2 gap-2">
                 <button id="ai-btn" onclick="aiAnalyze()" class="bg-indigo-700 text-white font-extrabold py-2.5 rounded-xl text-[11px]">🤖 تحليل ذكي للنتائج</button>
-                <button onclick="shareWhatsApp()" class="bg-green-600 text-white font-extrabold py-2.5 rounded-xl text-[11px]">💬 مشاركة واتساب</button>
+                <button id="share-btn" onclick="shareLink()" class="bg-green-600 text-white font-extrabold py-2.5 rounded-xl text-[11px]">🔗 شارك النتيجة برابط</button>
                 <button onclick="window.print()" class="bg-slate-900 text-white font-bold py-2.5 rounded-xl text-[11px]">📥 حفظ PDF</button>
                 <button onclick="resetAll()" class="bg-white border border-slate-300 font-bold py-2.5 rounded-xl text-[11px]">🗑️ فحص سيارة جديدة</button>
             </div>
@@ -381,7 +386,28 @@ function toolResult(keys) {
 function toolsBadge() {   // عدد ما قيس بالأدوات
     return new Set(Object.values(TOOLMAP).flatMap(t => t[1]).filter(k => (store.get('sd_inspect_tools', {})[k]))).size;
 }
+// ---------- الانتقال التلقائي عند اكتمال مرحلة ----------
+const stageDone = i => { const v = stageItems(STAGES[i]); return v.length > 0 && v.every(it => state.answers[it[0]]); };
+let toastTimer = null;
+function clearToast() { clearTimeout(toastTimer); toastTimer = null; const t = $('stage-toast'); if (t) t.remove(); }
+function stageDoneToast() {
+    clearToast();
+    const last = stageIdx === STAGES.length - 1, from = stageIdx;
+    const t = el('div', 'no-print fixed inset-x-3 bottom-4 z-50 rounded-2xl bg-slate-900 text-white shadow-2xl p-3 flex items-center gap-2');
+    t.id = 'stage-toast'; t.setAttribute('role', 'status');
+    t.appendChild(el('span', 'flex-1 text-[13px] font-bold leading-snug', last ? '🎉 أنهيت كل المراحل' : '✅ اكتملت «' + STAGES[from].title + '»، ننتقل للمرحلة التالية'));
+    const go = el('button', 'shrink-0 bg-amber-500 text-slate-950 font-black text-[12px] rounded-xl px-3 py-2', last ? '📊 اعرض النتيجة' : 'التالي الآن');
+    go.type = 'button'; go.onclick = () => { clearToast(); goStage(1); };
+    t.appendChild(go);
+    if (!last) {
+        const stay = el('button', 'shrink-0 border border-slate-500 text-slate-200 font-bold text-[12px] rounded-xl px-3 py-2', 'ابقَ هنا');
+        stay.type = 'button'; stay.onclick = clearToast; t.appendChild(stay);
+        toastTimer = setTimeout(() => { clearToast(); if (stageIdx === from) goStage(1); }, 3000);
+    }
+    document.body.appendChild(t);
+}
 function render() {
+    clearToast();
     buildStageTabs();
     const s = STAGES[stageIdx], box = $('stage-box'); box.innerHTML = '';
     const stop = ALL.filter(it => it.red && state.answers[it.id] === 'bad');
@@ -418,7 +444,12 @@ function render() {
         const row = el('div', 'flex gap-1.5');
         ANS.forEach(([k, label]) => {
             const b = el('button', 'ans ' + k + (state.answers[id] === k ? ' on' : ''), label);
-            b.onclick = () => { state.answers[id] = state.answers[id] === k ? undefined : k; if (!state.answers[id]) delete state.answers[id]; save(); render(); };
+            b.onclick = () => {
+                const was = stageDone(stageIdx);
+                state.answers[id] = state.answers[id] === k ? undefined : k; if (!state.answers[id]) delete state.answers[id];
+                save(); render();
+                if (!was && state.answers[id] && stageDone(stageIdx)) stageDoneToast();
+            };
             row.appendChild(b);
         });
         card.appendChild(row);
@@ -531,6 +562,33 @@ function reportText() {
     return lines.join('\n');
 }
 function shareWhatsApp() { window.open('https://wa.me/?text=' + encodeURIComponent(reportText()), '_blank'); }
+// رابط مشاركة للنتيجة (يُحفظ على الخادم نسخة منقّحة: بلا السعر ولا بيانات شخصية، ويُحذف بعد 120 يوماً)
+async function shareLink() {
+    const r = compute();
+    if (!r.answered) { alert('أجب على بعض نقاط الفحص أولاً.'); return; }
+    const btn = $('share-btn'), label = btn.textContent;
+    btn.disabled = true; btn.textContent = '⏳ جاري إنشاء الرابط…';
+    const raw = r.issues.reduce((a, x) => a + x.cost, 0), STG = { docs: 'الأوراق', body: 'الهيكل والمقصورة', eng: 'المحرك', drive: 'القيادة' };
+    const verdict = r.redBad || r.score < 60 ? 'problem' : (r.score < 80 || r.flags.length || raw > 0 ? 'attention' : 'good');
+    const stages = STAGES.map(s => {
+        const a = s.items.map(i => state.answers[i[0]]).filter(Boolean);
+        return { name: STG[s.id] || s.title, verdict: a.includes('bad') ? 'bad' : a.includes('note') ? 'note' : a.includes('ok') ? 'ok' : 'none' };
+    });
+    const itemStage = id => (STAGES.find(s => s.items.some(i => i[0] === id)) || {}).id;
+    const report = {
+        score: r.score, verdict, confidence: Math.round(r.coverage * 100) + '%',
+        summary: 'فحص ' + r.answered + ' من ' + activeItems().length + ' نقطة (' + (isFull() ? 'فحص كامل' : 'فحص سريع') + ')',
+        red_flags: r.issues.filter(x => x.it.red).map(x => ({ title: x.it.prob + (x.a === 'note' ? ' (ملاحظة)' : ''), stage: STG[itemStage(x.it.id)] || '', advice: state.notes[x.it.id] || '' })),
+        common_issues: r.issues.filter(x => !x.it.red).map(x => x.it.prob + (state.notes[x.it.id] ? ' — ' + state.notes[x.it.id] : '')),
+        repair_cost_sar: Math.round(raw)
+    };
+    const res = await payApi({ mode: 'report_save', car: carText(), km: state.car.km || '', report, stages });
+    btn.disabled = false; btn.textContent = label;
+    if (res.status !== 200 || !res.json || !res.json.id) { alert('تعذر إنشاء الرابط الآن، حاول بعد قليل.'); return; }
+    const url = location.origin + '/r.html?id=' + res.json.id, text = '🔍 نتيجة فحص ' + (carText() || 'سيارة') + ' — ' + r.score + '/100';
+    if (navigator.share) { try { await navigator.share({ title: 'نتيجة فحص السيارة', text, url }); } catch (e) {} return; }
+    window.open('https://wa.me/?text=' + encodeURIComponent(text + '\n' + url), '_blank');
+}
 function copyText(id) {
     const t = $(id).textContent;
     const done = () => alert('تم النسخ ✓');
@@ -541,7 +599,7 @@ function resetAll() {
     if (!confirm('مسح هذا الفحص والبدء بسيارة جديدة؟')) return;
     state = { answers: {}, notes: {}, car: {}, mode: 'quick' }; store.del('sd_inspect'); store.del('sd_inspect_tools'); document.body.classList.add('intro'); introModes();
     Object.keys(photos).forEach(k => delete photos[k]);
-    ['i-model', 'i-km', 'i-price'].forEach(id => $(id).value = '');
+    ['i-model', 'i-km', 'i-price'].forEach(id => $(id).value = ''); $('car-more').open = false;
     $('result').classList.add('hidden'); stageIdx = 0; render(); window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -649,6 +707,7 @@ window.addEventListener('DOMContentLoaded', () => {
     [yr, $('i-model'), $('i-km'), $('i-price')].forEach(e => e.addEventListener('input', sync));
     yr.onchange = sync;
     if (state.started || Object.keys(state.answers || {}).length) document.body.classList.remove('intro');
+    if (c.km || c.price) $('car-more').open = true;
     introModes(); sync(); render(); walletRefresh();
 });
 </script>
