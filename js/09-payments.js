@@ -162,6 +162,7 @@ function applyLock() {
     const pb = $('pass-banner'); if (pb) { pb.textContent = passText(); pb.classList.toggle('hidden', !passActive()); }
     const wf = $('welcome-free'); if (wf) { const fl = Wallet.state && Wallet.state.freeLeft; wf.textContent = fl === 1 ? '🎁 بقي لك فحص مجاني واحد' : '🎁 أول فحصين مجانيان'; wf.classList.toggle('hidden', !(Wallet.state && Wallet.state.freeAvailable && !passActive())); }
     const al = $('accuracy-line'), acc = Wallet.state && Wallet.state.accuracy;
+    { const sa = $('stat-acc'); const ok = !!(acc && acc.total >= 20); if (sa) { sa.classList.toggle('hidden', !ok); sa.parentNode.classList.toggle('has4', ok); if (ok) sa.querySelector('b').textContent = Math.round((acc.good !== undefined ? acc.good : acc.yes) / acc.total * 100) + '%'; } }   // نسبة حقيقية من تقييمات المشتركين، ولا تظهر قبل 20 تقييماً
     if (al && acc && acc.total >= 20) { al.textContent = '✅ ' + Math.round((acc.good !== undefined ? acc.good : acc.yes) / acc.total * 100) + '% من المشتركين قيّموا دقة التشخيص بـ 90% فأعلى (من ' + acc.total + ' تقييم)'; al.classList.remove('hidden'); }
 }
 // فتح تفاصيل هذا الفحص: برصيد موجود (يُخصم مرة واحدة)، وإلا نافذة الدفع
