@@ -66,7 +66,6 @@
         .hero-hint { font-size: 12.5px; color: #BFDBFE; margin: 4px 0 12px; }
         .hero-cta { display: block; width: 100%; min-height: 54px; border: 0; border-radius: 0; background: linear-gradient(180deg, #FBBF24 0%, #F59E0B 70%, #D97706 100%); color: #0F172A; font: inherit; font-size: 17px; font-weight: 900; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px)); cursor: pointer; transition: filter .1s ease, transform .1s ease; }
         .hero-cta:active { filter: brightness(.92); transform: translateY(2px); }
-        .hero-link { display: block; margin-top: 12px; padding: 12px 8px; border-radius: 10px; border: 1.5px solid #93C5FD; color: #fff; font-size: 14px; font-weight: 800; text-decoration: none; background: #172554; }
         .hero-trust { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
         .hero-pill { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 6px; background: #fff; border: 1px solid #BFDBFE; color: #1E3A8A; }
         .hero-pill-free { background: #172554; border-color: #93C5FD; color: #FDE68A; }
@@ -161,7 +160,6 @@
                 </div>
                 <p class="hero-hint">اضغط أي جزء من السيارة لفحصه بأداته</p>
                 <button type="button" onclick="document.getElementById('diag-form').scrollIntoView({ behavior: 'smooth', block: 'start' })" class="hero-cta">ابدأ فحصاً مجانياً</button>
-                <a href="inspect.html" class="hero-link">أنوي شراء سيارة مستعملة؟ افحصها قبل الدفع</a>
                 <div class="hero-trust">
                     <span id="welcome-free" class="hero-pill hero-pill-free">أول فحصين مجانيان</span>
                     <span class="hero-pill">دفع آمن</span>
@@ -173,6 +171,15 @@
                 <div><b>60<small>ث</small></b><span>لأول نتيجة</span></div>
                 <div id="stat-acc" class="hidden"><b data-noi18n>0%</b><span>قيّموا الدقة 90%+</span></div>
             </div>
+            <a href="inspect.html" id="used-car-cta" class="block rounded-2xl p-3.5 border-2 border-amber-400 no-underline">
+                <span class="flex items-center justify-between gap-2">
+                    <span class="min-w-0">
+                        <span class="block font-black text-[15px] text-slate-900">🔍 ناوي تشتري سيارة مستعملة؟</span>
+                        <span class="block text-[12px] text-slate-600 leading-relaxed mt-0.5">افحصها بنفسك قبل الدفع: 14 نقطة مهمة في دقيقتين أو 35 نقطة كاملة، وتقرير فيه السعر العادل وحجة للتفاوض. حتى عن بعد.</span>
+                    </span>
+                    <span class="shrink-0 bg-amber-500 text-slate-950 font-black text-[12px] rounded-xl px-3 py-2">ابدأ فحص المستعملة</span>
+                </span>
+            </a>
             <div id="fb-card" class="hidden no-print bg-white border border-emerald-200 rounded-2xl p-3.5 space-y-2">
                 <p class="font-black text-[15px] text-slate-900">ساعدنا نكون أدق 🙏</p>
                 <p class="text-[14px] text-slate-600 leading-relaxed">قبل أيام شخّصنا: <b id="fb-title"></b>. ما نسبة دقة التشخيص بعد الإصلاح؟</p>
@@ -410,15 +417,6 @@
                 <p class="text-[10px] text-slate-400 leading-relaxed">تشخيص مبدئي يساعدك تفهم المشكلة وتتفاوض على السعر، ولا يغني عن فحص الفني.</p>
             </div>
 
-            <a href="inspect.html" id="used-car-cta" class="block rounded-2xl p-3.5 border-2 border-amber-400 bg-gradient-to-l from-amber-50 to-white shadow-sm no-underline">
-                <span class="flex items-center justify-between gap-2">
-                    <span class="min-w-0">
-                        <span class="block font-black text-[15px] text-slate-900">🔍 فحص السيارات المستعملة الشامل</span>
-                        <span class="block text-[12px] text-slate-600 leading-relaxed mt-0.5">قبل ما تشتري: صوّر وسجّل واكتشف الحوادث والعيوب، واعرف السعر العادل وكيف تتفاوض. حتى عن بعد.</span>
-                    </span>
-                    <span class="shrink-0 bg-amber-500 text-slate-950 font-black text-[12px] rounded-xl px-3 py-2">ابدأ الفحص</span>
-                </span>
-            </a>
             <div class="grid grid-cols-2 gap-2">
                 <a href="tools.html?t=parts" id="parts-cta" class="block rounded-2xl p-3 border-2 border-blue-200 bg-white shadow-sm no-underline text-center">
                     <span class="block text-2xl">🧾</span>
@@ -858,20 +856,20 @@
     </div>
 </div>
 
-<script src="js/00-i18n.js?v=3.3.23"></script>
-<script src="js/00-core.js?v=3.3.23"></script>
-<script src="js/01-countries.js?v=3.3.23"></script>
-<script src="js/02-diagnosis.js?v=3.3.23"></script>
-<script src="js/03-interview.js?v=3.3.23"></script>
-<script src="js/04-sound.js?v=3.3.23"></script>
-<script src="js/05-codes.js?v=3.3.23"></script>
-<script src="js/06-history.js?v=3.3.23"></script>
-<script src="js/07-prices.js?v=3.3.23"></script>
-<script src="js/08-providers.js?v=3.3.23"></script>
-<script src="js/09-payments.js?v=3.3.23"></script>
-<script src="js/10-kb-admin.js?v=3.3.23"></script>
-<script src="js/11-learning.js?v=3.3.23"></script>
-<script src="js/12-account.js?v=3.3.23"></script>
-<script src="js/99-main.js?v=3.3.23"></script>
+<script src="js/00-i18n.js?v=3.3.24"></script>
+<script src="js/00-core.js?v=3.3.24"></script>
+<script src="js/01-countries.js?v=3.3.24"></script>
+<script src="js/02-diagnosis.js?v=3.3.24"></script>
+<script src="js/03-interview.js?v=3.3.24"></script>
+<script src="js/04-sound.js?v=3.3.24"></script>
+<script src="js/05-codes.js?v=3.3.24"></script>
+<script src="js/06-history.js?v=3.3.24"></script>
+<script src="js/07-prices.js?v=3.3.24"></script>
+<script src="js/08-providers.js?v=3.3.24"></script>
+<script src="js/09-payments.js?v=3.3.24"></script>
+<script src="js/10-kb-admin.js?v=3.3.24"></script>
+<script src="js/11-learning.js?v=3.3.24"></script>
+<script src="js/12-account.js?v=3.3.24"></script>
+<script src="js/99-main.js?v=3.3.24"></script>
 </body>
 </html>
