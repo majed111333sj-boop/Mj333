@@ -408,6 +408,10 @@ test('3.3.0 Whop: إنشاء جلسة دفع تحمل المحفظة والمن�
   const r = await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env });
   assert.equal(r.status, 200); assert.match(r.json.url, /^https:\/\/whop\.com\/checkout\//);
   assert.deepEqual(globalThis.__whopReq, { redirect_url: 'https://alfahis.pages.dev/?paid=1', variant_id: 'plan_abc12345', mode: 'payment', metadata: { wid: w, product: 'prices' } });
+  await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env, headers: { host: 'afhasnow.com' } });   // الدومين الجديد: يعود العميل إليه
+  assert.equal(globalThis.__whopReq.redirect_url, 'https://afhasnow.com/?paid=1');
+  await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env, headers: { host: 'evil.example' } });   // دومين غير معتمد: نرجع للأصلي
+  assert.equal(globalThis.__whopReq.redirect_url, 'https://alfahis.pages.dev/?paid=1');
   assert.equal((await api({ mode: 'whop_checkout', wid: w, product: 'nope' }, { env })).status, 400);
   assert.equal((await api({ mode: 'whop_checkout', wid: w, product: 'full' }, { env })).status, 503);   // معرّف الخطة غير مضبوط
   assert.equal((await api({ mode: 'wallet', wid: w }, { env })).json.whop, true);
