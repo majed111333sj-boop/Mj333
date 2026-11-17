@@ -5,7 +5,7 @@
 
 ## النشر
 - المستودع: `majed111333sj-boop/Mj333`، الفرع `main`.
-- الاستضافة: Cloudflare Pages، مشروع `alfahis` ← https://alfahis.pages.dev
+- الاستضافة: Cloudflare Pages، مشروع `alfahis` ← الدومين الرئيسي https://afhasnow.com (والقديم alfahis.pages.dev يحوَّل إليه بـ `functions/_middleware.js` لصفحات المتصفح فقط)
 - كل دفع إلى `main` يبني وينشر تلقائياً. أمر البناء: `npm run build`، والمخرجات: `dist`.
 - **البناء يشغّل الاختبارات أولاً**؛ إن فشل اختبار لا يُنشر شيء ويبقى الموقع على النسخة السليمة.
 - الفروع الأخرى تحصل على رابط معاينة من Cloudflare: اعمل على فرع، وافتح Pull Request، ودع المالك يجرّب رابط المعاينة ثم يدمج.
