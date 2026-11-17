@@ -407,11 +407,11 @@ test('3.3.0 Whop: إنشاء جلسة دفع تحمل المحفظة والمن�
   const env = { WHOP_API_KEY: 'k', WHOP_WEBHOOK_SECRET: 'ws_test', WHOP_PLAN_PRICES: 'plan_abc12345' };
   const r = await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env });
   assert.equal(r.status, 200); assert.match(r.json.url, /^https:\/\/whop\.com\/checkout\//);
-  assert.deepEqual(globalThis.__whopReq, { redirect_url: 'https://alfahis.pages.dev/?paid=1', variant_id: 'plan_abc12345', mode: 'payment', metadata: { wid: w, product: 'prices' } });
-  await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env, headers: { host: 'afhasnow.com' } });   // الدومين الجديد: يعود العميل إليه
-  assert.equal(globalThis.__whopReq.redirect_url, 'https://afhasnow.com/?paid=1');
-  await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env, headers: { host: 'evil.example' } });   // دومين غير معتمد: نرجع للأصلي
+  assert.deepEqual(globalThis.__whopReq, { redirect_url: 'https://afhasnow.com/?paid=1', variant_id: 'plan_abc12345', mode: 'payment', metadata: { wid: w, product: 'prices' } });
+  await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env, headers: { host: 'alfahis.pages.dev' } });   // الدومين القديم: يعود العميل إليه
   assert.equal(globalThis.__whopReq.redirect_url, 'https://alfahis.pages.dev/?paid=1');
+  await api({ mode: 'whop_checkout', wid: w, product: 'prices' }, { env, headers: { host: 'evil.example' } });   // دومين غير معتمد: نرجع للأصلي
+  assert.equal(globalThis.__whopReq.redirect_url, 'https://afhasnow.com/?paid=1');
   assert.equal((await api({ mode: 'whop_checkout', wid: w, product: 'nope' }, { env })).status, 400);
   assert.equal((await api({ mode: 'whop_checkout', wid: w, product: 'full' }, { env })).status, 503);   // معرّف الخطة غير مضبوط
   assert.equal((await api({ mode: 'wallet', wid: w }, { env })).json.whop, true);
@@ -493,4 +493,16 @@ test('3.3.30 ملف الخادم الخاص مطابق لقاعدة الأعطا
   const { readKb, render } = await import('../scripts/sync-kb.mjs');
   const fs = await import('node:fs');
   assert.equal(fs.readFileSync(new URL('../functions/_lib/kb-data.js', import.meta.url), 'utf8'), render(readKb()), 'شغّل: node scripts/sync-kb.mjs');
+});
+
+test('الدومين الجديد: العنوان القديم يُحوَّل للصفحات فقط، وواجهة API والمعاينات لا تُمسّ', async () => {
+  const { onRequest } = await import('../functions/_middleware.js');
+  const next = async () => new Response('ok');
+  const go = (url, headers = {}, method = 'GET') => onRequest({ request: new Request(url, { method, headers }), next });
+  const r = await go('https://alfahis.pages.dev/faults/cvt.html?q=1', { accept: 'text/html' });
+  assert.equal(r.status, 301); assert.equal(r.headers.get('location'), 'https://afhasnow.com/faults/cvt.html?q=1');
+  assert.equal((await go('https://alfahis.pages.dev/api/ai', { accept: 'text/html' }, 'POST')).status, 200);   // الطلبات غير GET
+  assert.equal((await go('https://alfahis.pages.dev/api/ai', { accept: '*/*' })).status, 200);                 // غير الصفحات
+  assert.equal((await go('https://afhasnow.com/', { accept: 'text/html' })).status, 200);                      // الدومين الجديد
+  assert.equal((await go('https://abc.alfahis.pages.dev/', { accept: 'text/html' })).status, 200);             // روابط المعاينة
 });

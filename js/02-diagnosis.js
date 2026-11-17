@@ -673,7 +673,7 @@ async function exportReportPDF() {
         pr.appendChild(el('p', null, new Date().toLocaleString('ar'))); pr.lastChild.style.cssText = 'color:#475569;margin:0 0 12px';
         if (p.summary) { const sm = el('p', null, p.summary); sm.style.cssText = 'background:#EFF6FF;border-radius:8px;padding:8px 10px;margin:0 0 12px'; pr.appendChild(sm); }
         const bd = el('div', null, p.body); bd.style.whiteSpace = 'pre-wrap'; pr.appendChild(bd);
-        const ft = el('p', null, 'تقدير يساعدك قبل الورشة ولا يغني عن فحص الفني. alfahis.pages.dev'); ft.style.cssText = 'color:#64748B;font-size:12px;margin-top:16px;border-top:1px solid #E2E8F0;padding-top:8px'; pr.appendChild(ft);
+        const ft = el('p', null, 'تقدير يساعدك قبل الورشة ولا يغني عن فحص الفني. afhasnow.com'); ft.style.cssText = 'color:#64748B;font-size:12px;margin-top:16px;border-top:1px solid #E2E8F0;padding-top:8px'; pr.appendChild(ft);
         document.body.classList.add('print-polished');
         window.addEventListener('afterprint', () => document.body.classList.remove('print-polished'), { once: true });
     }

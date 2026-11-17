@@ -614,7 +614,7 @@ async function pricesAccess(body, w) {
 }
 
 // الدومينات المعتمدة للموقع: يعود العميل بعد الدفع إلى نفس الدومين الذي بدأ منه (المحفظة محفوظة لكل دومين في المتصفح)
-const SITE_HOSTS = ['alfahis.pages.dev', 'afhasnow.com', 'www.afhasnow.com'];
+const SITE_HOSTS = ['afhasnow.com', 'www.afhasnow.com', 'alfahis.pages.dev'];
 async function payHandler(body, ip, res, host) {
   if (!KV_URL || !KV_TOKEN) return res.status(503).json({ error: 'not_configured' });
   const wid = body.wid;

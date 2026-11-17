@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const SITE_URL = 'https://alfahis.pages.dev';
+const SITE_URL = 'https://afhasnow.com';
 const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 fs.mkdirSync('dist/js', { recursive: true });
