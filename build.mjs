@@ -1,6 +1,7 @@
 // نسخ ملفات الموقع إلى dist بعد بناء التنسيق، وتوليد صفحات الأعطال الثابتة (للبحث في جوجل) من قاعدة الأعطال
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { GUIDES } from './seo/guides.mjs';
 
 const SITE_URL = 'https://afhasnow.com';
 const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -39,7 +40,7 @@ if (!Array.isArray(KB) || KB.length < 10) { console.error('قاعدة الأعط
 const SEV = { safe: ['آمن للسير', 'التشخيص المبدئي يشير إلى عطل لا يمنع القيادة، لكن لا تؤجل الفحص طويلاً.'], caution: ['أصلحه قريباً', 'يُنصح بفحصه وإصلاحه قريباً حتى لا يتحول إلى عطل أكبر.'], stop: ['توقف فوراً', 'هذا العطل قد يكون خطراً. لا تواصل القيادة قبل فحصه عند فني.'] };
 const css = '<link rel="stylesheet" href="/style.css">';
 const head = (title, desc, url) => `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}">${css}<style>body{font-family:"IBM Plex Sans Arabic",system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;background:#F8FAFC;color:#0F172A;margin:0}main{max-width:640px;margin:0 auto;padding:16px}h1{font-size:22px;margin:8px 0}h2{font-size:16px;margin:18px 0 6px}p,li{line-height:1.8;font-size:15px}a.btn{display:block;text-align:center;background:#1D4ED8;color:#fff;font-weight:800;border-radius:12px;padding:12px;text-decoration:none;margin:16px 0}.box{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:12px;margin:10px 0}.stop{background:#FEF2F2;border-color:#FECACA}small{color:#64748B}ul{list-style:disc;padding-inline-start:22px}ol{list-style:decimal;padding-inline-start:22px}main a:not(.btn){color:#1D4ED8;text-decoration:underline}h2{font-weight:700}</style><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;700&display=swap" rel="stylesheet"></head><body><main>`;
-const nav = `<p><a href="/">افحص الآن</a> · <a href="/faults/">دليل الأعطال</a> · ` + 'sa,ae,kw,qa,bh,om'.split(',').map(c => `<a href="/${c}">${{ sa: 'السعودية', ae: 'الإمارات', kw: 'الكويت', qa: 'قطر', bh: 'البحرين', om: 'عُمان' }[c]}</a>`).join(' · ') + `</p>`;
+const nav = `<p><a href="/">افحص الآن</a> · <a href="/faults/">دليل الأعطال</a> · <a href="/guides/">أدلة الصيانة</a> · ` + 'sa,ae,kw,qa,bh,om'.split(',').map(c => `<a href="/${c}">${{ sa: 'السعودية', ae: 'الإمارات', kw: 'الكويت', qa: 'قطر', bh: 'البحرين', om: 'عُمان' }[c]}</a>`).join(' · ') + `</p>`;
 const foot = `<p><small>معلومات مبدئية للتوعية ولا تغني عن فحص الفني.</small></p>${nav}</main></body></html>`;
 const ld = o => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`;
 const crumbs = list => ld({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: list.map(([name, item], i) => ({ '@type': 'ListItem', position: i + 1, name, item })) });
@@ -109,7 +110,34 @@ for (const cc of GCC) {
   countryUrls.push(url);
 }
 
-const urls = [SITE_URL + '/', SITE_URL + '/inspect', SITE_URL + '/tools', SITE_URL + '/faults/'].concat(countryUrls, rows.map(([id]) => `${SITE_URL}/faults/${id}`));
+// ---------- أدلة الصيانة (/guides/<slug>): أكثر ما يبحث عنه الناس ----------
+const titleOf = Object.fromEntries(rows.map(([id, t]) => [id, t]));
+const inline = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(?:\s*\[\[[a-z0-9_-]+\]\])+/gi, m => ' <small>انظر: ' + [...m.matchAll(/\[\[([a-z0-9_-]+)\]\]/gi)].map(([, id]) => {
+  if (!titleOf[id]) { console.error('رابط عطل غير موجود في دليل:', id); process.exit(1); }
+  return `<a href="/faults/${id}">${esc(titleOf[id])}</a>`;
+}).join('، ') + '</small>');
+fs.mkdirSync('dist/guides', { recursive: true });
+const guideUrls = [];
+for (const G of GUIDES) {
+  if (!/^[a-z0-9-]+$/.test(G.slug)) { console.error('اسم دليل غير صالح:', G.slug); process.exit(1); }
+  const url = `${SITE_URL}/guides/${G.slug}`;
+  const body = G.body.map(([t, v]) => t === 'h2' ? `<h2>${esc(v)}</h2>` : t === 'ul' ? `<ul>${v.map(x => `<li>${inline(x)}</li>`).join('')}</ul>` : `<p>${inline(v)}</p>`).join('');
+  const html = head(`${G.title} | افحص الآن`, G.desc, url)
+    + crumbs([['افحص الآن', SITE_URL + '/'], ['أدلة الصيانة', SITE_URL + '/guides/'], [G.title, url]]) + faq(G.faq)
+    + ld({ '@context': 'https://schema.org', '@type': 'Article', headline: G.h1, description: G.desc, inLanguage: 'ar', mainEntityOfPage: url, publisher: { '@type': 'Organization', name: 'افحص الآن', url: SITE_URL + '/' } })
+    + `<p><small><a href="/guides/">أدلة الصيانة</a> ‹ ${esc(G.title)}</small></p><h1>${esc(G.h1)}</h1>` + body
+    + `<a class="btn" href="/">شخّص سيارتك مجاناً</a>`
+    + `<h2>أسئلة شائعة</h2>` + G.faq.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join('')
+    + `<h2>أدلة أخرى</h2><ul>${GUIDES.filter(o => o !== G).map(o => `<li><a href="/guides/${o.slug}">${esc(o.title)}</a></li>`).join('')}</ul>`
+    + foot;
+  fs.writeFileSync(`dist/guides/${G.slug}.html`, html);
+  guideUrls.push(url);
+}
+fs.writeFileSync('dist/guides/index.html', head('أدلة صيانة السيارات وأعطالها | افحص الآن', 'أدلة مبسطة لأكثر ما يسأل عنه أصحاب السيارات: لمبات الطبلون، وأكواد الأعطال، وأصوات السيارة، وتغيير الزيت، وفحص السيارة المستعملة.', SITE_URL + '/guides/')
+  + crumbs([['افحص الآن', SITE_URL + '/'], ['أدلة الصيانة', SITE_URL + '/guides/']])
+  + `<h1>أدلة صيانة السيارات</h1><ul>${GUIDES.map(o => `<li><a href="/guides/${o.slug}">${esc(o.title)}</a></li>`).join('')}</ul>` + foot);
+
+const urls = [SITE_URL + '/', SITE_URL + '/inspect', SITE_URL + '/tools', SITE_URL + '/faults/', SITE_URL + '/guides/'].concat(guideUrls, countryUrls, rows.map(([id]) => `${SITE_URL}/faults/${id}`));
 fs.writeFileSync('dist/sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map(u => `<url><loc>${u}</loc></url>`).join('\n')}\n</urlset>\n`);
 fs.writeFileSync('dist/robots.txt', `User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: ${SITE_URL}/sitemap.xml\n`);
 
