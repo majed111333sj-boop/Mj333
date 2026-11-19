@@ -14,11 +14,11 @@
     <meta property="og:url" content="https://afhasnow.com/tools.html">
     <meta name="twitter:card" content="summary_large_image">
 <title>أدوات الفحص | الفاحص الذكي</title>
-<script src="js/00-i18n.js?v=3.3.42"></script>
+<script src="js/00-i18n.js?v=3.3.43"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#F4F6F9;--card:#FFFFFF;--line:#E2E8F0;--ink:#0F172A;--muted:#475569;--green:#047857;--green-d:#064E3B;--green-l:#ECFDF5;--navy:#0F172A;--navy-2:#1E293B;--primary:#1D4ED8;--primary-d:#1E3A8A;--primary-l:#EFF6FF;--amber:#F59E0B;--amber-l:#FFFBEB;--red:#991B1B;--red-l:#FEE2E2;--blue:#1D4ED8;--blue-l:#EFF6FF}
+:root{--bg:#F1EFEA;--card:#FFFFFF;--line:#E2E8F0;--ink:#0F172A;--muted:#475569;--green:#047857;--green-d:#064E3B;--green-l:#ECFDF5;--navy:#0F172A;--navy-2:#1E293B;--primary:#1D4ED8;--primary-d:#1E3A8A;--primary-l:#EFF6FF;--amber:#F59E0B;--amber-l:#FFFBEB;--red:#991B1B;--red-l:#FEE2E2;--blue:#1D4ED8;--blue-l:#EFF6FF}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Naskh Arabic','IBM Plex Sans Arabic',system-ui,sans-serif;font-size:15px;line-height:1.7;padding-bottom:env(safe-area-inset-bottom,0px)}
 header{position:sticky;top:0;z-index:10;background:var(--navy);color:#fff;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:10px}
@@ -165,7 +165,7 @@ button,select,label,nav,header,input[type=button],input[type=submit]{font-family
 </div>
 <script>
 // ---------- الإصدار وتسجيل الأخطاء: أي خطأ عند المستخدم يصل للوحة الإدارة (3 كحد أقصى لكل جلسة) ----------
-const APP_VERSION = '3.3.42';
+const APP_VERSION = '3.3.43';
 (() => {
     let n = 0;
     const send = m => { if (n++ >= 3 || location.protocol === 'file:') return; try { fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ mode: 'clienterr', msg: String(m).slice(0, 200), page: location.pathname.slice(-20), ver: APP_VERSION, ua: navigator.userAgent.slice(0, 60) }) }).catch(() => {}); } catch (e) {} };
