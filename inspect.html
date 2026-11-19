@@ -46,7 +46,7 @@
         #result.locked .paid { filter: blur(6px); pointer-events: none; user-select: none; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        /* 3.3.46 توحيد مع الصفحة الرئيسية: واجهة كحلية بوهج أزرق خفيف، زر كهرماني مسطح، بطاقات بيضاء بحد رفيع */
+        /* 3.3.47 توحيد مع الصفحة الرئيسية: واجهة كحلية بوهج أزرق خفيف، زر كهرماني مسطح، بطاقات بيضاء بحد رفيع */
         header.sticky { background: #0F172A !important; border-bottom: 1px solid rgba(255,255,255,.08); }
         .ihero { background: #0F172A !important; background-image: radial-gradient(120% 90% at 50% -10%, rgba(29,78,216,.55) 0%, rgba(29,78,216,0) 60%) !important; border: 1px solid #1E293B !important; border-radius: 18px !important; box-shadow: 0 1px 2px rgba(16,24,40,.06), 0 12px 32px -18px rgba(15,23,42,.55) !important; }
         .ihero p.sub, .imode span { color: #CBD5E1; }
@@ -55,6 +55,8 @@
         .imode button { border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.05); }
         .imode button.on { border-color: #F59E0B; background: rgba(245,158,11,.14); }
         .icta { clip-path: none !important; border-radius: 12px; background: #F59E0B !important; box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 6px 16px -6px rgba(245,158,11,.55); font-weight: 800; }
+        .tlink { background: #0F172A; color: #fff; box-shadow: 0 4px 10px -6px rgba(15,23,42,.6); } .tlink .ic { color: #F59E0B; }
+        .bg-blue-700 { background: #1D4ED8 !important; }
         main .bg-white.rounded-2xl { border: 1px solid #E4E7EC !important; border-radius: 16px !important; box-shadow: 0 1px 2px rgba(16,24,40,.05) !important; }
         @media print {
             .no-print { display: none !important; }
@@ -155,7 +157,7 @@ button,select,label,nav,header,input[type=button],input[type=submit]{font-family
             <button id="next-btn" onclick="goStage(1)" class="bg-blue-700 text-white font-extrabold py-2.5 rounded-xl text-xs">التالي ←</button>
         </div>
 
-        <button onclick="showResult()" class="no-print flow-part w-full bg-emerald-600 text-white font-black py-3 rounded-xl text-sm shadow-md">📊 عرض النتيجة والتقييم</button>
+        <button onclick="showResult()" class="no-print flow-part w-full bg-blue-700 text-white font-black py-3 rounded-xl text-sm shadow-md">📊 عرض النتيجة والتقييم</button>
 
         <!-- النتيجة -->
         <section id="result" class="hidden bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-3">
@@ -235,7 +237,7 @@ button,select,label,nav,header,input[type=button],input[type=submit]{font-family
     </main>
 </div>
 
-<script src="js/ui-icons.js?v=3.3.46"></script>
+<script src="js/ui-icons.js?v=3.3.47"></script>
 <script>
 // =====================================================================
 // 🔍 فحص السيارة قبل الشراء — خدمة مستقلة تعمل بالكامل داخل المتصفح
@@ -441,7 +443,7 @@ function render() {
         const tm = TOOLMAP[id];
         if (tm) {
             const tr = toolResult(tm[1]);
-            const link = el('a', 'block text-center text-[12px] font-extrabold rounded-xl py-2 ' + (tr ? 'bg-slate-100 text-slate-700' : 'bg-blue-700 text-amber-300'), tr ? '🔁 أعد القياس' : tm[2]);
+            const link = el('a', 'block text-center text-[12px] font-extrabold rounded-xl py-2 ' + (tr ? 'bg-slate-100 text-slate-700' : 'tlink'), tr ? '🔁 أعد القياس' : tm[2]);
             link.href = 'tools.html?t=' + tm[0] + '&stage=' + (stageIdx + 1) + '&insp=' + inspectId().slice(1).toLowerCase().replace(/[^a-z0-9]/g, '').padEnd(4, '0').slice(0, 40) + '&tk=' + (state.tk || (state.tk = Math.random().toString(36).slice(2) + Date.now().toString(36)));
             link.onclick = () => save();
             if (tr) {
