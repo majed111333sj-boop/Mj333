@@ -506,3 +506,15 @@ test('الدومين الجديد: العنوان القديم يُحوَّل ل
   assert.equal((await go('https://afhasnow.com/', { accept: 'text/html' })).status, 200);                      // الدومين الجديد
   assert.equal((await go('https://abc.alfahis.pages.dev/', { accept: 'text/html' })).status, 200);             // روابط المعاينة
 });
+
+test('الروابط القصيرة: /check و/lights تحوّل للتشخيص مع الحفاظ على utm', async () => {
+  const { onRequest } = await import('../functions/_middleware.js');
+  const next = async () => new Response('ok');
+  const go = (url, method = 'GET') => onRequest({ request: new Request(url, { method }), next });
+  let r = await go('https://afhasnow.com/check');
+  assert.equal(r.status, 302); assert.equal(r.headers.get('location'), 'https://afhasnow.com/?go=diag');
+  r = await go('https://afhasnow.com/Lights/?utm_source=tiktok');
+  assert.equal(r.status, 302); assert.equal(r.headers.get('location'), 'https://afhasnow.com/?go=lights&utm_source=tiktok');
+  assert.equal((await go('https://afhasnow.com/check', 'POST')).status, 200);
+  assert.equal((await go('https://afhasnow.com/checkout')).status, 200);
+});

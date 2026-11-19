@@ -25,6 +25,17 @@ window.addEventListener('DOMContentLoaded', () => {
     onLocationChanged();
     // رابط دليل الأعطال (?q=وصف العطل): نملأ الوصف ليبدأ المستخدم فوراً
     try { const q = new URLSearchParams(location.search).get('q'); if (q) { $('car-desc').value = q.slice(0, 300); onDescInput(); } } catch (e) {}
+    // الروابط القصيرة (?go=diag أو ?go=lights): ننزل مباشرة لنموذج التشخيص أو لمبات الطبلون
+    try {
+        const go = new URLSearchParams(location.search).get('go');
+        const target = go === 'diag' ? $('diag-form') : go === 'lights' ? $('chips-light') : null;
+        if (target) setTimeout(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: go === 'diag' ? 'start' : 'center' });
+            if (go === 'diag') { try { $('car-desc').focus({ preventScroll: true }); } catch (e) {} }
+            target.style.transition = 'box-shadow .3s'; target.style.boxShadow = '0 0 0 3px #F59E0B'; target.style.borderRadius = '12px';
+            setTimeout(() => { target.style.boxShadow = ''; }, 2600);
+        }, 500);
+    } catch (e) {}
     Providers.init();
     if (!LOC) suggestLocation();
 });
