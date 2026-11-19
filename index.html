@@ -71,18 +71,20 @@
         .hero-trust { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px; }
         .hero-pill { font-size: 12px; font-weight: 800; padding: 3px 10px; border-radius: 6px; background: #fff; border: 1px solid #BFDBFE; color: #1E3A8A; }
         .hero-pill-free { background: #172554; border-color: #93C5FD; color: #FDE68A; }
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); background: #070D1F; border-radius: 14px; border: 1px solid #1E293B; overflow: hidden; }
+        .ic { width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -0.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; margin-inline-end: .3em; }
+        .trust-row .ic, [class*="gap-"] > .ic, .rounded-full > .ic:only-child { margin-inline-end: 0; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); background: #fff; border-radius: 14px; border: 1px solid #E2E8F0; overflow: hidden; }
         .stats > div { text-align: center; padding: 12px 4px 10px; }
         .stats.has4 { grid-template-columns: repeat(4, 1fr); }
         .stats.has4 b { font-size: 22px; }
         .stats.has4 span { font-size: 11.5px; }
-        .stats > div + div { border-inline-start: 1px solid #1E293B; }
-        .stats b { display: block; font-size: 26px; line-height: 1.2; font-weight: 900; color: #60A5FA; letter-spacing: -.5px; }
+        .stats > div + div { border-inline-start: 1px solid #E2E8F0; }
+        .stats b { display: block; font-size: 26px; line-height: 1.2; font-weight: 900; color: #1D4ED8; letter-spacing: -.5px; }
         .stats small { font-size: 14px; margin-inline-start: 2px; }
-        .stats span { display: block; font-size: 12.5px; font-weight: 700; color: #CBD5E1; margin-top: 2px; }
-        #used-car-cta { background: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 100%) !important; border: 1.5px solid #1E3A8A !important; border-radius: 14px !important; box-shadow: none !important; }
-        #used-car-cta .text-slate-900 { color: #fff !important; }
-        #used-car-cta .text-slate-600 { color: #DBEAFE !important; }
+        .stats span { display: block; font-size: 12.5px; font-weight: 700; color: #475569; margin-top: 2px; }
+        #used-car-cta { background: #fff !important; border: 1.5px solid #BFDBFE !important; border-inline-start: 5px solid #1D4ED8 !important; border-radius: 14px !important; box-shadow: none !important; }
+        .trust-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; margin-top: 10px; font-size: 12px; font-weight: 700; color: #DBEAFE; }
+        .trust-row span { display: inline-flex; align-items: center; gap: 4px; }
         /* حواف فاتحة موحّدة لكل الأيقونات: كهرماني ذهبي على الأدوات (يلفت للاستخدام)، وأزرق فاتح في التنقل والرأس */
         #parts-cta > span:first-child, #sound-cta > span:first-child { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; margin: 0 auto 6px; border-radius: 14px; border: 2px solid #FCD34D; background: #FFFBEB; box-shadow: 0 0 0 3px rgba(245,158,11,.14); }
         .nav-btn .nav-ico { border: 1.5px solid #BFDBFE; }
@@ -126,6 +128,7 @@
     </style>
 </head>
 <body class="bg-slate-200 text-slate-900">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></symbol><symbol id="i-book" viewBox="0 0 24 24"><path d="M4 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4zM20 4h-6a3 3 0 0 0-3 3"/><path d="M20 4v14h-7"/></symbol><symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/></symbol><symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></symbol><symbol id="i-car" viewBox="0 0 24 24"><path d="M5 17h14M3 13l2-6a2 2 0 0 1 2-1.5h10A2 2 0 0 1 19 7l2 6v4a1 1 0 0 1-1 1h-2M6 18H4a1 1 0 0 1-1-1v-4h18"/><circle cx="7.5" cy="17.5" r="1.8"/><circle cx="16.5" cy="17.5" r="1.8"/></symbol><symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16M8 16v-4M12 16V8M16 16v-6"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 10"/></symbol><symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 4V2h6v2M9 11h6M9 15h4"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol><symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.6-1.5-3-1.5-1.7 0-3 .8-3 2s1.3 1.7 3 2 3 .8 3 2-1.3 2-3 2c-1.4 0-2.5-.5-3-1.5M12 6v2M12 16v2"/></symbol><symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></symbol><symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol><symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol><symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="i-hash" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/></symbol><symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3c0 5 10 5 10 9s-10 4-10 9M17 3c0 5-10 5-10 9s10 4 10 9"/></symbol><symbol id="i-infinity" viewBox="0 0 24 24"><path d="M7 9a3 3 0 1 0 0 6c2.5 0 7.5-6 10-6a3 3 0 1 1 0 6c-2.5 0-7.5-6-10-6z"/></symbol><symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol><symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol><symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></symbol><symbol id="i-paint" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18c1 0 1.5-.7 1.5-1.5 0-1.3-1-1.5-1-2.5s.7-1.5 1.7-1.5H17a4 4 0 0 0 4-4c0-4.7-4-8.5-9-8.5z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/></symbol><symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol><symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/></symbol><symbol id="i-robot" viewBox="0 0 24 24"><rect x="5" y="8" width="14" height="11" rx="3"/><path d="M12 4v4M9 13h.01M15 13h.01M10 16h4"/></symbol><symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h11l4 4v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 1-2z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/></symbol><symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3 3 0 0 0 6 0zM19 7l-3 7a3 3 0 0 0 6 0z"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol><symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></symbol><symbol id="i-siren" viewBox="0 0 24 24"><path d="M6 18v-6a6 6 0 0 1 12 0v6"/><path d="M4 21h16M12 3V2M4.2 6.2l-.7-.7M19.8 6.2l.7-.7"/><path d="M10 12a2 2 0 0 1 2-2"/></symbol><symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></symbol><symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2L12 17.3 6.5 20.2l1-6.2L3 9.6l6.2-.9z"/></symbol><symbol id="i-steth" viewBox="0 0 24 24"><path d="M5 3v6a5 5 0 0 0 10 0V3"/><path d="M10 14v2a5 5 0 0 0 10 0v-3"/><circle cx="20" cy="11" r="2"/></symbol><symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l2-5h14l2 5M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0zM5 13v8h14v-8M10 21v-5h4v5"/></symbol><symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 0 2-2h14a2 2 0 0 0 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 0-2 2H5a2 2 0 0 0-2-2v-2a2 2 0 0 0 0-4z"/><path d="M14 6v12"/></symbol><symbol id="i-tire" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3v5.5M12 15.5V21M3 12h5.5M15.5 12H21"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol><symbol id="i-unlock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></symbol><symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol><symbol id="i-vibe" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="18" rx="2"/><path d="M4 8v8M20 8v8M2 10v4M22 10v4"/></symbol><symbol id="i-window" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 12h16M12 4v16"/></symbol><symbol id="i-wrench" viewBox="0 0 24 24"><path d="M15 4a5 5 0 0 0-4.8 6.4L3 17.6V21h3.4l7.2-7.2A5 5 0 0 0 20 9l-3 1-3-3 1-3z"/></symbol><symbol id="i-xcircle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></symbol><symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></symbol></svg>
 <div id="print-report" dir="rtl"></div>
 <div class="max-w-md mx-auto min-h-screen flex flex-col bg-slate-50 relative shadow-xl">
 
@@ -133,16 +136,16 @@
     <header class="bg-slate-950 text-white px-4 pb-3 sticky top-0 z-40" style="padding-top:max(0.875rem, env(safe-area-inset-top))">
         <div class="flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 min-w-0">
-                <span class="w-9 h-9 shrink-0 rounded-xl bg-blue-600 flex items-center justify-center" aria-hidden="true"><svg viewBox="0 0 32 32" width="24" height="24" fill="none"><circle cx="16" cy="16" r="5.2" stroke="#fff" stroke-width="2.4"/><path d="M16 3v4.2M16 24.8V29M3 16h4.2M24.8 16H29M6.8 6.8l3 3M22.2 22.2l3 3M25.2 6.8l-3 3M9.8 22.2l-3 3" stroke="#F59E0B" stroke-width="2.6" stroke-linecap="round"/><path d="M12.6 16.2l2.4 2.4 4.6-4.9" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <img src="/icon-192.png" alt="" width="36" height="36" class="w-9 h-9 shrink-0 rounded-xl">
                 <div class="min-w-0">
-                    <h1 class="font-black text-sm leading-tight">الفاحص الذكي</h1>
-                    <p class="text-[10px] text-slate-400 truncate">شخّص العطل واعرف السعر العادل</p>
+                    <h1 class="font-black text-sm leading-tight">افحص الآن</h1>
+                    <p class="text-[10px] text-slate-400 truncate">الفاحص الذكي لأعطال السيارات</p>
                 </div>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
                 <button id="bal-chip" onclick="openPayModal()" aria-label="رصيدك" data-noi18n class="hidden bg-amber-500 text-slate-950 text-[11px] font-black px-2.5 py-1.5 rounded-lg whitespace-nowrap">💼 0</button>
-                <button id="loc-chip" onclick="openLocationModal()" class="bg-slate-800 border border-slate-700 text-[11px] font-bold px-2.5 py-1.5 rounded-lg max-w-[9.5rem] truncate">📍 اختر مدينتك</button>
-                <button onclick="switchTab('emergency')" aria-label="الطوارئ" class="bg-red-600 text-white text-xs font-bold w-8 h-8 rounded-lg">🚨</button>
+                <button id="loc-chip" onclick="openLocationModal()" class="bg-slate-800 border border-slate-700 text-[11px] font-bold px-2.5 py-1.5 rounded-lg max-w-[9.5rem] truncate"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg>اختر مدينتك</button>
+                <button onclick="switchTab('emergency')" aria-label="الطوارئ" class="bg-slate-800 border border-slate-700 text-red-400 text-sm w-8 h-8 rounded-lg flex items-center justify-center"><svg class="ic" aria-hidden="true"><use href="#i-siren"/></svg></button>
             </div>
         </div>
     </header>
@@ -158,36 +161,40 @@
                 <button type="button" onclick="document.getElementById('diag-form').scrollIntoView({ behavior: 'smooth', block: 'start' })" class="hero-cta">ابدأ فحصاً مجانياً</button>
                 <div class="hero-trust">
                     <span id="welcome-free" class="hero-pill hero-pill-free">أول فحصين مجانيان</span>
-                    <span class="hero-pill">دفع آمن</span>
+                </div>
+                <div class="trust-row">
+                    <span><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>دفع آمن ومشفّر</span>
+                    <span><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>لا نحفظ صورك</span>
+                    <span><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>تحذيرات السلامة مجانية</span>
                 </div>
             </div>
             <div class="no-print stats" aria-label="عن التطبيق">
                 <div><b>8</b><span>أدوات فحص</span></div>
-                <div><b>7</b><span>لغات</span></div>
+                <div><b>2</b><span>تشخيص مجاني</span></div>
                 <div><b>60<small>ث</small></b><span>لأول نتيجة</span></div>
                 <div id="stat-acc" class="hidden"><b data-noi18n>0%</b><span>قيّموا الدقة 90%+</span></div>
             </div>
             <a href="inspect.html" id="used-car-cta" class="block rounded-2xl p-3.5 border-2 border-amber-400 no-underline">
                 <span class="flex items-center justify-between gap-2">
                     <span class="min-w-0">
-                        <span class="block font-black text-[15px] text-slate-900">🔍 ناوي تشتري سيارة مستعملة؟</span>
+                        <span class="block font-black text-[15px] text-slate-900"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>ناوي تشتري سيارة مستعملة؟</span>
                         <span class="block text-[12px] text-slate-600 leading-relaxed mt-0.5">افحصها بنفسك قبل الدفع: 17 نقطة مهمة في دقيقتين أو 35 نقطة كاملة، وتقرير فيه السعر العادل وحجة للتفاوض. حتى عن بعد.</span>
                     </span>
                     <span class="shrink-0 bg-amber-500 text-slate-950 font-black text-[12px] rounded-xl px-3 py-2">ابدأ فحص المستعملة</span>
                 </span>
             </a>
             <div id="fb-card" class="hidden no-print bg-white border border-emerald-200 rounded-2xl p-3.5 space-y-2">
-                <p class="font-black text-[15px] text-slate-900">ساعدنا نكون أدق 🙏</p>
+                <p class="font-black text-[15px] text-slate-900">ساعدنا نكون أدق </p>
                 <p class="text-[14px] text-slate-600 leading-relaxed">قبل أيام شخّصنا: <b id="fb-title"></b>. ما نسبة دقة التشخيص بعد الإصلاح؟</p>
                 <div class="grid grid-cols-2 gap-2">
-                    <button onclick="sendFeedback('a')" class="bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-[13px]">✅ 90% – 100%</button>
-                    <button onclick="sendFeedback('b')" class="bg-amber-100 text-amber-900 font-bold py-2.5 rounded-xl text-[13px]">🔶 80% – 90%</button>
-                    <button onclick="sendFeedback('c')" class="bg-rose-100 text-rose-900 font-bold py-2.5 rounded-xl text-[13px]">❌ أقل من 80%</button>
+                    <button onclick="sendFeedback('a')" class="bg-emerald-600 text-white font-bold py-2.5 rounded-xl text-[13px]"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>90% – 100%</button>
+                    <button onclick="sendFeedback('b')" class="bg-amber-100 text-amber-900 font-bold py-2.5 rounded-xl text-[13px]"><svg class="ic" aria-hidden="true" style="color:#F59E0B"><use href="#i-dot"/></svg>80% – 90%</button>
+                    <button onclick="sendFeedback('c')" class="bg-rose-100 text-rose-900 font-bold py-2.5 rounded-xl text-[13px]"><svg class="ic" aria-hidden="true"><use href="#i-xcircle"/></svg>أقل من 80%</button>
                     <button onclick="sendFeedback('later')" class="bg-slate-100 text-slate-700 font-bold py-2.5 rounded-xl text-[13px]">لم أصلحه بعد</button>
                 </div>
             </div>
             <div id="diag-form" class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-3" style="scroll-margin-top:84px">
-                <h2 class="font-extrabold text-sm text-slate-900">🚗 افحص سيارتك</h2>
+                <h2 class="font-extrabold text-sm text-slate-900"><svg class="ic" aria-hidden="true"><use href="#i-car"/></svg>افحص سيارتك</h2>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label for="car-make" class="text-[10px] text-slate-500 font-bold block mb-1">الشركة</label>
@@ -218,9 +225,9 @@
                 </div>
 
                 <div class="bg-slate-100 p-1 rounded-xl grid grid-cols-3 gap-1 text-[11px] font-extrabold text-slate-600">
-                    <button id="mode-desc" onclick="setDiagMode('desc')" class="mode-btn active py-2 rounded-lg">📝 بالوصف</button>
-                    <button id="mode-voice" onclick="setDiagMode('voice')" class="mode-btn py-2 rounded-lg">🎙️ بالصوت</button>
-                    <button id="mode-code" onclick="setDiagMode('code')" class="mode-btn py-2 rounded-lg">🔌 بالكود</button>
+                    <button id="mode-desc" onclick="setDiagMode('desc')" class="mode-btn active py-2 rounded-lg"><svg class="ic" aria-hidden="true"><use href="#i-edit"/></svg>بالوصف</button>
+                    <button id="mode-voice" onclick="setDiagMode('voice')" class="mode-btn py-2 rounded-lg"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg>بالصوت</button>
+                    <button id="mode-code" onclick="setDiagMode('code')" class="mode-btn py-2 rounded-lg"><svg class="ic" aria-hidden="true"><use href="#i-plug"/></svg>بالكود</button>
                 </div>
 
                 <!-- Mode: description -->
@@ -228,22 +235,22 @@
                     <label for="car-desc" class="text-[11px] text-slate-600 font-bold block">صف المشكلة بكلامك (أو اختر من الخيارات تحتها):</label>
                     <div class="relative">
                         <textarea id="car-desc" rows="4" maxlength="600" placeholder="مثال: السيارة تفتف وترج وهي واقفة عند الإشارة، ولمبة المكينة تومض" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pl-11 text-xs leading-relaxed outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white resize-none"></textarea>
-                        <button onclick="startDictation('car-desc')" aria-label="تحدث بدل الكتابة" class="absolute left-2 top-2 w-8 h-8 rounded-lg bg-blue-50 text-blue-700 text-sm">🎤</button>
+                        <button onclick="startDictation('car-desc')" aria-label="تحدث بدل الكتابة" class="absolute left-2 top-2 w-8 h-8 rounded-lg bg-blue-50 text-blue-700 text-sm"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg></button>
                         <button id="desc-confirm" onclick="startInterview()" aria-label="تأكيد الوصف وبدء الفحص" disabled class="absolute left-2 bottom-3 w-8 h-8 rounded-lg bg-slate-200 text-slate-400 text-sm font-black transition-all">✓</button>
                     </div>
-                    <p id="dictate-status" class="hidden text-[10px] text-blue-700 font-bold">🔴 أستمع إليك… تحدث الآن</p>
+                    <p id="dictate-status" class="hidden text-[10px] text-blue-700 font-bold"><svg class="ic" aria-hidden="true" style="color:#DC2626"><use href="#i-dot"/></svg>أستمع إليك… تحدث الآن</p>
                     <div class="space-y-2 bg-slate-50 border border-slate-200 rounded-xl p-2.5">
                         <p class="text-[10px] text-slate-500 font-bold">اختر ما ينطبق (اختياري، يرفع الدقة كثيراً):</p>
                         <div>
-                            <span class="text-[10px] font-extrabold text-slate-700 block mb-1">⏱️ متى تظهر المشكلة؟</span>
+                            <span class="text-[10px] font-extrabold text-slate-700 block mb-1"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>متى تظهر المشكلة؟</span>
                             <div id="chips-when" class="flex flex-wrap gap-1.5"></div>
                         </div>
                         <div>
-                            <span class="text-[10px] font-extrabold text-slate-700 block mb-1">👀 وش تلاحظ؟</span>
+                            <span class="text-[10px] font-extrabold text-slate-700 block mb-1"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>وش تلاحظ؟</span>
                             <div id="chips-sym" class="flex flex-wrap gap-1.5"></div>
                         </div>
                         <div>
-                            <span class="text-[10px] font-extrabold text-slate-700 block mb-1">🚨 لمبات ظاهرة في الطبلون</span>
+                            <span class="text-[10px] font-extrabold text-slate-700 block mb-1"><svg class="ic" aria-hidden="true"><use href="#i-siren"/></svg>لمبات ظاهرة في الطبلون</span>
                             <div id="chips-light" class="flex flex-wrap gap-1.5"></div>
                         </div>
                     </div>
@@ -254,10 +261,10 @@
                         <button onclick="quickDesc('صرير عند الفرملة')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">صرير الفرامل</button>
                         <button onclick="quickDesc('الحرارة ترتفع')" class="whitespace-nowrap px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200">الحرارة ترتفع</button>
                     </div>
-                    <button onclick="startInterview()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-extrabold py-3 rounded-xl text-xs shadow-md">⚡ افحص الآن</button>
+                    <button onclick="startInterview()" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-extrabold py-3 rounded-xl text-xs shadow-md"><svg class="ic" aria-hidden="true"><use href="#i-zap"/></svg>افحص الآن</button>
                     <div id="interview" class="hidden bg-indigo-50 border border-indigo-200 rounded-xl p-3 space-y-2.5">
                         <div class="flex justify-between items-center gap-2">
-                            <span id="iv-title" class="font-black text-[11px] text-indigo-900">🤖 جاري التحليل…</span>
+                            <span id="iv-title" class="font-black text-[11px] text-indigo-900"><svg class="ic" aria-hidden="true"><use href="#i-robot"/></svg>جاري التحليل…</span>
                             <span id="iv-step" class="text-[10px] font-bold text-indigo-600 shrink-0"></span>
                         </div>
                         <div class="h-1.5 bg-indigo-100 rounded-full overflow-hidden"><div id="iv-bar" class="h-full bg-indigo-600 transition-all" style="width:5%"></div></div>
@@ -288,12 +295,12 @@
                     </div>
                     <div id="rec-box" class="hidden bg-slate-950 rounded-xl p-2.5">
                         <div class="flex justify-between text-[10px] text-slate-300 font-bold mb-1.5">
-                            <span id="rec-label">🔴 جاري التسجيل…</span>
+                            <span id="rec-label"><svg class="ic" aria-hidden="true" style="color:#DC2626"><use href="#i-dot"/></svg>جاري التسجيل…</span>
                             <span id="rec-timer" class="font-mono">8</span>
                         </div>
                         <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div id="rec-level" class="h-full bg-emerald-400" style="width:0%"></div></div>
                     </div>
-                    <button id="rec-btn" onclick="startSoundDiagnosis()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-extrabold py-3 rounded-xl text-xs shadow-md">🎙️ سجّل صوت السيارة وافحص</button>
+                    <button id="rec-btn" onclick="startSoundDiagnosis()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-extrabold py-3 rounded-xl text-xs shadow-md"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg>سجّل صوت السيارة وافحص</button>
                     <p class="text-[10px] text-slate-400">إذا كتبت وصفاً في تبويب "بالوصف" فسيُدمج مع الصوت لدقة أعلى.</p>
                 </div>
 
@@ -306,7 +313,7 @@
                     </div>
                     <div id="obd-box" class="bg-slate-950 text-white rounded-xl p-3 space-y-2">
                         <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-black">🔌 قراءة مباشرة من السيارة</span>
+                            <span class="text-[11px] font-black"><svg class="ic" aria-hidden="true"><use href="#i-plug"/></svg>قراءة مباشرة من السيارة</span>
                             <span class="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded">تجريبي</span>
                         </div>
                         <p class="text-[10px] text-slate-400 leading-relaxed">يحتاج قارئ OBD2 بلوتوث من نوع ELM327 BLE، ومتصفح Chrome على أندرويد أو كمبيوتر. شغّل السيارة (أو المفتاح على وضع ON) قبل الاتصال.</p>
@@ -319,7 +326,7 @@
 
             <!-- Skeleton -->
             <div id="car-skeleton" class="hidden bg-white rounded-2xl p-4 border border-slate-200 space-y-3">
-                <p id="skeleton-msg" class="text-[11px] text-indigo-700 font-bold">🤖 جاري تحليل المشكلة بالذكاء الاصطناعي… (حتى 20 ثانية)</p>
+                <p id="skeleton-msg" class="text-[11px] text-indigo-700 font-bold"><svg class="ic" aria-hidden="true"><use href="#i-robot"/></svg>جاري تحليل المشكلة بالذكاء الاصطناعي… (حتى 20 ثانية)</p>
                 <div class="h-4 w-32 shimmer rounded-md"></div>
                 <div class="h-6 w-3/4 shimmer rounded-md"></div>
                 <div class="h-20 w-full shimmer rounded-xl"></div>
@@ -353,27 +360,27 @@
                 </div>
 
                 <div id="paywall" class="hidden no-print bg-gradient-to-l from-amber-50 to-white border-2 border-amber-300 rounded-xl p-3 space-y-2">
-                    <p id="pw-title" class="font-black text-[13px] text-slate-900">🔓 افتح كل الخدمات ليوم كامل</p>
+                    <p id="pw-title" class="font-black text-[13px] text-slate-900"><svg class="ic" aria-hidden="true"><use href="#i-unlock"/></svg>افتح كل الخدمات ليوم كامل</p>
                     <ul class="text-[11px] text-slate-700 space-y-0.5">
-                        <li>💰 التكلفة العادلة بالتفصيل في <span class="city-name"></span></li>
-                        <li>🔧 القطع اللازمة وأسعارها</li>
-                        <li>🔍 ماذا تطلب من الفني فحصه قبل ما يبدّل شيء</li>
-                        <li>🔎 هل القطعة التي تقترحها الورشة لازمة فعلاً؟</li>
-                        <li>📥 التقرير PDF وإرساله للورش لطلب عروض أسعار</li>
-                        <li>♾️ فحوصات غير محدودة لمدة 24 ساعة + الأسعار وتدقيق الفواتير والفحص قبل الشراء</li>
+                        <li><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg>التكلفة العادلة بالتفصيل في <span class="city-name"></span></li>
+                        <li><svg class="ic" aria-hidden="true"><use href="#i-wrench"/></svg>القطع اللازمة وأسعارها</li>
+                        <li><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>ماذا تطلب من الفني فحصه قبل ما يبدّل شيء</li>
+                        <li><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>هل القطعة التي تقترحها الورشة لازمة فعلاً؟</li>
+                        <li><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>التقرير PDF وإرساله للورش لطلب عروض أسعار</li>
+                        <li><svg class="ic" aria-hidden="true"><use href="#i-infinity"/></svg>فحوصات غير محدودة لمدة 24 ساعة + الأسعار وتدقيق الفواتير والفحص قبل الشراء</li>
                     </ul>
-                    <p class="text-[11px] font-bold text-emerald-700">💡 معرفة السعر العادل قبل الإصلاح قد توفر عليك مئات الريالات.</p>
-                    <button id="pw-btn" onclick="unlockCurrent()" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl text-sm shadow-md">🔓 افتح التقرير</button>
+                    <p class="text-[11px] font-bold text-emerald-700"><svg class="ic" aria-hidden="true"><use href="#i-bulb"/></svg>معرفة السعر العادل قبل الإصلاح قد توفر عليك مئات الريالات.</p>
+                    <button id="pw-btn" onclick="unlockCurrent()" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl text-sm shadow-md"><svg class="ic" aria-hidden="true"><use href="#i-unlock"/></svg>افتح التقرير</button>
                     <p id="pw-sub" class="text-[10px] text-slate-500 text-center"></p>
                 </div>
 
                 <div class="space-y-2 text-[11px]">
                     <div class="paid lite">
-                        <span class="font-black text-slate-800 block mb-1">🔧 القطع المتوقعة:</span>
+                        <span class="font-black text-slate-800 block mb-1"><svg class="ic" aria-hidden="true"><use href="#i-wrench"/></svg>القطع المتوقعة:</span>
                         <ul id="res-parts" class="space-y-1"></ul>
                     </div>
                     <div id="res-checks-box" class="hidden paid lite">
-                        <span class="font-black text-slate-800 block mb-1">🔍 اطلب من الفني فحص:</span>
+                        <span class="font-black text-slate-800 block mb-1"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>اطلب من الفني فحص:</span>
                         <ul id="res-checks" class="list-disc pr-5 space-y-0.5 text-slate-700"></ul>
                     </div>
                     <div id="res-advice" class="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-2 text-[11px] leading-relaxed"></div>
@@ -381,21 +388,21 @@
                         <p id="res-question" class="text-[11px] text-blue-900 font-bold leading-relaxed"></p>
                         <div class="flex gap-1.5">
                             <input id="followup-input" maxlength="200" placeholder="اكتب إجابتك هنا…" class="flex-1 min-w-0 bg-white border border-blue-200 rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-blue-600">
-                            <button onclick="startDictation('followup-input')" aria-label="أجب بالصوت" class="shrink-0 w-9 rounded-lg bg-white border border-blue-200 text-sm">🎤</button>
+                            <button onclick="startDictation('followup-input')" aria-label="أجب بالصوت" class="shrink-0 w-9 rounded-lg bg-white border border-blue-200 text-sm"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg></button>
                         </div>
-                        <button onclick="answerFollowup()" class="w-full bg-blue-700 text-white font-extrabold py-2 rounded-lg text-xs">🔄 أجب وأعد الفحص</button>
+                        <button onclick="answerFollowup()" class="w-full bg-blue-700 text-white font-extrabold py-2 rounded-lg text-xs"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>أجب وأعد الفحص</button>
                     </div>
                     <p id="res-alt" class="text-[10px] text-slate-500"></p>
                 </div>
 
                 <div class="paid lite bg-blue-50/80 border border-blue-200 rounded-xl p-2.5">
-                    <span class="font-black text-blue-950 text-[11px] block mb-1">💡 قبل ما تدفع</span>
+                    <span class="font-black text-blue-950 text-[11px] block mb-1"><svg class="ic" aria-hidden="true"><use href="#i-bulb"/></svg>قبل ما تدفع</span>
                     <ul id="protect-list" class="text-[11px] text-slate-700 space-y-1 leading-relaxed"></ul>
                     <p id="negotiator-script" class="hidden"></p>
                 </div>
 
                 <div class="paid bg-white border border-slate-200 rounded-xl p-3 space-y-2 no-print">
-                    <span class="font-black text-slate-900 text-[11px] block">🔎 الورشة تقول لازم تغيّر قطعة؟ اسأل قبل ما توافق</span>
+                    <span class="font-black text-slate-900 text-[11px] block"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>الورشة تقول لازم تغيّر قطعة؟ اسأل قبل ما توافق</span>
                     <div class="flex gap-1.5">
                         <input id="pc-part-r" maxlength="60" placeholder="اسم القطعة، مثل: طرمبة الدركسون" class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs outline-none focus:ring-2 focus:ring-blue-600">
                         <button onclick="checkPart('r')" class="shrink-0 bg-slate-900 text-white font-bold px-3 rounded-lg text-[11px]">هل هي لازمة؟</button>
@@ -404,24 +411,24 @@
                 </div>
 
                 <div class="paid grid grid-cols-2 gap-2 no-print">
-                    <button onclick="scrollToProviders('workshop')" class="bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl text-[11px]">🔧 أرسل لورشة</button>
-                    <button onclick="scrollToProviders('agent')" class="bg-blue-600 text-white font-black py-2.5 rounded-xl text-[11px]">🧩 سعّر القطع عند وكيل</button>
+                    <button onclick="scrollToProviders('workshop')" class="bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl text-[11px]"><svg class="ic" aria-hidden="true"><use href="#i-wrench"/></svg>أرسل لورشة</button>
+                    <button onclick="scrollToProviders('agent')" class="bg-blue-600 text-white font-black py-2.5 rounded-xl text-[11px]"><svg class="ic" aria-hidden="true"><use href="#i-store"/></svg>سعّر القطع عند وكيل</button>
                 </div>
-                <button id="res-share" onclick="shareResult()" class="no-print w-full bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs">📤 شارك النتيجة في واتساب</button>
-                <div id="upgrade-box" class="hidden no-print"><button id="upgrade-btn" onclick="upgradeCurrent()" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl text-sm shadow-md">⬆️ ترقية هذا الفحص إلى الوافي</button><p class="text-[11px] text-slate-600 text-center mt-1 mb-2">نوع الترقية: من «فحص السيارة + قطع الأعطال» إلى «الفحص الوافي»، وتضيف مدقق القطع وتقرير PDF وإرساله للورش.</p></div>
-                <button onclick="exportReportPDF()" class="paid no-print w-full bg-slate-900 text-white font-bold py-2 rounded-xl text-xs">📥 حفظ التقرير PDF</button>
+                <button id="res-share" onclick="shareResult()" class="no-print w-full bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg>شارك النتيجة في واتساب</button>
+                <div id="upgrade-box" class="hidden no-print"><button id="upgrade-btn" onclick="upgradeCurrent()" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl text-sm shadow-md"><svg class="ic" aria-hidden="true"><use href="#i-up"/></svg>ترقية هذا الفحص إلى الوافي</button><p class="text-[11px] text-slate-600 text-center mt-1 mb-2">نوع الترقية: من «فحص السيارة + قطع الأعطال» إلى «الفحص الوافي»، وتضيف مدقق القطع وتقرير PDF وإرساله للورش.</p></div>
+                <button onclick="exportReportPDF()" class="paid no-print w-full bg-slate-900 text-white font-bold py-2 rounded-xl text-xs"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>حفظ التقرير PDF</button>
                 <p class="text-[10px] text-slate-400 leading-relaxed">تشخيص مبدئي يساعدك تفهم المشكلة وتتفاوض على السعر، ولا يغني عن فحص الفني.</p>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
                 <a href="tools.html?t=parts" id="parts-cta" class="block rounded-2xl p-3 border-2 border-blue-200 bg-white shadow-sm no-underline text-center">
-                    <span class="block text-2xl">🧾</span>
+                    <span class="block text-2xl"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg></span>
                     <span class="block font-black text-[14px] text-slate-900">أسعار القطع</span>
                     <span class="block text-[11px] text-slate-500 leading-snug">حمّل صورة ورقة القطع واعرف الأسعار</span>
                     <span id="parts-cta-price" class="inline-block mt-1.5 bg-amber-500 text-slate-950 font-black text-[12px] rounded-lg px-2.5 py-1">5 ر.س</span>
                 </a>
                 <a href="tools.html?t=sound" id="sound-cta" class="block rounded-2xl p-3 border-2 border-blue-200 bg-white shadow-sm no-underline text-center">
-                    <span class="block text-2xl">🎙️</span>
+                    <span class="block text-2xl"><svg class="ic" aria-hidden="true"><use href="#i-mic"/></svg></span>
                     <span class="block font-black text-[14px] text-slate-900">فحص صوت المحرك</span>
                     <span class="block text-[11px] text-slate-500 leading-snug">سجّل صوت المحرك ونحلله</span>
                     <span id="sound-cta-price" class="inline-block mt-1.5 bg-amber-500 text-slate-950 font-black text-[12px] rounded-lg px-2.5 py-1">9 ر.س</span>
@@ -429,22 +436,22 @@
             </div>
             <section class="no-print space-y-2.5" aria-label="أدوات الفحص المستقلة">
                 <div>
-                    <h2 class="font-extrabold text-[16px] text-slate-900">🧰 أدوات الفحص</h2>
+                    <h2 class="font-extrabold text-[16px] text-slate-900"><svg class="ic" aria-hidden="true"><use href="#i-wrench"/></svg>أدوات الفحص</h2>
                     <p class="text-[13px] text-slate-500">استخدم أي أداة وحدها لسيارتك</p>
                 </div>
                 <div class="grid grid-cols-2 gap-2.5">
-                    <a href="tools.html?t=camera" class="tool-tile"><span class="ico" style="background:#DBEAFE">🎥</span><b>الفحص بالكاميرا</b><small>صوّر أي جزء ونحلله</small></a>
-                    <a href="tools.html?t=sound" class="tool-tile"><span class="ico" style="background:#D1FAE5">🔊</span><b>تحليل صوت المحرك</b><small>تقطيع، طقطقة، صياح</small></a>
-                    <a href="tools.html?t=vibration" class="tool-tile"><span class="ico" style="background:#EDE9FE">📳</span><b>قياس الاهتزاز</b><small>وقوف أو قيادة</small></a>
-                    <a href="tools.html?t=tires" class="tool-tile"><span class="ico" style="background:#FEF3C7">🛞</span><b>فحص الكفرات</b><small>سنة الصنع والتآكل</small></a>
-                    <a href="tools.html?t=lights" class="tool-tile"><span class="ico" style="background:#FEE2E2">⚠️</span><b>لمبات الطبلون</b><small>صوّرها واعرف معناها</small></a>
-                    <button type="button" onclick="openCodeTool()" class="tool-tile"><span class="ico" style="background:#E2E8F0">🔢</span><b>قراءة كود العطل</b><small>معنى الكود وما تفعل</small></button>
-                    <a href="tools.html?t=paint" class="tool-tile"><span class="ico" style="background:#FCE7F3">🎨</span><b>سماكة الدهان</b><small>خريطة الرش والمعجون</small></a>
-                    <a href="tools.html?t=glass" class="tool-tile"><span class="ico" style="background:#E0F2FE">🪟</span><b>كشف القطع المستبدلة</b><small>تواريخ الزجاج والأحزمة</small></a>
+                    <a href="tools.html?t=camera" class="tool-tile"><span class="ico" style="background:#DBEAFE"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg></span><b>الفحص بالكاميرا</b><small>صوّر أي جزء ونحلله</small></a>
+                    <a href="tools.html?t=sound" class="tool-tile"><span class="ico" style="background:#D1FAE5"><svg class="ic" aria-hidden="true"><use href="#i-sound"/></svg></span><b>تحليل صوت المحرك</b><small>تقطيع، طقطقة، صياح</small></a>
+                    <a href="tools.html?t=vibration" class="tool-tile"><span class="ico" style="background:#EDE9FE"><svg class="ic" aria-hidden="true"><use href="#i-vibe"/></svg></span><b>قياس الاهتزاز</b><small>وقوف أو قيادة</small></a>
+                    <a href="tools.html?t=tires" class="tool-tile"><span class="ico" style="background:#FEF3C7"><svg class="ic" aria-hidden="true"><use href="#i-tire"/></svg></span><b>فحص الكفرات</b><small>سنة الصنع والتآكل</small></a>
+                    <a href="tools.html?t=lights" class="tool-tile"><span class="ico" style="background:#FEE2E2"><svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg></span><b>لمبات الطبلون</b><small>صوّرها واعرف معناها</small></a>
+                    <button type="button" onclick="openCodeTool()" class="tool-tile"><span class="ico" style="background:#E2E8F0"><svg class="ic" aria-hidden="true"><use href="#i-hash"/></svg></span><b>قراءة كود العطل</b><small>معنى الكود وما تفعل</small></button>
+                    <a href="tools.html?t=paint" class="tool-tile"><span class="ico" style="background:#FCE7F3"><svg class="ic" aria-hidden="true"><use href="#i-paint"/></svg></span><b>سماكة الدهان</b><small>خريطة الرش والمعجون</small></a>
+                    <a href="tools.html?t=glass" class="tool-tile"><span class="ico" style="background:#E0F2FE"><svg class="ic" aria-hidden="true"><use href="#i-window"/></svg></span><b>كشف القطع المستبدلة</b><small>تواريخ الزجاج والأحزمة</small></a>
                 </div>
             </section>
             <a href="inspect.html" class="no-print flex items-center gap-3 rounded-2xl p-4 text-white" style="background:#1E3A8A">
-                <span class="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background:#1D4ED8">🔍</span>
+                <span class="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style="background:#1D4ED8"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg></span>
                 <span class="flex-1 min-w-0">
                     <span class="block font-black text-[16px]">فحص السيارة المستعملة</span>
                     <span class="block text-[13px]" style="color:#DBEAFE">ناوي تشتري؟ فحص كامل بالكاميرا والصوت والاهتزاز، وتقرير وسعر تفاوض</span>
@@ -456,12 +463,12 @@
         <!-- ================= TAB: PRICES ================= -->
         <section id="tab-prices" class="hidden space-y-3.5">
             <div id="prices-paywall" class="hidden bg-gradient-to-l from-amber-50 to-white border-2 border-amber-300 rounded-2xl p-3 space-y-2">
-                <p class="font-black text-[13px]">🔓 أسعار القطع وتدقيق الفواتير</p>
+                <p class="font-black text-[13px]"><svg class="ic" aria-hidden="true"><use href="#i-unlock"/></svg>أسعار القطع وتدقيق الفواتير</p>
                 <p class="text-[11px] text-slate-600">قارن سعر قطعة أو فاتورة واحدة بالسعر العادل.</p>
-                <button onclick="openPayModal(null, 'prices', 'prices')" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl text-sm">🔓 أسعار القطع بـ <span id="prices-pw-price" data-noi18n></span></button>
+                <button onclick="openPayModal(null, 'prices', 'prices')" class="w-full bg-amber-500 text-slate-950 font-black py-2.5 rounded-xl text-sm"><svg class="ic" aria-hidden="true"><use href="#i-unlock"/></svg>أسعار القطع بـ <span id="prices-pw-price" data-noi18n></span></button>
             </div>
             <div class="paid bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2.5">
-                <h2 class="font-extrabold text-sm">🔎 هل هذه القطعة لازمة فعلاً؟</h2>
+                <h2 class="font-extrabold text-sm"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>هل هذه القطعة لازمة فعلاً؟</h2>
                 <p class="text-[10px] text-slate-500">اكتب العطل وما تقترحه الورشة، ونقول لك هل تغييرها مرتبط بالعطل أم لا.</p>
                 <textarea id="pc-fault-p" rows="2" maxlength="300" placeholder="وصف العطل، مثل: صوت ونين لما ألف الدركسون" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs resize-none outline-none"></textarea>
                 <input id="pc-part-p" maxlength="60" placeholder="القطعة المقترحة، مثل: طرمبة الدركسون" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs outline-none">
@@ -469,7 +476,7 @@
                 <div id="pc-result-p" class="hidden rounded-xl p-2.5 text-[11px] leading-relaxed border space-y-1"></div>
             </div>
             <div class="paid bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2.5">
-                <h2 class="font-extrabold text-sm">💰 السعر العادل في <span class="city-name"></span></h2>
+                <h2 class="font-extrabold text-sm"><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg>السعر العادل في <span class="city-name"></span></h2>
                 <select id="price-part" onchange="renderPriceLookup()" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold outline-none"></select>
                 <div class="bg-slate-950 text-white rounded-xl p-3">
                     <div class="grid grid-cols-3 gap-2 text-center">
@@ -482,8 +489,8 @@
             </div>
 
             <div class="paid bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2.5">
-                <h2 class="font-extrabold text-sm">🧾 دقّق فاتورتك</h2>
-                <button onclick="document.getElementById('invoice-file').click()" class="w-full bg-indigo-50 border border-indigo-200 text-indigo-800 font-bold py-2.5 rounded-xl text-xs">📷 صوّر الفاتورة وتُقرأ تلقائياً</button>
+                <h2 class="font-extrabold text-sm"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg>دقّق فاتورتك</h2>
+                <button onclick="document.getElementById('invoice-file').click()" class="w-full bg-indigo-50 border border-indigo-200 text-indigo-800 font-bold py-2.5 rounded-xl text-xs"><svg class="ic" aria-hidden="true"><use href="#i-camera"/></svg>صوّر الفاتورة وتُقرأ تلقائياً</button>
                 <input type="file" id="invoice-file" accept="image/*" capture="environment" class="hidden" onchange="readInvoicePhoto(this)">
                 <p id="invoice-status" class="hidden text-[10px] text-indigo-700 font-bold"></p>
                 <div id="invoice-items" class="hidden space-y-1"></div>
@@ -492,12 +499,12 @@
                     <input type="number" inputmode="decimal" id="audit-part-price" placeholder="سعر القطعة" class="bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono">
                     <input type="number" inputmode="decimal" id="audit-labor-price" placeholder="أجرة اليد" class="bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono">
                 </div>
-                <button onclick="runAudit()" class="w-full bg-slate-950 text-white font-extrabold py-2.5 rounded-xl text-xs">⚖️ قارن بسعر السوق</button>
+                <button onclick="runAudit()" class="w-full bg-slate-950 text-white font-extrabold py-2.5 rounded-xl text-xs"><svg class="ic" aria-hidden="true"><use href="#i-scale"/></svg>قارن بسعر السوق</button>
                 <div id="audit-result" class="hidden rounded-xl p-3 text-[11px] leading-relaxed border whitespace-pre-line"></div>
             </div>
 
             <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2.5">
-                <h2 class="font-extrabold text-sm">➕ ساهم بسعر دفعته</h2>
+                <h2 class="font-extrabold text-sm"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>ساهم بسعر دفعته</h2>
                 <p class="text-[10px] text-slate-500">سعرك يساعد غيرك في <span class="city-name"></span> يعرف السعر الحقيقي. لا نعرض اسمك.</p>
                 <select id="contrib-part" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold outline-none"></select>
                 <input type="number" inputmode="decimal" id="contrib-price" placeholder="المبلغ المدفوع للقطعة" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-mono">
@@ -508,7 +515,7 @@
         <!-- ================= TAB: EMERGENCY ================= -->
         <section id="tab-emergency" class="hidden space-y-3.5">
             <div class="bg-gradient-to-b from-red-950 to-slate-950 text-white rounded-2xl p-4 shadow-xl border border-red-800 space-y-3">
-                <h2 class="font-black text-sm">🚨 أرقام الطوارئ في <span class="country-name"></span></h2>
+                <h2 class="font-black text-sm"><svg class="ic" aria-hidden="true"><use href="#i-siren"/></svg>أرقام الطوارئ في <span class="country-name"></span></h2>
                 <div id="emergency-numbers" class="grid grid-cols-2 gap-2"></div>
                 <div class="text-[11px] text-red-100 leading-relaxed bg-black/30 rounded-xl p-2.5 space-y-1">
                     <p>• إذا ارتفعت الحرارة أو ظهرت لمبة الزيت الحمراء: أطفئ المحرك فوراً.</p>
@@ -517,7 +524,7 @@
                 </div>
             </div>
             <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2.5">
-                <h2 class="font-extrabold text-sm">📟 معنى كود العطل (يعمل بدون إنترنت)</h2>
+                <h2 class="font-extrabold text-sm"><svg class="ic" aria-hidden="true"><use href="#i-chip"/></svg>معنى كود العطل (يعمل بدون إنترنت)</h2>
                 <input type="text" id="offline-code-input" oninput="checkOfflineCode()" maxlength="5" dir="ltr" placeholder="P0300" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm font-mono uppercase outline-none">
                 <div id="offline-result" class="hidden rounded-xl p-3 text-[11px] leading-relaxed border space-y-1"></div>
             </div>
@@ -527,12 +534,12 @@
         <section id="tab-mine" class="hidden space-y-3.5">
             <div class="acct-slot"></div>
             <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2">
-                <h2 class="font-extrabold text-sm">📨 طلباتي للورش والوكلاء</h2>
+                <h2 class="font-extrabold text-sm"><svg class="ic" aria-hidden="true"><use href="#i-mail"/></svg>طلباتي للورش والوكلاء</h2>
                 <div id="my-requests" class="space-y-2"></div>
             </div>
             <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2">
                 <div class="flex justify-between items-center">
-                    <h2 class="font-extrabold text-sm">📋 فحوصاتي السابقة</h2>
+                    <h2 class="font-extrabold text-sm"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg>فحوصاتي السابقة</h2>
                     <button onclick="clearHistory()" class="text-[10px] text-slate-400 underline">مسح</button>
                 </div>
                 <div id="my-history" class="space-y-1.5"></div>
@@ -545,42 +552,42 @@
         <!-- ================= PROVIDERS AREA (always at bottom) ================= -->
         <div id="providers-area" class="space-y-3.5">
             <div id="demo-banner" class="hidden bg-amber-50 border border-amber-300 text-amber-900 rounded-xl p-2.5 text-[10px] leading-relaxed">
-                ⚠️ وضع تجريبي: بيانات الورش والوكلاء محفوظة على هذا الجهاز فقط. لتعمل بين جميع المستخدمين أضف إعدادات Firebase (راجع README).
+                <svg class="ic" aria-hidden="true"><use href="#i-alert"/></svg>وضع تجريبي: بيانات الورش والوكلاء محفوظة على هذا الجهاز فقط. لتعمل بين جميع المستخدمين أضف إعدادات Firebase (راجع README).
             </div>
 
             <section id="workshops-section" class="bg-slate-950 text-white rounded-2xl p-4 shadow-xl border border-amber-500/40 space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
                     <div>
-                        <h2 class="font-black text-sm text-amber-300">🔧 ورش معتمدة في <span class="city-name"></span></h2>
+                        <h2 class="font-black text-sm text-amber-300"><svg class="ic" aria-hidden="true"><use href="#i-wrench"/></svg>ورش معتمدة في <span class="city-name"></span></h2>
                         <p class="text-[10px] text-slate-400">أرسل تقريرك، استلم عرض سعر، وقيّم بعد الإصلاح.</p>
                     </div>
                     <span id="ws-count" class="text-[10px] font-mono bg-amber-950 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded shrink-0">0</span>
                 </div>
                 <div id="ws-list" class="space-y-2.5"></div>
-                <button onclick="openJoinModal('workshop')" class="w-full bg-slate-800 text-amber-300 border border-amber-500/40 font-bold py-2.5 rounded-xl text-[11px]">🏢 سجّل ورشتك مجاناً</button>
+                <button onclick="openJoinModal('workshop')" class="w-full bg-slate-800 text-amber-300 border border-amber-500/40 font-bold py-2.5 rounded-xl text-[11px]"><svg class="ic" aria-hidden="true"><use href="#i-store"/></svg>سجّل ورشتك مجاناً</button>
             </section>
 
             <section id="agents-section" class="bg-blue-950 text-white rounded-2xl p-4 shadow-xl border border-blue-500/40 space-y-3">
                 <div class="flex items-center justify-between border-b border-blue-900 pb-2.5">
                     <div>
-                        <h2 class="font-black text-sm text-blue-300">🧩 وكلاء وقطع غيار في <span class="city-name"></span></h2>
+                        <h2 class="font-black text-sm text-blue-300"><svg class="ic" aria-hidden="true"><use href="#i-store"/></svg>وكلاء وقطع غيار في <span class="city-name"></span></h2>
                         <p class="text-[10px] text-blue-100/60">اطلب تسعير القطع (أصلي/تجاري) قبل الشراء.</p>
                     </div>
                     <span id="ag-count" class="text-[10px] font-mono bg-blue-900 text-blue-300 border border-blue-500/40 px-2 py-0.5 rounded shrink-0">0</span>
                 </div>
                 <div id="ag-list" class="space-y-2.5"></div>
-                <button onclick="openJoinModal('agent')" class="w-full bg-blue-900 text-blue-200 border border-blue-500/40 font-bold py-2.5 rounded-xl text-[11px]">🏪 سجّل محلك أو وكالتك مجاناً</button>
+                <button onclick="openJoinModal('agent')" class="w-full bg-blue-900 text-blue-200 border border-blue-500/40 font-bold py-2.5 rounded-xl text-[11px]"><svg class="ic" aria-hidden="true"><use href="#i-store"/></svg>سجّل محلك أو وكالتك مجاناً</button>
             </section>
 
             <div id="join-compact" class="hidden bg-white border border-slate-200 rounded-2xl p-3.5 space-y-2">
                 <p class="font-black text-[15px] text-slate-900">صاحب ورشة أو محل قطع غيار؟</p>
                 <p class="text-[13px] text-slate-600 leading-relaxed">سجّل مجاناً لتصلك طلبات العملاء في مدينتك.</p>
                 <div class="grid grid-cols-2 gap-2">
-                    <button onclick="openJoinModal('workshop')" class="bg-slate-900 text-white font-bold py-2.5 rounded-xl text-[13px]">🔧 سجّل ورشتك</button>
-                    <button onclick="openJoinModal('agent')" class="bg-blue-700 text-white font-bold py-2.5 rounded-xl text-[13px]">🧩 سجّل محلك</button>
+                    <button onclick="openJoinModal('workshop')" class="bg-slate-900 text-white font-bold py-2.5 rounded-xl text-[13px]"><svg class="ic" aria-hidden="true"><use href="#i-wrench"/></svg>سجّل ورشتك</button>
+                    <button onclick="openJoinModal('agent')" class="bg-blue-700 text-white font-bold py-2.5 rounded-xl text-[13px]"><svg class="ic" aria-hidden="true"><use href="#i-store"/></svg>سجّل محلك</button>
                 </div>
             </div>
-            <button id="provider-login-btn" onclick="openModal('login-modal')" class="w-full bg-white border border-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-[11px]">🔐 دخول الورش والوكلاء</button>
+            <button id="provider-login-btn" onclick="openModal('login-modal')" class="w-full bg-white border border-slate-300 text-slate-700 font-bold py-2.5 rounded-xl text-[11px]"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>دخول الورش والوكلاء</button>
         </div>
 
         <footer class="pt-2 pb-2 text-center text-[10px] text-slate-400 leading-relaxed space-y-1">
@@ -591,18 +598,18 @@
             </p>
             <p>الأسعار تقديرية وتتحدث من مساهمات المستخدمين. أسماء الشركات للتوضيح فقط.</p>
             <p id="accuracy-line" class="hidden font-bold text-emerald-700"></p>
-            <p>الدفع الآمن عبر Lemon Squeezy · <a href="terms.html#refund" class="underline">سياسة الاسترجاع</a> · تحذيرات السلامة مجانية دائماً</p>
-            <p class="font-mono opacity-60">الإصدار 3.0 · 2026-11</p>
+            <p>الدفع الآمن عبر بوابات دفع موثوقة · <a href="terms.html#refund" class="underline">سياسة الاسترجاع</a> · تحذيرات السلامة مجانية دائماً</p>
+            <p class="text-[12px] text-slate-500 font-bold">الدعم والتواصل: <a href="mailto:afhas.now@gmail.com" class="underline text-blue-700" data-noi18n dir="ltr">afhas.now@gmail.com</a></p>
         </footer>
     </main>
 
     <!-- ================= BOTTOM NAV ================= -->
     <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur border-t border-slate-200 z-40" style="padding-bottom:env(safe-area-inset-bottom)">
         <div class="grid grid-cols-4 text-[10px] font-extrabold text-slate-500">
-            <button id="nav-diagnose" onclick="switchTab('diagnose')" class="nav-btn active flex flex-col items-center py-2 gap-0.5"><span class="nav-ico text-lg w-10 h-7 rounded-full flex items-center justify-center">🩺</span>الفحص</button>
-            <button id="nav-prices" onclick="switchTab('prices')" class="nav-btn flex flex-col items-center py-2 gap-0.5"><span class="nav-ico text-lg w-10 h-7 rounded-full flex items-center justify-center">💰</span>الأسعار</button>
-            <button id="nav-emergency" onclick="switchTab('emergency')" class="nav-btn flex flex-col items-center py-2 gap-0.5"><span class="nav-ico text-lg w-10 h-7 rounded-full flex items-center justify-center">🚨</span>الطوارئ</button>
-            <button id="nav-mine" onclick="switchTab('mine')" class="nav-btn flex flex-col items-center py-2 gap-0.5 relative"><span class="nav-ico text-lg w-10 h-7 rounded-full flex items-center justify-center">📋</span>سجلي<span id="mine-dot" class="hidden absolute top-1.5 right-1/2 -mr-5 w-2.5 h-2.5 bg-red-500 rounded-full"></span></button>
+            <button id="nav-diagnose" onclick="switchTab('diagnose')" class="nav-btn active flex flex-col items-center py-2 gap-0.5"><span class="nav-ico text-lg w-10 h-7 rounded-full flex items-center justify-center"><svg class="ic" aria-hidden="true"><use href="#i-steth"/></svg></span>الفحص</button>
+            <button id="nav-prices" onclick="switchTab('prices')" class="nav-btn flex flex-col items-center py-2 gap-0.5"><span class="nav-ico text-lg w-10 h-7 rounded-full flex items-center justify-center"><svg class="ic" aria-hidden="true"><use href="#i-coin"/></svg></span>الأسعار</button>
+            <button id="nav-emergency" onclick="switchTab('emergency')" class="nav-btn flex flex-col items-center py-2 gap-0.5"><span class="nav-ico text-lg w-10 h-7 rounded-full flex items-center justify-center"><svg class="ic" aria-hidden="true"><use href="#i-siren"/></svg></span>الطوارئ</button>
+            <button id="nav-mine" onclick="switchTab('mine')" class="nav-btn flex flex-col items-center py-2 gap-0.5 relative"><span class="nav-ico text-lg w-10 h-7 rounded-full flex items-center justify-center"><svg class="ic" aria-hidden="true"><use href="#i-clipboard"/></svg></span>سجلي<span id="mine-dot" class="hidden absolute top-1.5 right-1/2 -mr-5 w-2.5 h-2.5 bg-red-500 rounded-full"></span></button>
         </div>
     </nav>
 </div>
@@ -611,7 +618,7 @@
 <div id="location-modal" class="modal hidden fixed inset-0 bg-black/75 z-[60] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-2xl p-4 space-y-3 shadow-2xl">
         <div class="text-center">
-            <span class="text-3xl">📍</span>
+            <span class="text-3xl"><svg class="ic" aria-hidden="true"><use href="#i-pin"/></svg></span>
             <h3 class="font-black text-sm mt-1">اختر دولتك ومدينتك</h3>
             <p class="text-[10px] text-slate-500">نعرض لك الأسعار والعملة والورش والوكلاء وأرقام الطوارئ حسب موقعك.</p>
         </div>
@@ -662,7 +669,7 @@
 <div id="login-modal" class="modal hidden fixed inset-0 bg-black/75 z-[60] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-2xl p-4 space-y-2.5 shadow-2xl">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-            <h3 class="font-black text-sm">🔐 دخول الورش والوكلاء</h3>
+            <h3 class="font-black text-sm"><svg class="ic" aria-hidden="true"><use href="#i-lock"/></svg>دخول الورش والوكلاء</h3>
             <button onclick="closeModal('login-modal')" class="text-slate-400 px-2 text-sm">✕</button>
         </div>
         <select id="login-country" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs font-semibold"></select>
@@ -692,7 +699,7 @@
 
 <div id="rate-modal" class="modal hidden fixed inset-0 bg-black/75 z-[60] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-2xl p-4 space-y-3 shadow-2xl text-center">
-        <h3 class="font-black text-sm">⭐ قيّم <span id="rate-to"></span></h3>
+        <h3 class="font-black text-sm"><svg class="ic" aria-hidden="true"><use href="#i-star"/></svg>قيّم <span id="rate-to"></span></h3>
         <div id="rate-stars" class="flex justify-center gap-1 text-3xl" dir="ltr"></div>
         <textarea id="rate-text" rows="2" maxlength="300" placeholder="كيف كانت التجربة؟ (اختياري)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs resize-none"></textarea>
         <div class="grid grid-cols-2 gap-2">
@@ -705,7 +712,7 @@
 <div id="owner-modal" class="modal hidden fixed inset-0 bg-black/75 z-[60] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-2xl p-4 space-y-2.5 shadow-2xl max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-            <h3 class="font-black text-sm">🔑 لوحة الإدارة</h3>
+            <h3 class="font-black text-sm"><svg class="ic" aria-hidden="true"><use href="#i-key"/></svg>لوحة الإدارة</h3>
             <button onclick="closeModal('owner-modal')" class="text-slate-400 px-2 text-sm">✕</button>
         </div>
         <div id="owner-login" class="space-y-2">
@@ -717,15 +724,15 @@
         <div id="owner-panel" class="hidden space-y-3">
             <div id="owner-stats" class="grid grid-cols-3 gap-2 text-center"></div>
             <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 space-y-1.5 text-[11px]">
-                <h4 class="text-xs font-black text-slate-900">📊 أرقام آخر 7 أيام</h4>
+                <h4 class="text-xs font-black text-slate-900"><svg class="ic" aria-hidden="true"><use href="#i-chart"/></svg>أرقام آخر 7 أيام</h4>
                 <div id="ins-funnel" class="grid grid-cols-3 gap-1.5 text-center"></div>
                 <p id="ins-acc" class="font-bold text-emerald-800"></p>
                 <div id="ins-miss" class="space-y-1"></div>
-                <button onclick="ownerHealth()" class="w-full bg-white border border-slate-300 font-bold py-2 rounded-lg">🩺 فحص سلامة الموقع</button>
+                <button onclick="ownerHealth()" class="w-full bg-white border border-slate-300 font-bold py-2 rounded-lg"><svg class="ic" aria-hidden="true"><use href="#i-steth"/></svg>فحص سلامة الموقع</button>
                 <p id="ins-health" class="hidden leading-relaxed"></p>
             </div>
             <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-2 space-y-1.5 text-[11px]">
-                <h4 class="text-xs font-black text-emerald-900">💳 المبيعات وأكواد التفعيل</h4>
+                <h4 class="text-xs font-black text-emerald-900"><svg class="ic" aria-hidden="true"><use href="#i-card"/></svg>المبيعات وأكواد التفعيل</h4>
                 <p id="oc-stats" class="text-[10px] text-emerald-900"></p>
                 <p class="text-[10px] text-emerald-800">أنشئ أكواداً لبيعها يدوياً أو كهدايا وعروض. كل كود يُستخدم مرة واحدة.</p>
                 <div class="grid grid-cols-3 gap-1.5">
@@ -735,53 +742,53 @@
                     <input id="oc-count" type="number" min="1" max="50" value="5" class="bg-white border border-emerald-200 rounded-lg p-1.5 font-mono">
                 </div>
                 <input id="oc-note" maxlength="60" placeholder="ملاحظة (اختياري): مثل عرض الافتتاح" class="w-full bg-white border border-emerald-200 rounded-lg p-1.5">
-                <button onclick="ownerCreateCodes()" class="w-full bg-emerald-700 text-white font-bold py-2 rounded-lg">🎟️ إنشاء أكواد</button>
+                <button onclick="ownerCreateCodes()" class="w-full bg-emerald-700 text-white font-bold py-2 rounded-lg"><svg class="ic" aria-hidden="true"><use href="#i-ticket"/></svg>إنشاء أكواد</button>
                 <textarea id="oc-out" rows="4" readonly class="hidden w-full bg-white border border-emerald-200 rounded-lg p-1.5 font-mono text-[11px]" dir="ltr"></textarea>
                 <div class="border-t border-emerald-200 pt-2 space-y-1.5">
-                    <div class="flex items-center justify-between"><h4 class="text-xs font-black text-blue-900">💳 طلبات تم pay المعلّقة</h4><button onclick="ownerTamList()" class="bg-blue-700 text-white font-bold px-3 py-1 rounded-lg text-[11px]">تحديث</button></div>
+                    <div class="flex items-center justify-between"><h4 class="text-xs font-black text-blue-900"><svg class="ic" aria-hidden="true"><use href="#i-card"/></svg>طلبات تم pay المعلّقة</h4><button onclick="ownerTamList()" class="bg-blue-700 text-white font-bold px-3 py-1 rounded-lg text-[11px]">تحديث</button></div>
                     <p class="text-[10px] text-slate-600">قارن رقم العملية بقائمة «المعاملات» في تم pay، ثم اعتمد أو ارفض.</p>
                     <div id="tam-list" class="space-y-1.5 text-[12px]"></div>
                 </div>
             </div>
             <div>
-                <h4 class="text-xs font-black mb-1.5">⏳ طلبات بانتظار الموافقة</h4>
+                <h4 class="text-xs font-black mb-1.5"><svg class="ic" aria-hidden="true"><use href="#i-hourglass"/></svg>طلبات بانتظار الموافقة</h4>
                 <div id="owner-pending" class="space-y-2"></div>
             </div>
             <div>
-                <h4 class="text-xs font-black mb-1.5">✅ المعتمدون</h4>
+                <h4 class="text-xs font-black mb-1.5"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>المعتمدون</h4>
                 <div id="owner-approved" class="space-y-2"></div>
             </div>
             <div class="border-t border-slate-100 pt-3 space-y-2">
-                <h4 class="text-xs font-black">📚 قاعدة المعرفة <span id="kb-count" class="text-[10px] text-slate-400 font-bold"></span></h4>
+                <h4 class="text-xs font-black"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg>قاعدة المعرفة <span id="kb-count" class="text-[10px] text-slate-400 font-bold"></span></h4>
                 <div class="bg-amber-50 border border-amber-200 rounded-xl p-2 space-y-1.5">
-                    <h5 class="text-[11px] font-black text-amber-900">📥 حالات جديدة من المستخدمين <span id="kbq-count" class="font-bold"></span></h5>
+                    <h5 class="text-[11px] font-black text-amber-900"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>حالات جديدة من المستخدمين <span id="kbq-count" class="font-bold"></span></h5>
                     <p class="text-[10px] text-amber-800">فحوصات أجاب عنها الذكاء الاصطناعي ولا تطابق جداولك، مرتبة حسب التكرار. اعتمدها لتصبح جزءاً من القاعدة.</p>
                     <div id="kb-queue" class="space-y-1.5 max-h-80 overflow-y-auto"></div>
                 </div>
                 <div class="bg-sky-50 border border-sky-200 rounded-xl p-2 space-y-1.5">
-                    <h5 class="text-[11px] font-black text-sky-900">🤖 أُضيف تلقائياً (بانتظار اعتمادك) <span id="kba-count" class="font-bold"></span></h5>
+                    <h5 class="text-[11px] font-black text-sky-900"><svg class="ic" aria-hidden="true"><use href="#i-robot"/></svg>أُضيف تلقائياً (بانتظار اعتمادك) <span id="kba-count" class="font-bold"></span></h5>
                     <p class="text-[10px] text-sky-800">حالات تكررت من 3 مستخدمين أو أكثر ونظّمها الذكاء الاصطناعي. تساعد التشخيص كمرجع، ولا تُعطى للمستخدم وحدها حتى تعتمدها.</p>
                     <div id="kb-auto" class="space-y-1.5 max-h-80 overflow-y-auto"></div>
                 </div>
                 <div class="bg-violet-50 border border-violet-200 rounded-xl p-2 space-y-1.5">
-                    <h5 class="text-[11px] font-black text-violet-900">🔍 المراجعة الذكية الأسبوعية</h5>
+                    <h5 class="text-[11px] font-black text-violet-900"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>المراجعة الذكية الأسبوعية</h5>
                     <p id="kbr-last" class="text-[10px] text-violet-800"></p>
-                    <button id="kbr-btn" onclick="kbReviewRun()" class="w-full bg-violet-700 text-white font-bold py-2 rounded-lg text-[11px]">🔍 راجع الجداول الآن (يصحح ويحذف الخطأ تلقائياً)</button>
+                    <button id="kbr-btn" onclick="kbReviewRun()" class="w-full bg-violet-700 text-white font-bold py-2 rounded-lg text-[11px]"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>راجع الجداول الآن (يصحح ويحذف الخطأ تلقائياً)</button>
                     <p id="kbr-progress" class="hidden text-[10px] font-bold text-violet-900"></p>
                 </div>
                 <div class="flex gap-1.5">
                     <input id="kb-research-q" maxlength="120" placeholder="ابحث وأضف بالذكاء الاصطناعي، مثل: تكتكة محرك أكسنت" class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-lg p-2 text-[11px]">
-                    <button id="kb-research-btn" onclick="kbResearch()" class="shrink-0 bg-indigo-700 text-white font-bold px-3 rounded-lg text-[11px]">🔎 ابحث</button>
+                    <button id="kb-research-btn" onclick="kbResearch()" class="shrink-0 bg-indigo-700 text-white font-bold px-3 rounded-lg text-[11px]"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg>ابحث</button>
                 </div>
                 <div class="grid grid-cols-3 gap-1.5">
-                    <button onclick="kbEdit(null)" class="bg-slate-900 text-white font-bold py-2 rounded-lg text-[10px]">➕ عطل جديد</button>
-                    <button onclick="kbExportCsv()" class="bg-emerald-600 text-white font-bold py-2 rounded-lg text-[10px]">📤 Excel</button>
-                    <button onclick="kbExportJson()" class="bg-white border border-slate-300 font-bold py-2 rounded-lg text-[10px]">💾 نسخة كاملة</button>
+                    <button onclick="kbEdit(null)" class="bg-slate-900 text-white font-bold py-2 rounded-lg text-[10px]"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>عطل جديد</button>
+                    <button onclick="kbExportCsv()" class="bg-emerald-600 text-white font-bold py-2 rounded-lg text-[10px]"><svg class="ic" aria-hidden="true"><use href="#i-share"/></svg>Excel</button>
+                    <button onclick="kbExportJson()" class="bg-white border border-slate-300 font-bold py-2 rounded-lg text-[10px]"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>نسخة كاملة</button>
                 </div>
-                <label class="block text-center text-[10px] text-blue-700 underline cursor-pointer">📥 استعادة من نسخة (JSON)<input type="file" accept=".json,application/json" class="hidden" onchange="kbImportJson(this)"></label>
+                <label class="block text-center text-[10px] text-blue-700 underline cursor-pointer"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg>استعادة من نسخة (JSON)<input type="file" accept=".json,application/json" class="hidden" onchange="kbImportJson(this)"></label>
                 <input id="kb-search" oninput="renderKbAdmin()" placeholder="بحث في الأعطال…" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-[11px]">
                 <div id="kb-list" class="space-y-1.5 max-h-72 overflow-y-auto"></div>
-                <h5 class="text-[11px] font-black pt-1">🕒 آخر التحديثات</h5>
+                <h5 class="text-[11px] font-black pt-1"><svg class="ic" aria-hidden="true"><use href="#i-clock"/></svg>آخر التحديثات</h5>
                 <div id="kb-updates" class="space-y-1 text-[10px] text-slate-600"></div>
             </div>
             <button onclick="ownerLogout()" class="w-full text-[10px] text-slate-500 underline">تسجيل خروج</button>
@@ -792,14 +799,14 @@
 <div id="pay-modal" class="modal hidden fixed inset-0 bg-black/75 z-[70] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-2xl p-4 space-y-2.5 shadow-2xl max-h-[92vh] overflow-y-auto text-[11px]">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-            <h3 class="font-black text-sm">🔓 الوصول الكامل لكل الخدمات</h3>
+            <h3 class="font-black text-sm"><svg class="ic" aria-hidden="true"><use href="#i-unlock"/></svg>الوصول الكامل لكل الخدمات</h3>
             <button onclick="closeModal('pay-modal')" class="text-slate-400 px-2 text-sm">✕</button>
         </div>
         <p id="pm-msg" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-2 font-bold text-amber-900 leading-relaxed"></p>
         <p id="pm-wallet" class="bg-slate-50 border border-slate-200 rounded-lg p-2 font-bold text-slate-700"></p>
         <div id="pm-products" class="space-y-2"></div>
         <div class="border-t border-slate-100 pt-2 space-y-1.5">
-            <span class="font-black block">🎟️ لديك كود تفعيل؟</span>
+            <span class="font-black block"><svg class="ic" aria-hidden="true"><use href="#i-ticket"/></svg>لديك كود تفعيل؟</span>
             <div class="flex gap-1.5">
                 <input id="pm-code" maxlength="12" placeholder="SD-XXXXXXXX" dir="ltr" class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-lg p-2 font-mono uppercase">
                 <button onclick="redeemCode()" class="shrink-0 bg-slate-900 text-white font-bold px-3 rounded-lg">تفعيل</button>
@@ -807,7 +814,7 @@
         </div>
         <div class="acct-slot"></div>
         <details class="text-[10px] text-slate-500">
-            <summary class="cursor-pointer font-bold">🔑 محفظتي (للنقل لجهاز آخر)</summary>
+            <summary class="cursor-pointer font-bold"><svg class="ic" aria-hidden="true"><use href="#i-key"/></svg>محفظتي (للنقل لجهاز آخر)</summary>
             <p class="mt-1">رقم محفظتك: <span id="pm-wid" class="font-mono select-all" dir="ltr"></span> <button onclick="copyWid()" class="underline text-blue-700">نسخ</button></p>
             <div class="flex gap-1.5 mt-1">
                 <input id="pm-restore" placeholder="الصق رقم محفظة سابقة" dir="ltr" class="flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-mono">
@@ -820,7 +827,7 @@
 <div id="kb-modal" class="modal hidden fixed inset-0 bg-black/75 z-[70] flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-sm rounded-2xl p-4 space-y-2 shadow-2xl max-h-[92vh] overflow-y-auto text-[11px]">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-            <h3 id="kbm-title" class="font-black text-sm">📚 عطل</h3>
+            <h3 id="kbm-title" class="font-black text-sm"><svg class="ic" aria-hidden="true"><use href="#i-book"/></svg>عطل</h3>
             <button onclick="closeModal('kb-modal')" class="text-slate-400 px-2 text-sm">✕</button>
         </div>
         <p id="kbm-src" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg p-2 text-[10px] text-indigo-900 leading-relaxed"></p>
@@ -846,27 +853,27 @@
         <label class="flex items-center gap-2 font-bold"><input id="kbm-active" type="checkbox" checked> مفعّل في التشخيص</label>
         <label class="block font-bold">ملاحظة التحديث <span class="text-slate-400 font-normal">(تُحفظ في جدول التحديثات)</span><input id="kbm-note" maxlength="150" placeholder="مثل: تحديث الأسعار من فاتورة ورشة" class="mt-1 w-full bg-slate-50 border border-slate-200 rounded-lg p-2"></label>
         <div class="grid grid-cols-2 gap-2 pt-1">
-            <button id="kbm-save" onclick="kbSave()" class="bg-emerald-600 text-white font-black py-2.5 rounded-xl">💾 حفظ</button>
-            <button id="kbm-del" onclick="kbDelete()" class="bg-rose-600 text-white font-bold py-2.5 rounded-xl">🗑️ تعطيل</button>
+            <button id="kbm-save" onclick="kbSave()" class="bg-emerald-600 text-white font-black py-2.5 rounded-xl"><svg class="ic" aria-hidden="true"><use href="#i-save"/></svg>حفظ</button>
+            <button id="kbm-del" onclick="kbDelete()" class="bg-rose-600 text-white font-bold py-2.5 rounded-xl"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>تعطيل</button>
         </div>
     </div>
 </div>
 
-<script src="js/00-i18n.js?v=3.3.36"></script>
-<script src="js/00-core.js?v=3.3.36"></script>
-<script src="js/01-countries.js?v=3.3.36"></script>
-<script src="js/02-diagnosis.js?v=3.3.36"></script>
-<script src="js/03-interview.js?v=3.3.36"></script>
-<script src="js/04-sound.js?v=3.3.36"></script>
-<script src="js/05-codes.js?v=3.3.36"></script>
-<script src="js/06-history.js?v=3.3.36"></script>
-<script src="js/07-prices.js?v=3.3.36"></script>
-<script src="js/08-providers.js?v=3.3.36"></script>
-<script src="js/09-payments.js?v=3.3.36"></script>
-<script src="js/10-kb-admin.js?v=3.3.36"></script>
-<script src="js/11-learning.js?v=3.3.36"></script>
-<script src="js/12-account.js?v=3.3.36"></script>
-<script src="js/13-pwa.js?v=3.3.36"></script>
-<script src="js/99-main.js?v=3.3.36"></script>
+<script src="js/00-i18n.js?v=3.3.37"></script>
+<script src="js/00-core.js?v=3.3.37"></script>
+<script src="js/01-countries.js?v=3.3.37"></script>
+<script src="js/02-diagnosis.js?v=3.3.37"></script>
+<script src="js/03-interview.js?v=3.3.37"></script>
+<script src="js/04-sound.js?v=3.3.37"></script>
+<script src="js/05-codes.js?v=3.3.37"></script>
+<script src="js/06-history.js?v=3.3.37"></script>
+<script src="js/07-prices.js?v=3.3.37"></script>
+<script src="js/08-providers.js?v=3.3.37"></script>
+<script src="js/09-payments.js?v=3.3.37"></script>
+<script src="js/10-kb-admin.js?v=3.3.37"></script>
+<script src="js/11-learning.js?v=3.3.37"></script>
+<script src="js/12-account.js?v=3.3.37"></script>
+<script src="js/13-pwa.js?v=3.3.37"></script>
+<script src="js/99-main.js?v=3.3.37"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 // جزء من index.html، يُحمَّل بالترتيب: كل الملفات تشترك في نفس النطاق العام
 
 // ---------- الإصدار وتسجيل الأخطاء: أي خطأ عند المستخدم يصل للوحة الإدارة (3 كحد أقصى لكل جلسة) ----------
-const APP_VERSION = '3.3.36';
+const APP_VERSION = '3.3.37';
 const SITE_URL = 'https://afhasnow.com';
 // حذف أرقام الجوال والهوية والبريد من أي نص قبل إرساله أو حفظه
 function noPii(text) {
@@ -30,12 +30,7 @@ window.reportIssue = async function (ctx) {
     } catch (e) { alert('تعذر الإرسال الآن، حاول بعد قليل.'); }
 };
 document.addEventListener('DOMContentLoaded', () => {
-    const h = document.querySelector('header h1, header .t b, header > b');
-    if (h && !document.getElementById('beta-badge')) {
-        const b = document.createElement('span'); b.id = 'beta-badge'; b.textContent = 'نسخة تجريبية';
-        b.style.cssText = 'display:inline-block;margin-inline-start:6px;font-size:11px;font-weight:700;color:#0F172A;background:#FCD34D;border-radius:6px;padding:1px 7px;vertical-align:middle;line-height:1.6';
-        h.appendChild(b);
-    }
+    // شارة «نسخة تجريبية» أُزيلت عن الزوار (3.3.37) لأنها تضعف الثقة قبل الدفع
     const host = document.querySelector('main') || document.body;
     const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = '⚠️ أبلغ عن مشكلة';
     btn.style.cssText = 'display:block;margin:18px auto 0;min-height:44px;padding:0 18px;border-radius:12px;border:1px solid #CBD5E1;background:#fff;color:#0F172A;font:inherit;font-size:14px;font-weight:600;cursor:pointer';
