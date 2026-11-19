@@ -130,6 +130,7 @@
         main .bg-white.rounded-2xl, .stats, #used-car-cta, .tool-tile { background: #fff !important; border: 1px solid #E4E7EC !important; border-radius: 16px !important; box-shadow: 0 1px 2px rgba(16,24,40,.05) !important; }
         #used-car-cta { border-inline-start: 1px solid #E4E7EC !important; }
         .stats > div + div { border-inline-start-color: #EAECF0; }
+        .stats, .stats.has4 { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }   /* خانة واحدة (تجربتان مجانيتان)، وتظهر خانة الدقة بجانبها عند توفرها */
         .chip { background: #fff; border: 1px solid #E4E7EC; border-radius: 9999px; color: #344054; }
         .chip.on { background: #1D4ED8; border-color: #1D4ED8; color: #fff; }
         main .bg-blue-700 { background: #1D4ED8 !important; box-shadow: 0 1px 2px rgba(16,24,40,.08), 0 6px 14px -8px rgba(29,78,216,.6) !important; }
@@ -193,9 +194,7 @@ button,select,label,nav,header,input[type=button],input[type=submit]{font-family
             </div>
             <p class="no-print text-center text-[12.5px] leading-relaxed text-slate-600 px-2">منصة إلكترونية لفحص السيارات وتقديم الاستشارات قبل التوجه للورش أو مراكز الفحص المعتمدة، لتعرف العطل والسعر العادل وتتجنب الاستغلال في الصيانة.</p>
             <div class="no-print stats" aria-label="عن التطبيق">
-                <div><b>8</b><span>أدوات فحص</span></div>
-                <div><b>2</b><span>تشخيص مجاني</span></div>
-                <div><b>60<small>ث</small></b><span>لأول نتيجة</span></div>
+                <div><b>2</b><span>تجربة مجانية</span></div>
                 <div id="stat-acc" class="hidden"><b data-noi18n>0%</b><span>قيّموا الدقة 90%+</span></div>
             </div>
             <a href="inspect.html" id="used-car-cta" class="block rounded-2xl p-3.5 border-2 border-amber-400 no-underline">
