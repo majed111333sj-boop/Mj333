@@ -396,6 +396,24 @@ test('3.3.0 Whop: الدفع يمنح الرصيد مرة واحدة، والا�
   assert.equal(rf.json.refunded, true);
   assert.equal((await api({ mode: 'wallet', wid: w })).json.cr.prices, 0);
 });
+test('Whop: نفس المستخدم يشتري مرتين ويستخدم كل مرة، ثم يُطلب الدفع من جديد', async () => {
+  const w = wid(); await burnFree(w);
+  const buy = () => whop('payment.succeeded', { id: 'pay_' + did(), product: { title: 'أداة فحص فرعية' }, metadata: { wid: w, product: 'toolsub' } });
+  const use = () => api({ mode: 'measure', wid: w, did: 't' + did(), summary: 'x', tool: 'tires' });
+  geminiText = JSON.stringify({ verdict: 'good', title: 'سليم', explanation: '', causes: [], advice: '' });
+  assert.equal((await use()).status, 402);                                   // بلا رصيد
+  assert.equal((await buy()).json.ok, true);                                 // الشراء الأول
+  assert.equal((await api({ mode: 'wallet', wid: w })).json.cr.ts, 1);
+  assert.notEqual((await use()).status, 402);                                // الاستخدام الأول
+  assert.equal((await api({ mode: 'wallet', wid: w })).json.cr.ts, 0);
+  assert.equal((await use()).status, 402);                                   // انتهى الرصيد
+  assert.equal((await buy()).json.ok, true);                                 // إعادة الشراء بدفعة جديدة
+  assert.equal((await buy()).json.ok, true);                                 // وشراء ثالث يتراكم
+  assert.equal((await api({ mode: 'wallet', wid: w })).json.cr.ts, 2);
+  assert.notEqual((await use()).status, 402);
+  assert.notEqual((await use()).status, 402);
+  assert.equal((await use()).status, 402);
+});
 test('3.3.0 Whop: منتج مجهول أو بلا محفظة لا يمنح شيئاً ويُحفظ للمراجعة', async () => {
   assert.equal((await whop('payment.succeeded', { id: 'pay_x', product: { title: 'شيء آخر' }, metadata: { wid: wid() } })).json.unmapped, true);
   assert.equal((await whop('payment.succeeded', { id: 'pay_y', product: { title: 'الفحص الوافي' } })).json.no_wallet, true);
