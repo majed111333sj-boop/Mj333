@@ -14,7 +14,7 @@
     <meta property="og:url" content="https://afhasnow.com/tools.html">
     <meta name="twitter:card" content="summary_large_image">
 <title>أدوات الفحص | الفاحص الذكي</title>
-<script src="js/00-i18n.js?v=3.3.42"></script>
+<script src="js/00-i18n.js?v=3.3.43"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -165,7 +165,7 @@ button,select,label,nav,header,input[type=button],input[type=submit]{font-family
 </div>
 <script>
 // ---------- الإصدار وتسجيل الأخطاء: أي خطأ عند المستخدم يصل للوحة الإدارة (3 كحد أقصى لكل جلسة) ----------
-const APP_VERSION = '3.3.42';
+const APP_VERSION = '3.3.43';
 (() => {
     let n = 0;
     const send = m => { if (n++ >= 3 || location.protocol === 'file:') return; try { fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ mode: 'clienterr', msg: String(m).slice(0, 200), page: location.pathname.slice(-20), ver: APP_VERSION, ua: navigator.userAgent.slice(0, 60) }) }).catch(() => {}); } catch (e) {} };
