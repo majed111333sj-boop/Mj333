@@ -7,7 +7,7 @@ const esc = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&a
 
 fs.mkdirSync('dist/js', { recursive: true });
 let n = 0;
-for (const f of fs.readdirSync('.')) if (/\.(html|png|ico|webmanifest)$/.test(f)) { fs.copyFileSync(f, 'dist/' + f); n++; }
+for (const f of fs.readdirSync('.')) if (/\.(html|png|ico|webmanifest)$|^sw\.js$/.test(f)) { fs.copyFileSync(f, 'dist/' + f); n++; }
 for (const f of fs.readdirSync('js')) if (f.endsWith('.js')) { fs.copyFileSync('js/' + f, 'dist/js/' + f); n++; }
 
 // كل ملف js مذكور في الصفحات موجود فعلاً
