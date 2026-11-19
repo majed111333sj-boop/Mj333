@@ -61,7 +61,7 @@ function showLaunchSheet() {
         const s = el('span', '', hint); s.style.cssText = 'display:block;font-size:12px;opacity:.8;margin-top:2px';
         b.append(t, s); b.onclick = () => { close(); fn(); }; box.appendChild(b);
     };
-    opt('فحص سريع', 'صف العطل واعرف السبب والخطورة', true, () => goSection('diag'));
+    opt('فحص سريع', 'صف العطل واعرف السبب والخطورة، وقطع الأعطال وأسعارها', true, () => goSection('diag'));
     opt('لمبات الطبلون', 'اختر اللمبة الظاهرة واعرف معناها', false, () => goSection('lights'));
     opt('فحص سيارة مستعملة', 'قبل الشراء، بنفسك أو عن بعد', false, () => { location.href = 'inspect.html'; });
     const skip = el('button', '', 'تصفّح التطبيق'); skip.type = 'button';
