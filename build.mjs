@@ -10,6 +10,8 @@ fs.mkdirSync('dist/js', { recursive: true });
 let n = 0;
 for (const f of fs.readdirSync('.')) if (/\.(html|png|ico|webmanifest)$|^sw\.js$/.test(f)) { fs.copyFileSync(f, 'dist/' + f); n++; }
 for (const f of fs.readdirSync('js')) if (f.endsWith('.js')) { fs.copyFileSync('js/' + f, 'dist/js/' + f); n++; }
+// فيديوهات الإعلانات (روابط عامة للجدولة عبر Metricool)
+if (fs.existsSync('ads')) { fs.mkdirSync('dist/ads', { recursive: true }); for (const f of fs.readdirSync('ads')) if (f.endsWith('.mp4')) { fs.copyFileSync('ads/' + f, 'dist/ads/' + f); n++; } }
 
 // كل ملف js مذكور في الصفحات موجود فعلاً
 for (const page of ['index.html', 'tools.html']) {
