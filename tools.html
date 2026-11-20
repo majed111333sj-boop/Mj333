@@ -14,8 +14,8 @@
     <meta property="og:url" content="https://afhasnow.com/tools.html">
     <meta name="twitter:card" content="summary_large_image">
 <title>أدوات الفحص | الفاحص الذكي</title>
-<script src="js/00-i18n.js?v=3.3.47"></script>
-<script src="js/ui-icons.js?v=3.3.47"></script>
+<script src="js/00-i18n.js?v=3.3.48"></script>
+<script src="js/ui-icons.js?v=3.3.48"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -168,7 +168,7 @@ button,select,label,nav,header,input[type=button],input[type=submit]{font-family
 </div>
 <script>
 // ---------- الإصدار وتسجيل الأخطاء: أي خطأ عند المستخدم يصل للوحة الإدارة (3 كحد أقصى لكل جلسة) ----------
-const APP_VERSION = '3.3.47';
+const APP_VERSION = '3.3.48';
 (() => {
     let n = 0;
     const send = m => { if (n++ >= 3 || location.protocol === 'file:') return; try { fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ mode: 'clienterr', msg: String(m).slice(0, 200), page: location.pathname.slice(-20), ver: APP_VERSION, ua: navigator.userAgent.slice(0, 60) }) }).catch(() => {}); } catch (e) {} };
@@ -187,7 +187,7 @@ window.reportIssue = async function (ctx) {
     } catch (e) { alert('تعذر الإرسال الآن، حاول بعد قليل.'); }
 };
 document.addEventListener('DOMContentLoaded', () => {
-    // شارة «نسخة تجريبية» أُزيلت عن الزوار (3.3.47)
+    // شارة «نسخة تجريبية» أُزيلت عن الزوار (3.3.48)
     const host = document.querySelector('main') || document.body;
     const btn = document.createElement('button'); btn.type = 'button'; btn.textContent = '⚠️ أبلغ عن مشكلة';
     btn.style.cssText = 'display:block;margin:18px auto 0;min-height:44px;padding:0 18px;border-radius:12px;border:1px solid #CBD5E1;background:#fff;color:#0F172A;font:inherit;font-size:14px;font-weight:600;cursor:pointer';
